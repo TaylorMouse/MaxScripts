@@ -1051,7 +1051,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
---         print tags
+        print tags
             
         -- read tag by tag
         for tag in tags do
@@ -1073,9 +1073,9 @@ struct Warcraft3_Reforged
 
         )
 
-        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-        Warcraft3_Reforged.BuildGEOS geos modl mtls
-        Warcraft3_Reforged.BuildATCH atch bpos
+--         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+--         Warcraft3_Reforged.BuildGEOS geos modl mtls
+--         Warcraft3_Reforged.BuildATCH atch bpos
         
         
         
