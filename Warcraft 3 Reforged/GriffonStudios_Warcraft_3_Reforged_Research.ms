@@ -13,7 +13,7 @@ struct Warcraft3_Reforged_MATS
     ( ID, LOD, Name, Matrices )
 
 struct Warcraft3_Reforged_BONE
-    ( Id, Name, ParentBoneId, KGTR, KGRT, KGSC, offset )
+    ( Id, Name, ParentBoneId, boneRef, KGTR, KGRT, KGSC, offset )
 
 struct Warcraft3_Reforged_ATCH
     ( Id, Name, ParentBoneId, Offset, Size, KGTR, KGRT, KGSC, KATV)
@@ -40,31 +40,30 @@ struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
 
 /*
-    TAGS FOUND
-    VERS
-    MODL
-    SEQS
-    MTLS
-    TEXS
-    GEOS
-    GEOA
-    BONE
-    ATCH
-    PIVT
-    CAMS
-    EVTS
-    CLID
-    BPOS
-    FAFX
-    LITE
-    PRE2
-    CORN
-    RIBB
-    
-    GLBS
-    HELP
-    TXAN
-    SNDS
+
+TAGS FOUND
+    VERS // version
+    MODL // model
+    SEQS // animation sequences
+    TEXS // texture names
+    PIVT // pivots
+    PRE2 // particle emitter
+    EVTS // events
+    BPOS // binding position
+    CORN // conrners ??
+    MTLS // materials
+    GEOS // geosets
+    GEOA // geoset animation
+    BONE // bones
+    ATCH // attachments
+    CLID // colission 
+    RIBB // ribbon emitters
+    GLBS // globals
+    TXAN // texture animations
+    CAMS // camera
+    LITE // lites
+    FAFX // facial effects
+    PREM // particle emitters
     
     // Node
     KGTR: float[3] translation
@@ -193,32 +192,15 @@ struct Warcraft3_Reforged
         )
         return tags
     ),
-    /* 
-        Warcraft 3 Reforged 
+    /* Warcraft 3 Reforged 
     
         READ
     */
-    function ReadMODL stream tag=
-    (
-        local modl = Warcraft3_Reforged_MODL()
-        fseek stream tag.offset #seek_set
-        
-        modl.name = Warcraft3_Reforged.ReadFixedString stream 80
-        Warcraft3_Reforged.SkipBytes stream (tag.size - 80 - 28)
-        
-        
-        modl.PointA = [readFloat stream, readFloat stream, readFloat stream]
-        modl.PointB = [readFloat stream, readFloat stream, readFloat stream]
-        modl.Unk1 = readLong stream
-        
-        return modl
-        
-    ),
-    function ReadKMTA stream=
+    function ReadFloatAnim stream=
     (
         -- Key Attachment visibility
         /* presumably the visibility of the object, the lineType will indicate the trasition tangent */
-        local kmta = #()
+        local anim = #()
         
         local numPts = readLong stream
         local lineType = readLong stream
@@ -236,43 +218,14 @@ struct Warcraft3_Reforged
                 k.inTan = readFloat stream
                 k.outTan = readFloat stream
             )
-            append kmta k
+            append anim k
         )
         
-        return kmta
+        return anim
     ),
-    function ReadKATV stream=
+    function ReadVector3Anim stream=
     (
-        -- Key Attachment visibility
-        /* presumably the visibility of the object, the lineType will indicate the trasition tangent */
-        local katv = #()
-        
-        local numPts = readLong stream
-        local lineType = readLong stream
-        local ffff = readLong stream
-        
-        for i=1 to numPts do
-        (
-            local k = Warcraft3_Reforged_KG()
-            
-            k.Time = ReadLong stream
-            k.Point = readFloat stream -- always 1, indicating it starts or ends
-
-            if( lineType > 1)  then
-            (
-                k.inTan = readFloat stream
-                k.outTan = readFloat stream
-            )
-            append katv k
-        )
-        
-        return katv
-    ),
-    function ReadKGTR stream= 
-    (
-        -- Key Global Transformation
-        /* presumably the position of the object at that timeframe, the lineType will indicate the trasition tangent */
-        local kgtr = #()
+        local anim = #()
         
         local numPts = readLong stream
         local lineType = readLong stream
@@ -290,17 +243,14 @@ struct Warcraft3_Reforged
                 k.inTan = [readFloat stream, readFloat stream, readFloat stream]
                 k.outTan = [readFloat stream, readFloat stream, readFloat stream]
             )
-            append kgtr k
+            append anim k
         )
         
-        return kgtr
-        
+        return anim
     ),
-    function ReadKGRT stream=
+    function ReadQuatAnim stream=
     (
-        -- Key Global Rotation
-        /* presumably the rotation of the object at that timeframe, the lineType will indicate the trasition tangent */
-        local kgrt = #()
+        local anim = #()
         
         local numPts = readLong stream
         local lineType = readLong stream
@@ -318,38 +268,26 @@ struct Warcraft3_Reforged
                 k.inTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
                 k.outTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
             )
-            append kgrt k
+            append anim k
         )
         
-        return kgrt
-        
+        return anim
     ),
-    function ReadKGSC stream=
+    function ReadMODL stream tag=
     (
-         -- Key Global scale
-        /* presumably the scale of the object at that timeframe, the lineType will indicate the trasition tangent */
-        local kgsc = #()
+        local modl = Warcraft3_Reforged_MODL()
+        fseek stream tag.offset #seek_set
         
-        local numPts = readLong stream
-        local lineType = readLong stream
-        local ffff = readLong stream
+        modl.name = Warcraft3_Reforged.ReadFixedString stream 80
+        Warcraft3_Reforged.SkipBytes stream (tag.size - 80 - 28)
         
-        for i=1 to numPts do
-        (
-            local k = Warcraft3_Reforged_KG()
-            
-            k.Time = ReadLong stream
-            k.Point = [readFloat stream, readFloat stream, readFloat stream]
-
-            if( lineType > 1)  then
-            (
-                k.inTan = [readFloat stream, readFloat stream, readFloat stream]
-                k.outTan = [readFloat stream, readFloat stream, readFloat stream]
-            )
-            append kgsc k
-        )
         
-        return kgsc
+        modl.PointA = [readFloat stream, readFloat stream, readFloat stream]
+        modl.PointB = [readFloat stream, readFloat stream, readFloat stream]
+        modl.Unk1 = readLong stream
+        
+        return modl
+        
     ),
     function ReadVERS stream tag=
     (
@@ -585,9 +523,9 @@ struct Warcraft3_Reforged
             (
                 local kg = Warcraft3_Reforged.ReadFixedString stream 4
 
-                if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadKGTR stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadKGRT stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then kgsc = Warcraft3_Reforged.ReadKGSC stream -- Key Global Scale
+                if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then kgsc = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
             )
             
             b.KGTR = kgtr
@@ -657,7 +595,7 @@ struct Warcraft3_Reforged
                 if(bytes>32) then 
                 (
                     local km = Warcraft3_Reforged.ReadFixedString stream 4
-                    if ( km == "KMTA" ) then kmta = Warcraft3_Reforged.ReadKMTA stream 
+                    if ( km == "KMTA" ) then kmta = Warcraft3_Reforged.ReadFloatAnim stream 
                 )
                 lay.KMTA = kmta
                 append laysList lay
@@ -710,9 +648,9 @@ struct Warcraft3_Reforged
             (
                 local kg = Warcraft3_Reforged.ReadFixedString stream 4
 
-                if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadKGTR stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadKGRT stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then kgsc = Warcraft3_Reforged.ReadKGSC stream -- Key Global Scale
+                if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then kgsc = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
             )
             
             att.KGTR = kgtr
@@ -727,7 +665,7 @@ struct Warcraft3_Reforged
 
             local katv = Warcraft3_Reforged.ReadFixedString stream 4
             
-            if( katv == "KATV") then att.katv = Warcraft3_Reforged.ReadKATV stream -- visibility track ?
+            if( katv == "KATV") then att.katv = Warcraft3_Reforged.ReadFloatAnim stream -- visibility track ?
 
         )
         
@@ -797,9 +735,9 @@ struct Warcraft3_Reforged
             (
                 local kg = Warcraft3_Reforged.ReadFixedString stream 4
                 
-                if ( kg == "KGTR" ) then cl.KGTR = Warcraft3_Reforged.ReadKGTR stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then cl.KGRT = Warcraft3_Reforged.ReadKGRT stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then cl.KGSC = Warcraft3_Reforged.ReadKGSC stream -- Key Global Scale
+                if ( kg == "KGTR" ) then cl.KGTR = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then cl.KGRT = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then cl.KGSC = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
 
                 )
 
@@ -959,7 +897,7 @@ struct Warcraft3_Reforged
         )
         --return mtls
     ),
-    function BuildATCH atch bpos=
+    function BuildATCH atch bpos boneList=
     (
         local layer = Warcraft3_Reforged.CreateLayer "Attachments"
      
@@ -972,7 +910,10 @@ struct Warcraft3_Reforged
             pnt.Transform = bpos[a.id].matrix 
             
             layer.AddNode pnt
-
+            if( a.parentBoneId>0) then 
+            (
+                pnt.parent = boneList[a.parentBoneId].boneRef
+            )
             -- KGTR, KGRT, KGSC, KATV
                     
             if ( a.KGRT != undefined ) then
@@ -1021,6 +962,96 @@ struct Warcraft3_Reforged
         
         
     ),
+    function BuildBONE boneList bpos=
+    (
+--         print boneList
+--         print bpos
+        
+        local layer = Warcraft3_Reforged.CreateLayer "Bones"
+        
+        -- create the bones
+        for b in boneList do
+        (
+            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0] [0,0,1]
+            
+            aBone.Name = b.name
+            aBone.showLinks = true
+            aBone.Width = 0.05
+			aBone.Height = 0.05
+            
+            b.boneRef = aBone
+            layer.AddNode aBone
+            aBone.transform = bpos[b.id].matrix
+            
+        )
+        
+        -- build bone hierarchy
+        for b in boneList do
+        (
+            if ( b.ParentBoneId > 0 ) then 
+            (
+                local parentBone = boneList[b.ParentBoneId].boneRef
+                b.boneRef.parent = parentBone
+            )
+        )
+        
+        -- apply bone animation
+         for b in boneList do
+         (
+            local pnt = b.boneRef
+             
+            
+
+--             if ( b.KGRT != undefined ) then
+--             (
+--                 local pnt = b.boneRef
+--                 for anim in b.KGRT do
+--                 (
+--                     local q = anim.point
+--                     
+--                     with animate on
+--                     (
+--                         at time (anim.Time + 10) in coordsys parent 
+
+--                              pnt.assumeskinpose()
+--                             local mtrx = matrix3 1
+--                             rotate mtrx (inverse q)
+--                             
+--                             local rKey = numKeys pnt.rotation.controller
+--                             if rKey>0 then deleteKey  pnt.rotation.controller rKey
+--                             
+--                             if ( pnt.parent != undefined) then
+--                             (
+--                                     mtrx = mtrx *  pnt.parent.transform --> check if this is necessary!!
+--                             )
+--                              pnt.transform = mtrx
+--                             local pKey = numKeys  pnt.position.controller
+--                             local sKey = numKeys  pnt.scale.controller
+--                             if pKey>0 then deleteKey  pnt.position.controller pkey
+--                             if skey>0 then deleteKey  pnt.scale.controller skey
+
+
+--                     )
+--                 )    
+--             )
+            if ( b.KGTR != undefined ) then
+            (
+               for anim in b.KGTR do
+               (
+                    with animate on 
+                       at time (anim.Time + 10)
+                            in coordsys parent 
+                                pnt.pos = anim.Point 
+                )
+            )
+        
+  
+--             if ( b.KGSC != undefined ) then
+--                 for anim in b.KGTR do
+--                     with animate on at time anim.Time 
+--                         pnt.scale = anim.Point 
+        )
+    ),
     function Import file=
     (
         if ( file == undefined ) then throw("Provide a correct value for the paramete file")
@@ -1039,9 +1070,9 @@ struct Warcraft3_Reforged
         local boneList -- bones
         local atch -- attachments
         local clid -- collision spheres
-        local bpos -- binding position ?
+        local bpos -- binding position
         
-        -- validate first
+        -- VERS // version
         for tag in tags do 
             if( tag.Name == "VERS" ) then 
             (
@@ -1056,42 +1087,52 @@ struct Warcraft3_Reforged
         -- read tag by tag
         for tag in tags do
         (
-             if( tag.Name == "MODL" ) then modl = Warcraft3_Reforged.ReadMODL stream tag
-             if( tag.Name == "SEQS" ) then seqs = Warcraft3_Reforged.ReadSEQS stream tag
-             if( tag.Name == "MTLS" ) then mtls = Warcraft3_Reforged.ReadMTLS stream tag
-             if( tag.Name == "TEXS" ) then texs = Warcraft3_Reforged.ReadTEXS stream tag
-             if( tag.Name == "GEOS" ) then geos = Warcraft3_Reforged.ReadGEOS stream tag
-            --GEOA
-             if( tag.Name == "BONE" ) then boneList = Warcraft3_Reforged.ReadBONE stream tag
-             if( tag.Name == "ATCH" ) then atch = Warcraft3_Reforged.ReadATCH stream tag 
-            --PIVT
-            --CAMS
-            --EVTS
-             if( tag.Name == "CLID" ) then clid = Warcraft3_Reforged.ReadCLID stream tag
-            --FAFX
+            -- MODL // model
+            if( tag.Name == "MODL" ) then modl = Warcraft3_Reforged.ReadMODL stream tag
+            -- SEQS // animation sequences
+            if( tag.Name == "SEQS" ) then seqs = Warcraft3_Reforged.ReadSEQS stream tag
+            -- MTLS // materials
+            if( tag.Name == "MTLS" ) then mtls = Warcraft3_Reforged.ReadMTLS stream tag
+            -- TEXS // texture names
+            if( tag.Name == "TEXS" ) then texs = Warcraft3_Reforged.ReadTEXS stream tag
+            -- GEOS // geosets
+            if( tag.Name == "GEOS" ) then geos = Warcraft3_Reforged.ReadGEOS stream tag
+            -- BONE // bones
+            if( tag.Name == "BONE" ) then boneList = Warcraft3_Reforged.ReadBONE stream tag
+            -- ATCH // attachments
+            if( tag.Name == "ATCH" ) then atch = Warcraft3_Reforged.ReadATCH stream tag 
+            -- CLID // colission 
+            if( tag.Name == "CLID" ) then clid = Warcraft3_Reforged.ReadCLID stream tag
+            -- BPOS // binding position
             if( tag.Name == "BPOS" ) then bpos = Warcraft3_Reforged.ReadBPOS stream tag
-
+            -- PIVT // pivots
+            -- PRE2 // particle emitter
+            -- EVTS // events
+            -- CORN // conrners ??
+            -- GEOA // geoset animation
+            -- RIBB // ribbon emitters
+            -- GLBS // globals
+            -- TXAN // texture animations
+            -- CAMS // camera
+            -- LITE // lites
+            -- FAFX // facial effects
+            -- PREM // particle emitters    
+            
         )
 
---         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
---         Warcraft3_Reforged.BuildGEOS geos modl mtls
---         Warcraft3_Reforged.BuildATCH atch bpos
-        
-        
-        
+        Warcraft3_Reforged.BuildBONE boneList bpos
+        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+        Warcraft3_Reforged.BuildGEOS geos modl mtls
+        Warcraft3_Reforged.BuildATCH atch bpos boneList
+     
 --      print modl
 --      print seqs
 --      print mtls
 --      print texs        
 --      print geos
---      print geoa
 --      print boneList
 --      print atch
---      print pivt
---      print cams
---      print evts
 --      print clid
---      print fafx
 --      print bpos
         
 
@@ -1104,7 +1145,7 @@ struct Warcraft3_Reforged
 ClearListener()
 
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaosgrunt\chaosgrunt.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\creeps\wendigo\wendigo.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
