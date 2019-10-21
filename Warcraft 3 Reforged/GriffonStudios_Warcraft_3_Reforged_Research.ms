@@ -407,17 +407,15 @@ struct Warcraft3_Reforged
             /* Groups */
             local gndx = Warcraft3_Reforged.ReadFixedString stream 4
             local nGndx = readLong stream
-            geo.GNDX = 0 --> currently always zero occurences so to prevent errors, skip the bytes for now
-            Warcraft3_Reforged.SkipBytes stream (nGndx)
+            local groups = #()
+            for g=1 to nGndx do append groups ( readByte stream + 1 )
+            geo.GNDX = groups
             
             /* Matrix Groups or bone groups */
             local matrixGroups = #()
             local mtgc = Warcraft3_Reforged.ReadFixedString stream 4
             local nMtgc = readLong stream
-            for m=1 to nMtgc do
-            (
-                append matrixGroups (readLong stream)
-            )
+            for m=1 to nMtgc do append matrixGroups (readLong stream)
             geo.MTGC = matrixGroups
 
             /* Matrices */
@@ -903,36 +901,105 @@ struct Warcraft3_Reforged
      
         sliderTime = 0f
         
+        for a in atch do
+        (
+            print a.name
+           
+            if ( a.parentBoneId > 0 ) then 
+                print boneList[a.parentBoneId].name
+            else
+                print "None"
+            print bpos[a.id].matrix.row4
+            print ""
+        )
+        
+        
         for a in atch do 
         (
             local pnt = Point name:a.name box:off cross:on centermarker:off axistripod:off size:12
             pnt.wirecolor = color 255 255 0
-            pnt.Transform = bpos[a.id].matrix 
+            pnt.pos = bpos[a.id].matrix.row4
             
             layer.AddNode pnt
             if( a.parentBoneId>0) then 
             (
-                pnt.parent = boneList[a.parentBoneId].boneRef
+                local parentBone = boneList[a.parentBoneId].boneRef
+                if( parentBone == undefined) then
+                    parentBone = getnodebyname boneList[a.parentBoneId].name
+                
+                pnt.parent = parentBone
             )
             -- KGTR, KGRT, KGSC, KATV
-                    
-            if ( a.KGRT != undefined ) then
+            if ( a.KGRT != undefined ) then 
+            (
+                pnt.assumeSkinPose()
+                
+                local dr = dummy name:"DummyRotationController"
+                dr.rotation.controller = pnt.rotation.controller
+                local q0 = dr.transform
+                
                 for anim in a.KGRT do
-                    with animate on at time anim.Time 
-                    (
-                        local euler = quatToEuler anim.point
-                        rotate pnt euler
-                    )
+                (
+                    local t = anim.Time + 10
+                    local q = anim.Point
                     
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys q0 dr.rotation = q
+                            
+                        )
+                )
+                with animate on pnt.rotation.controller = copy dr.rotation.controller
+                
+                delete dr
+            )
             if ( a.KGTR != undefined ) then
+            (
+                pnt.assumeSkinPose()
+                
+                local dp = dummy name:"DummyPositionController" 
+                dp.position.controller = pnt.position.controller
+                local p0 = dp.transform
+                
                 for anim in a.KGTR do
-                    with animate on at time anim.Time 
-                        pnt.pos = anim.Point 
-               
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 dp.position = p 
+                        )
+                )
+                with animate on pnt.position.controller = copy dp.position.controller
+                
+                delete dp
+            )
             if ( a.KGSC != undefined ) then
+            (
+                b.assumeSkinPose()
+                
+                local ds = dummy name:"DummyScaleController" 
+                ds.scale.controller = pnt.scale.controller
+                local p0 = ds.transform
+                
                 for anim in a.KGTR do
-                    with animate on at time anim.Time 
-                        pnt.scale = anim.Point 
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 ds.position = p 
+                        )
+                )
+                with animate on pnt.scale.controller = copy ds.scale.controller
+                
+                delete ds
+            )
                     
             if ( a.KATV != undefined ) then 
             (
@@ -964,9 +1031,6 @@ struct Warcraft3_Reforged
     ),
     function BuildBONE boneList bpos=
     (
---         print boneList
---         print bpos
-        
         local layer = Warcraft3_Reforged.CreateLayer "Bones"
         
         -- create the bones
@@ -981,8 +1045,8 @@ struct Warcraft3_Reforged
             
             b.boneRef = aBone
             layer.AddNode aBone
-            aBone.transform = bpos[b.id].matrix
-            
+            --aBone.transform = bpos[b.id].matrix
+            aBone.pos = bpos[b.id].matrix.row4
         )
         
         -- build bone hierarchy
@@ -996,60 +1060,83 @@ struct Warcraft3_Reforged
         )
         
         -- apply bone animation
-         for b in boneList do
-         (
-            local pnt = b.boneRef
-             
+        for obj in boneList do
+        (
+            local b = obj.boneRef
             
-
---             if ( b.KGRT != undefined ) then
---             (
---                 local pnt = b.boneRef
---                 for anim in b.KGRT do
---                 (
---                     local q = anim.point
---                     
---                     with animate on
---                     (
---                         at time (anim.Time + 10) in coordsys parent 
-
---                              pnt.assumeskinpose()
---                             local mtrx = matrix3 1
---                             rotate mtrx (inverse q)
---                             
---                             local rKey = numKeys pnt.rotation.controller
---                             if rKey>0 then deleteKey  pnt.rotation.controller rKey
---                             
---                             if ( pnt.parent != undefined) then
---                             (
---                                     mtrx = mtrx *  pnt.parent.transform --> check if this is necessary!!
---                             )
---                              pnt.transform = mtrx
---                             local pKey = numKeys  pnt.position.controller
---                             local sKey = numKeys  pnt.scale.controller
---                             if pKey>0 then deleteKey  pnt.position.controller pkey
---                             if skey>0 then deleteKey  pnt.scale.controller skey
-
-
---                     )
---                 )    
---             )
-            if ( b.KGTR != undefined ) then
+            if ( obj.KGRT != undefined ) then 
             (
-               for anim in b.KGTR do
-               (
+                b.assumeSkinPose()
+                
+                local dr = dummy name:"DummyRotationController"
+                dr.rotation.controller = b.rotation.controller
+                local q0 = dr.transform
+                
+                for anim in obj.KGRT do
+                (
+                    local t = anim.Time + 10
+                    local q = anim.Point
+                    
                     with animate on 
-                       at time (anim.Time + 10)
-                            in coordsys parent 
-                                pnt.pos = anim.Point 
+                        at time t
+                        (
+                            in coordsys q0 dr.rotation = q
+                            
+                        )
                 )
+                with animate on b.rotation.controller = copy dr.rotation.controller
+                
+                delete dr
             )
-        
-  
---             if ( b.KGSC != undefined ) then
---                 for anim in b.KGTR do
---                     with animate on at time anim.Time 
---                         pnt.scale = anim.Point 
+            
+            if ( obj.KGTR != undefined ) then
+            (
+                b.assumeSkinPose()
+                
+                local dp = dummy name:"DummyPositionController" 
+                dp.position.controller = b.position.controller
+                local p0 = dp.transform
+                
+                for anim in obj.KGTR do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 dp.position = p 
+                        )
+                )
+                with animate on b.position.controller = copy dp.position.controller
+                
+                delete dp
+            )
+            
+            if ( obj.KGSC != undefined ) then
+            (
+                b.assumeSkinPose()
+                
+                local ds = dummy name:"DummyScaleController" 
+                ds.scale.controller = b.scale.controller
+                local p0 = ds.transform
+                
+                for anim in obj.KGTR do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 ds.position = p 
+                        )
+                )
+                with animate on b.scale.controller = copy ds.scale.controller
+                
+                delete ds
+            )
+            
         )
     ),
     function Import file=
@@ -1124,7 +1211,7 @@ struct Warcraft3_Reforged
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
         Warcraft3_Reforged.BuildGEOS geos modl mtls
         Warcraft3_Reforged.BuildATCH atch bpos boneList
-     
+      
 --      print modl
 --      print seqs
 --      print mtls
@@ -1145,15 +1232,15 @@ struct Warcraft3_Reforged
 ClearListener()
 
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
+file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaosgrunt\chaosgrunt.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\creeps\wendigo\wendigo.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
 
-file = getOpenFileName \
-			caption:"Heroes of the Storm" \
-			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
-			historyCategory:"ReforgedPreset"
+-- file = getOpenFileName \
+-- 			caption:"Heroes of the Storm" \
+-- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
+-- 			historyCategory:"ReforgedPreset"
 
 
 Warcraft3_Reforged.Import file
