@@ -7,7 +7,7 @@ struct Warcraft3_Reforged_MODL
     ( Name, PointA, PointB, Unk1 )
 
 struct Warcraft3_Reforged_GEO
-    ( VRTX, NRMS, PTYP, PCNT, PVTX, GNDX, MTGC, MATS, TANG, SKIN, UVS ) 
+    ( VRTX, NRMS, PTYP, PCNT, PVTX, GNDX, MTGC, MATS, TANG, SKIN, UVS, meshRef ) 
 
 struct Warcraft3_Reforged_MATS
     ( ID, LOD, Name, Matrices )
@@ -39,9 +39,11 @@ struct Warcraft3_Reforged_LAYS
 struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
 
-/*
+struct Warcraft3_Reforged_Weights
+    ( VertexId, BoneIds, Weights )
 
-TAGS FOUND
+
+/* TAGS
     VERS // version
     MODL // model
     SEQS // animation sequences
@@ -58,13 +60,14 @@ TAGS FOUND
     ATCH // attachments
     CLID // colission 
     RIBB // ribbon emitters
-    GLBS // globals
+    GLBS // global sequences
     TXAN // texture animations
     CAMS // camera
     LITE // lites
     FAFX // facial effects
     PREM // particle emitters
-    
+*/
+/* Animation Tags
     // Node
     KGTR: float[3] translation
     KGRT: float[4] rotation
@@ -120,6 +123,7 @@ TAGS FOUND
 
 
 */
+
 global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\"
 
 struct Warcraft3_Reforged
@@ -452,9 +456,42 @@ struct Warcraft3_Reforged
             local skins = #()
             local skn = Warcraft3_Reforged.ReadFixedString stream 4
             local nSkn = readLong stream
-            for s=1 to nSkn do
+            
+            for s=1 to nSkn / 8 do
             (
-                append skins (readByte stream #unsigned)
+                local w = Warcraft3_Reforged_Weights()
+                w.VertexId = s
+                w.BoneIds = #()
+                w.Weights = #()
+                local b1 = (readByte stream #unsigned + 1)
+                local b2 = (readByte stream #unsigned + 1)
+                local b3 = (readByte stream #unsigned + 1)
+                local b4 = (readByte stream #unsigned + 1)
+                local w1 = ((readByte stream #unsigned) / 255.0)
+                local w2 = ((readByte stream #unsigned) / 255.0)
+                local w3 = ((readByte stream #unsigned) / 255.0)
+                local w4 = ((readByte stream #unsigned) / 255.0)
+
+                append w.BoneIds b1
+                append w.Weights w1
+                
+                if (w2 > 0.0 ) then 
+                (
+                    append w.BoneIds b2
+                    append w.Weights w2
+                )
+                if (w3 > 0.0 ) then 
+                (
+                    append w.BoneIds b3
+                    append w.Weights w3
+                )
+                
+                if (w4 > 0.0 ) then
+                (
+                    append w.BoneIds b4
+                    append w.Weights w4
+                )
+                append skins w
             )
             geo.SKIN = skins
             
@@ -682,8 +719,8 @@ struct Warcraft3_Reforged
         (
             local seq = Warcraft3_Reforged_SEQS()
             seq.Name = Warcraft3_Reforged.ReadFixedString stream 80
-            seq.StartFrame = readLong stream
-            seq.EndFrame = readLong stream
+            seq.StartFrame = readLong stream + 10
+            seq.EndFrame = readLong stream + 10
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
@@ -813,7 +850,7 @@ struct Warcraft3_Reforged
                 layer.AddNode theMesh
                 
                 update theMesh
-                
+                geo.meshRef = theMesh
             )
             catch (
                 print "ERROR occured in"
@@ -900,19 +937,6 @@ struct Warcraft3_Reforged
         local layer = Warcraft3_Reforged.CreateLayer "Attachments"
      
         sliderTime = 0f
-        
-        for a in atch do
-        (
-            print a.name
-           
-            if ( a.parentBoneId > 0 ) then 
-                print boneList[a.parentBoneId].name
-            else
-                print "None"
-            print bpos[a.id].matrix.row4
-            print ""
-        )
-        
         
         for a in atch do 
         (
@@ -1139,6 +1163,78 @@ struct Warcraft3_Reforged
             
         )
     ),
+    function BuildSKIN geos boneList=
+    (
+        try(
+            for geo in geos do
+            (
+                local msh = geo
+                local obj = geo.meshRef
+                
+                local mshSkin = skin name:"Skin"
+
+                max modify mode
+                addmodifier obj mshSkin
+
+                modPanel.setCurrentObject mshSkin
+
+                for i=1 to boneList.count do
+                (
+                    local b = boneList[i].boneRef
+                    skinOps.addBone mshSkin b 0
+                )
+
+                update obj
+                max views redraw
+
+                for v=1 to geo.VRTX.count do
+                (
+                    local boneIds = geo.SKIN[v].BoneIds
+                    local weights = geo.SKIN[v].Weights
+                    skinOps.ReplaceVertexWeights mshSkin v boneIds weights
+
+                )
+
+                update obj
+            )
+        )
+        catch()
+        redrawViews()
+
+    ),
+    function BuildSEQS seqs=
+    (
+        local starAnimTrack = undefined
+        local nNoteTracks = numNoteTracks rootNode
+        
+        if(  nNoteTracks > 0 ) then
+        (
+            for n=1 to nNoteTracks do deleteNoteTrack rootNode (getNoteTrack rootNode n)
+        )
+        
+        if( numNoteTracks rootNode == 0 ) then
+        (
+            starAnimTrack = notetrack "starAnimTrack"
+            addNoteTrack rootNode starAnimTrack
+        )
+                                    
+        for seq in seqs do
+        (
+            local startNote = AddNewNoteKey starAnimTrack seq.startFrame
+            local endNote = AddNewNoteKey starAnimTrack seq.endFrame
+            local val = seq.name + "\r\n"
+                  val += "rarity = " 	 + (seq.Rarity as string)    + "\r\n"
+                  val += "moveSpeed = "  + (seq.MovementSpeed as string) + "\r\n"
+                  val += "nonLoop = " 	 + (seq.Noloop as string)    + "\r\n"
+                  val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = 0"
+
+            startNote.Value = val
+            endNote.Value = val
+
+            format "Animation added: %  %-%\n" seq.name seq.startFrame seq.endFrame
+			
+        )
+    ),
     function Import file=
     (
         if ( file == undefined ) then throw("Provide a correct value for the paramete file")
@@ -1211,7 +1307,10 @@ struct Warcraft3_Reforged
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
         Warcraft3_Reforged.BuildGEOS geos modl mtls
         Warcraft3_Reforged.BuildATCH atch bpos boneList
-      
+        Warcraft3_Reforged.BuildSKIN geos boneList
+        Warcraft3_Reforged.BuildSEQS seqs
+        
+        
 --      print modl
 --      print seqs
 --      print mtls
@@ -1231,6 +1330,7 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
+--file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\critters\frog\frog.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
 file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaosgrunt\chaosgrunt.mdx"
