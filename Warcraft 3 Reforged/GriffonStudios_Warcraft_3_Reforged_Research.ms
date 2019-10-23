@@ -22,7 +22,7 @@ struct Warcraft3_Reforged_SEQS
     ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity )
 	
 struct Warcraft3_Reforged_KG
-	( Time, Point, inTan, outTan )
+	( Time, Point, inTan, outTan, LineType )
 
 struct Warcraft3_Reforged_CLID
     ( Id, Name, Offset, Size, OffsetBounding, BoundingType, KGTR, KGRT, KGSC, Pos, Radius, Height )
@@ -34,7 +34,7 @@ struct Warcraft3_Reforged_MTLS
     ( Id, materialRef, ShaderName,  LAYS )
 
 struct Warcraft3_Reforged_LAYS
-    ( Id, filterMode, shadingFlags, TextureId, KMTA )
+    ( Id, filterMode, shadingFlags, TextureId, KMTA, KMTE )
 
 struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
@@ -128,8 +128,7 @@ global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod
 
 struct Warcraft3_Reforged
 (
-    /* 
-        Helper functions 
+    /* Helper functions 
     */
     function CreateLayer layerName =
     (
@@ -214,7 +213,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = ReadLong stream
+            k.Time = (ReadLong stream * 30 / 1000.0 ) as integer
             k.Point = readFloat stream -- always 1, indicating it starts or ends
 
             if( lineType > 1)  then
@@ -239,7 +238,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = ReadLong stream
+            k.Time = ReadLong stream  * 30 / 1000.0 as integer
             k.Point = [readFloat stream, readFloat stream, readFloat stream]
 
             if( lineType > 1)  then
@@ -264,11 +263,12 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = ReadLong stream
+            k.Time = ReadLong stream  * 30 / 1000.0 as integer
             k.Point = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
-
+            k.LineType = lineType
             if( lineType > 1)  then
             (
+                format "Linetype: %" lineType
                 k.inTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
                 k.outTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
             )
@@ -627,12 +627,26 @@ struct Warcraft3_Reforged
                 local alpha = readFloat stream
                 
                 local kmta
-                if(bytes>32) then 
+                local kmte
+                
+                if ( bytes > 32 ) then
                 (
                     local km = Warcraft3_Reforged.ReadFixedString stream 4
-                    if ( km == "KMTA" ) then kmta = Warcraft3_Reforged.ReadFloatAnim stream 
+                    if ( km == "KMTA" ) then kmta = Warcraft3_Reforged.ReadFloatAnim stream
+                    
+                    local currentpos = ftell stream
+                    km = Warcraft3_Reforged.ReadFixedString stream 4
+                    if ( km == "KMTE" ) then 
+                        kmte = Warcraft3_Reforged.ReadFloatAnim stream
+                    else
+                        fseek stream currentPos #seek_set
+                        
+                    
+                    
+                        
                 )
                 lay.KMTA = kmta
+                lay.KMTE = kmte
                 append laysList lay
             )
             mtl.LAYS = laysList
@@ -719,8 +733,8 @@ struct Warcraft3_Reforged
         (
             local seq = Warcraft3_Reforged_SEQS()
             seq.Name = Warcraft3_Reforged.ReadFixedString stream 80
-            seq.StartFrame = readLong stream + 10
-            seq.EndFrame = readLong stream + 10
+            seq.StartFrame = (readLong stream  * 30 / 1000.0 as integer )+ 10
+            seq.EndFrame = (readLong stream * 30 / 1000.0 as integer) + 10
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
@@ -820,12 +834,20 @@ struct Warcraft3_Reforged
     */
     function BuildGEOS geos modl mtls=
     (
+        local wireColor = color 128 128 128
         for geo in geos do
         (
+            format "Building %\n" geo.MATS.Name
             local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
             local layer = Warcraft3_Reforged.CreateLayer layerName
             
             if (geo.MATS.LOD != 0 ) then layer.isHidden = true
+            
+            if (geo.MATS.LOD == 0) then wireColor = color 128 128 0
+            if (geo.MATS.LOD == 1) then wireColor = color 128 0 128
+            if (geo.MATS.LOD == 2) then wireColor = color 255 0 128
+            if (geo.MATS.LOD == 3) then wireColor = color 255 0 255
+            
             
             local mat = mtls[geo.MATS.ID].MaterialRef
             
@@ -839,7 +861,7 @@ struct Warcraft3_Reforged
                 
                 local theMesh = mesh vertices:v vnorms:n name:meshName faces:f tverts:uv 
 
-                theMesh.WireColor = Color (random 0 128) (random 0 255) (random 0 128)
+                theMesh.WireColor = wireColor
 
                 theMesh.Material = mat
                 
@@ -1060,16 +1082,20 @@ struct Warcraft3_Reforged
         -- create the bones
         for b in boneList do
         (
-            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0] [0,0,1]
+            
+            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
             
             aBone.Name = b.name
             aBone.showLinks = true
-            aBone.Width = 0.05
+			aBone.Width = 0.05
 			aBone.Height = 0.05
-            
             b.boneRef = aBone
             layer.AddNode aBone
-            --aBone.transform = bpos[b.id].matrix
+            
+            
+            --aBone.assumeSkinPose()
+            --aBone.transform = inverse(bpos[b.id].matrix)
+            
             aBone.pos = bpos[b.id].matrix.row4
         )
         
@@ -1080,6 +1106,7 @@ struct Warcraft3_Reforged
             (
                 local parentBone = boneList[b.ParentBoneId].boneRef
                 b.boneRef.parent = parentBone
+                
             )
         )
         
@@ -1115,26 +1142,28 @@ struct Warcraft3_Reforged
             
             if ( obj.KGTR != undefined ) then
             (
-                b.assumeSkinPose()
-                
-                local dp = dummy name:"DummyPositionController" 
-                dp.position.controller = b.position.controller
-                local p0 = dp.transform
-                
-                for anim in obj.KGTR do
-                (
-                    local t = anim.Time + 10
-                    local p = anim.Point
+               
+                    b.assumeSkinPose()
                     
-                    with animate on 
-                        at time t
-                        (
-                            in coordsys p0 dp.position = p 
-                        )
-                )
-                with animate on b.position.controller = copy dp.position.controller
+                    local dp = dummy name:"DummyPositionController" 
+                    dp.position.controller = b.position.controller
+                    local p0 = dp.transform
+                    
+                    for anim in obj.KGTR do
+                    (
+                        local t = anim.Time + 10
+                        local p = anim.Point
+                        
+                        with animate on 
+                            at time t
+                            (
+                                in coordsys p0 dp.position = p 
+                            )
+                    )
+                    with animate on b.position.controller = copy dp.position.controller
+                    
+                    delete dp
                 
-                delete dp
             )
             
             if ( obj.KGSC != undefined ) then
@@ -1145,7 +1174,7 @@ struct Warcraft3_Reforged
                 ds.scale.controller = b.scale.controller
                 local p0 = ds.transform
                 
-                for anim in obj.KGTR do
+                for anim in obj.KGSC do
                 (
                     local t = anim.Time + 10
                     local p = anim.Point
@@ -1165,6 +1194,7 @@ struct Warcraft3_Reforged
     ),
     function BuildSKIN geos boneList=
     (
+       
         try(
             for geo in geos do
             (
@@ -1309,7 +1339,7 @@ struct Warcraft3_Reforged
         Warcraft3_Reforged.BuildATCH atch bpos boneList
         Warcraft3_Reforged.BuildSKIN geos boneList
         Warcraft3_Reforged.BuildSEQS seqs
-        
+--       
         
 --      print modl
 --      print seqs
@@ -1324,7 +1354,7 @@ struct Warcraft3_Reforged
 
         
         fclose stream
-
+        gc()
     )
 )
 
@@ -1332,15 +1362,15 @@ ClearListener()
 
 --file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\critters\frog\frog.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
-file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaosgrunt\chaosgrunt.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\creeps\wendigo\wendigo.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
+ -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
 
--- file = getOpenFileName \
--- 			caption:"Heroes of the Storm" \
--- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
--- 			historyCategory:"ReforgedPreset"
+file = getOpenFileName \
+			caption:"Heroes of the Storm" \
+			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
+			historyCategory:"ReforgedPreset"
 
 
 Warcraft3_Reforged.Import file
