@@ -266,7 +266,7 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
 
    
     
-    on MyAnimationProperties open do
+    on GriffonStudios_AnimationProperties open do
     (
         InitializeListView()
         cbUpdateTimeLine.Checked = true

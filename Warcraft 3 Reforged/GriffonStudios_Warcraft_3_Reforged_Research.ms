@@ -467,30 +467,36 @@ struct Warcraft3_Reforged
                 local b2 = (readByte stream #unsigned + 1)
                 local b3 = (readByte stream #unsigned + 1)
                 local b4 = (readByte stream #unsigned + 1)
+
                 local w1 = ((readByte stream #unsigned) / 255.0)
                 local w2 = ((readByte stream #unsigned) / 255.0)
                 local w3 = ((readByte stream #unsigned) / 255.0)
                 local w4 = ((readByte stream #unsigned) / 255.0)
 
-                append w.BoneIds b1
-                append w.Weights w1
-                
-                if (w2 > 0.0 ) then 
-                (
-                    append w.BoneIds b2
-                    append w.Weights w2
-                )
-                if (w3 > 0.0 ) then 
-                (
-                    append w.BoneIds b3
-                    append w.Weights w3
-                )
-                
-                if (w4 > 0.0 ) then
-                (
-                    append w.BoneIds b4
-                    append w.Weights w4
-                )
+
+
+                    append w.BoneIds b1
+                    
+                    append w.Weights w1
+                    
+                    
+                    if (w2 > 0.0 ) then 
+                    (
+                        append w.BoneIds b2
+                        append w.Weights w2
+                    )
+                    if (w3 > 0.0 ) then 
+                    (
+                        append w.BoneIds b3
+                        append w.Weights w3
+                    )
+                    
+                    if (w4 > 0.0 ) then
+                    (
+                        append w.BoneIds b4
+                        append w.Weights w4
+                    )
+
                 append skins w
             )
             geo.SKIN = skins
@@ -837,16 +843,17 @@ struct Warcraft3_Reforged
         local wireColor = color 128 128 128
         for geo in geos do
         (
+            if (geo.MATS.LOD != 0) then continue
             format "Building %\n" geo.MATS.Name
             local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
             local layer = Warcraft3_Reforged.CreateLayer layerName
             
             if (geo.MATS.LOD != 0 ) then layer.isHidden = true
             
-            if (geo.MATS.LOD == 0) then wireColor = color 128 128 0
-            if (geo.MATS.LOD == 1) then wireColor = color 128 0 128
-            if (geo.MATS.LOD == 2) then wireColor = color 255 0 128
-            if (geo.MATS.LOD == 3) then wireColor = color 255 0 255
+            if (geo.MATS.LOD == 0) then wireColor = color 190 190 100
+            if (geo.MATS.LOD == 1) then wireColor = color 64 164 64
+            if (geo.MATS.LOD == 2) then wireColor = color 64 164 164
+            if (geo.MATS.LOD == 3) then wireColor = color 0 128 255
             
             
             local mat = mtls[geo.MATS.ID].MaterialRef
@@ -1084,19 +1091,13 @@ struct Warcraft3_Reforged
         (
             
             local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
-            
             aBone.Name = b.name
             aBone.showLinks = true
 			aBone.Width = 0.05
 			aBone.Height = 0.05
             b.boneRef = aBone
             layer.AddNode aBone
-            
-            
-            --aBone.assumeSkinPose()
-            --aBone.transform = inverse(bpos[b.id].matrix)
-            
-            aBone.pos = bpos[b.id].matrix.row4
+
         )
         
         -- build bone hierarchy
@@ -1106,14 +1107,21 @@ struct Warcraft3_Reforged
             (
                 local parentBone = boneList[b.ParentBoneId].boneRef
                 b.boneRef.parent = parentBone
-                
             )
         )
         
-        -- apply bone animation
+        -- apply bind pos
         for obj in boneList do
         (
             local b = obj.boneRef
+           
+            b.pos = bpos[obj.id].matrix.row4
+        )
+
+        -- apply bone animation
+        for obj in boneList do
+        (
+                        local b = obj.boneRef
             
             if ( obj.KGRT != undefined ) then 
             (
@@ -1133,15 +1141,20 @@ struct Warcraft3_Reforged
                         (
                             in coordsys q0 dr.rotation = q
                             
+                            
                         )
                 )
                 with animate on b.rotation.controller = copy dr.rotation.controller
                 
                 delete dr
+                
+
+                
             )
             
             if ( obj.KGTR != undefined ) then
             (
+               
                
                     b.assumeSkinPose()
                     
@@ -1182,7 +1195,7 @@ struct Warcraft3_Reforged
                     with animate on 
                         at time t
                         (
-                            in coordsys p0 ds.position = p 
+                            in coordsys p0 ds.scale = p 
                         )
                 )
                 with animate on b.scale.controller = copy ds.scale.controller
@@ -1198,6 +1211,7 @@ struct Warcraft3_Reforged
         try(
             for geo in geos do
             (
+                if (geo.MATS.LOD != 0) then continue
                 local msh = geo
                 local obj = geo.meshRef
                 
@@ -1264,6 +1278,68 @@ struct Warcraft3_Reforged
             format "Animation added: %  %-%\n" seq.name seq.startFrame seq.endFrame
 			
         )
+    ),
+    function BuildCLID clid boneList bpos=
+    (
+        local layer = Warcraft3_Reforged.CreateLayer "Collision Objects"
+        for cl in clid do
+        (
+            local cap = undefined
+            
+            if cl.BoundingType == 0 then cap = capsule name:cl.name radius:cl.radius height:cl.height
+            if cap == undefined then 
+            (
+                format "[WARNING] This bounding type is not implemented (Bounding type = %)\n" cl.BoundingType
+                cap = capsule name:cl.name radius:cl.radius height:cl.height
+            )
+
+            rotate cap (angleaxis 180 [0,1,0])
+            cap.boxmode = on
+            cap.renderable = off
+            cap.showFrozenInGray = off
+            cap.wirecolor = color 100 200 250
+            freeze cap
+            resetXform cap
+            
+            layer.AddNode cap
+            cap.assumeSkinPose()
+            
+            local mtrx = bpos[cl.id].matrix
+            
+            if ( cl.KGRT != undefined ) then 
+            (
+                -- initial pose
+                 with animate on at time 0 in coordsys mtrx cap.rotation = cl.KGRT[1].point
+                
+                for anim in cl.KGRT do
+                (
+                    local t = anim.time + 10
+                    local q = anim.Point
+                    
+                    with animate on at time t in coordsys mtrx cap.rotation = q
+                )
+                    
+            )
+            
+            if ( cl.KGTR != undefined ) then 
+            (
+                -- initial pose
+                 with animate on at time 0 in coordsys mtrx cap.pos = cl.KGTR[1].point
+                     
+                for anim in cl.KGTR do
+                (
+                    local t = anim.time + 10
+                    local p = anim.Point
+                    
+                    with animate on at time t in coordsys mtrx cap.pos = p
+                )
+                    
+            )
+          
+            
+            
+            
+        )          
     ),
     function Import file=
     (
@@ -1334,13 +1410,13 @@ struct Warcraft3_Reforged
         )
 
         Warcraft3_Reforged.BuildBONE boneList bpos
-        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-        Warcraft3_Reforged.BuildGEOS geos modl mtls
-        Warcraft3_Reforged.BuildATCH atch bpos boneList
-        Warcraft3_Reforged.BuildSKIN geos boneList
-        Warcraft3_Reforged.BuildSEQS seqs
---       
-        
+--         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+--         Warcraft3_Reforged.BuildGEOS geos modl mtls
+--         Warcraft3_Reforged.BuildATCH atch bpos boneList
+--         Warcraft3_Reforged.BuildSKIN geos boneList
+--         Warcraft3_Reforged.BuildSEQS seqs
+--         Warcraft3_Reforged.BuildCLID clid boneList bpos
+
 --      print modl
 --      print seqs
 --      print mtls
@@ -1367,10 +1443,11 @@ ClearListener()
 -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\creeps\wendigo\wendigo.mdx"
  -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
 
-file = getOpenFileName \
-			caption:"Heroes of the Storm" \
-			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
-			historyCategory:"ReforgedPreset"
+file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaospeon\chaospeon.mdx"
+-- file = getOpenFileName \
+-- 			caption:"Heroes of the Storm" \
+-- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
+-- 			historyCategory:"ReforgedPreset"
 
 
 Warcraft3_Reforged.Import file
