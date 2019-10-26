@@ -1111,7 +1111,7 @@ struct Warcraft3_Reforged
             )
             if ( a.KGSC != undefined ) then
             (
-                b.assumeSkinPose()
+                pnt.assumeSkinPose()
                 
                 local ds = dummy name:"DummyScaleController" 
                 ds.scale.controller = pnt.scale.controller
@@ -1476,6 +1476,8 @@ struct Warcraft3_Reforged
     */
     function Import file=
     (
+        local startedAt = timestamp()
+        
         if ( file == undefined ) then throw("Provide a correct value for the paramete file")
         if ( doesFileExist file == false ) then throw("File does not exist!")
         
@@ -1505,7 +1507,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-        print tags
+--         print tags
             
         -- read tag by tag
         for tag in tags do
@@ -1546,14 +1548,15 @@ struct Warcraft3_Reforged
         )
 
         
---          Warcraft3_Reforged.BuildBONE boneList bpos
---          Warcraft3_Reforged.BuildMTLS mtls texs modl.name
---          Warcraft3_Reforged.BuildGEOS geos modl mtls
---          Warcraft3_Reforged.BuildATCH atch bpos boneList
---          Warcraft3_Reforged.BuildSKIN geos boneList
---          Warcraft3_Reforged.BuildCLID clid boneList bpos
---          Warcraft3_Reforged.BuildGEOA geoa geos
+         Warcraft3_Reforged.BuildBONE boneList bpos
+         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+         Warcraft3_Reforged.BuildGEOS geos modl mtls
+         Warcraft3_Reforged.BuildATCH atch bpos boneList
+         Warcraft3_Reforged.BuildSKIN geos boneList
+         Warcraft3_Reforged.BuildCLID clid boneList bpos
+         Warcraft3_Reforged.BuildGEOA geoa geos
          Warcraft3_Reforged.BuildSEQS seqs
+        
 --      print modl
 --      print seqs
 --      print mtls
@@ -1568,11 +1571,13 @@ struct Warcraft3_Reforged
         
         fclose stream
         gc()
+        local endedAt = timestamp()
+        Format "DONE (import took %seconds" ( (endedAt - startedAt) / 1000.0 as integer )
     )
 )
 
 ClearListener()
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\bristleback\bristleback.mdx"
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\dragonspawnblue\dragonspawnblue.mdx"
 --file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\critters\frog\frog.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\orc\battroll\battroll.mdx"
