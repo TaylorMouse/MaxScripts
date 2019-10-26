@@ -127,9 +127,36 @@ struct Warcraft3_Reforged_GEOA
 */
 
 global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
+global Warcraft3_ImportAllLOD = false
+global Warcraft3_ConvertToSC2 = true
+
+struct StarTools_Helpers
+(
+    function RenameSEQS seqs=
+    (
+        for seq in seqs do
+        (
+            local parts = filterstring seq.name " "
+            
+           if ( parts[parts.count] == "1" ) then parts[parts.count] = "" 
+            for x=2 to 26 do
+                if ( parts[parts.count] == (x as string ) ) then parts[parts.count] = ( bit.intAsChar ( x + 64 ) )    
+            
+            local newName = ""
+            for p=1 to parts.count do 
+            (
+                newName +=parts[p]
+                if ( p < parts.count ) then newName += " "
+            )
+            seq.name = trimRight newName
+        )
+        
+    ) 
+)
 
 struct Warcraft3_Reforged
 (
+
     /* Helper functions 
     */
     function CreateLayer layerName =
@@ -197,6 +224,14 @@ struct Warcraft3_Reforged
         )
         return tags
     ),
+    function RoundToFrame val=
+    (
+        local a = val * 30 / 1000
+        local b = val * 30 / 1000.0
+        
+        if ( b - a ) > 0.5 then return a + 1 else return a
+       
+    ),
     /* Warcraft 3 Reforged 
     
         READ
@@ -215,7 +250,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = (ReadLong stream * 30 / 1000.0 ) as integer
+            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
             k.Point = readFloat stream -- always 1, indicating it starts or ends
 
             if( lineType > 1)  then
@@ -240,7 +275,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = ReadLong stream  * 30 / 1000.0 as integer
+            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
             k.Point = [readFloat stream, readFloat stream, readFloat stream]
 
             if( lineType > 1)  then
@@ -265,7 +300,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = ReadLong stream  * 30 / 1000.0 as integer
+            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
             k.Point = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
             k.LineType = lineType
             if( lineType > 1)  then
@@ -741,8 +776,8 @@ struct Warcraft3_Reforged
         (
             local seq = Warcraft3_Reforged_SEQS()
             seq.Name = Warcraft3_Reforged.ReadFixedString stream 80
-            seq.StartFrame = (readLong stream  * 30 / 1000.0 as integer )+ 10
-            seq.EndFrame = (readLong stream * 30 / 1000.0 as integer) + 10
+            seq.StartFrame = ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
+            seq.EndFrame = ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
@@ -750,6 +785,9 @@ struct Warcraft3_Reforged
 
             append seqs seq
         )
+        
+        
+        
         
         return seqs
         
@@ -875,11 +913,11 @@ struct Warcraft3_Reforged
     function BuildGEOS geos modl mtls=
     (
         local wireColor = color 128 128 128
+        local uniqueId = 1
         for geo in geos do
         (
-            --if (geo.MATS.LOD != 0) then continue
-            --format "[NOTE] Only LOD 0 is build !!\n"
-            
+            if (Warcraft3_ImportAllLOD == false and geo.MATS.LOD != 0) then continue
+
             format "Building %\n" geo.MATS.Name
             
             local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
@@ -901,7 +939,7 @@ struct Warcraft3_Reforged
                 local n = geo.NRMS
                 local f = geo.PVTX
                 local uv = geo.UVS[1]
-                local meshName = geo.MATS.Name
+                local meshName = ( uniqueId as string ) + "_" + geo.MATS.Name
                 
                 local theMesh = mesh vertices:v vnorms:n name:meshName faces:f tverts:uv 
 
@@ -922,7 +960,7 @@ struct Warcraft3_Reforged
                 print "ERROR occured in"
                 print geo
                 )
-
+            uniqueId +=1
         )
     ),
     function BuildMTLS mtls texs modlName=
@@ -1128,17 +1166,19 @@ struct Warcraft3_Reforged
         local layer = Warcraft3_Reforged.CreateLayer "Bones"
         
         -- create the bones
+        local uniqueId = 1
         for b in boneList do
         (
             
             local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
-            aBone.Name = b.name
+            aBone.Name = b.name + "_" + ( uniqueId as String )
             aBone.showLinks = true
 			aBone.Width = 0.05
 			aBone.Height = 0.05
             b.boneRef = aBone
             layer.AddNode aBone
 
+            uniqueId += 1
         )
         
         -- build bone hierarchy
@@ -1291,9 +1331,14 @@ struct Warcraft3_Reforged
     ),
     function BuildSEQS seqs=
     (
+        if ( seqs == undefined ) then return undefined
+        
         local starAnimTrack = undefined
         local nNoteTracks = numNoteTracks rootNode
         
+        if ( Warcraft3_ConvertToSC2 == true ) then StarTools_Helpers.RenameSEQS seqs
+        
+
         if(  nNoteTracks > 0 ) then
         (
             for n=1 to nNoteTracks do deleteNoteTrack rootNode (getNoteTrack rootNode n)
@@ -1304,9 +1349,19 @@ struct Warcraft3_Reforged
             starAnimTrack = notetrack "starAnimTrack"
             addNoteTrack rootNode starAnimTrack
         )
-                                    
+        
+        local prevEndFrame = 0                       
         for seq in seqs do
         (
+            if ( prevEndFrame > seq.StartFrame ) then 
+            (
+                format "[ERROR] Unable to add '%', Start and End frame are not correct (%-%)\n" seq.name seq.startFrame seq.endFrame
+                continue
+            )
+            else
+                prevEndFrame = seq.endFrame
+            
+            
             local startNote = AddNewNoteKey starAnimTrack seq.startFrame
             local endNote = AddNewNoteKey starAnimTrack seq.endFrame
             local val = seq.name + "\r\n"
@@ -1490,15 +1545,15 @@ struct Warcraft3_Reforged
             
         )
 
-         Warcraft3_Reforged.BuildBONE boneList bpos
-         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-         Warcraft3_Reforged.BuildGEOS geos modl mtls
-         Warcraft3_Reforged.BuildATCH atch bpos boneList
-         Warcraft3_Reforged.BuildSKIN geos boneList
+        
+--          Warcraft3_Reforged.BuildBONE boneList bpos
+--          Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+--          Warcraft3_Reforged.BuildGEOS geos modl mtls
+--          Warcraft3_Reforged.BuildATCH atch bpos boneList
+--          Warcraft3_Reforged.BuildSKIN geos boneList
+--          Warcraft3_Reforged.BuildCLID clid boneList bpos
+--          Warcraft3_Reforged.BuildGEOA geoa geos
          Warcraft3_Reforged.BuildSEQS seqs
-         Warcraft3_Reforged.BuildCLID clid boneList bpos
-         Warcraft3_Reforged.BuildGEOA geoa geos
-
 --      print modl
 --      print seqs
 --      print mtls
@@ -1517,7 +1572,7 @@ struct Warcraft3_Reforged
 )
 
 ClearListener()
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\azuredragon\azuredragon.mdx"
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\bristleback\bristleback.mdx"
 --file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\critters\frog\frog.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\orc\battroll\battroll.mdx"
@@ -1530,6 +1585,7 @@ file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\azuredrago
 -- 			caption:"Heroes of the Storm" \
 -- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
 -- 			historyCategory:"ReforgedPreset"
+
 
 
 Warcraft3_Reforged.Import file
