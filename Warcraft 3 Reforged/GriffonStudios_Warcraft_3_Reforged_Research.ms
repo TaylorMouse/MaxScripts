@@ -126,7 +126,7 @@ struct Warcraft3_Reforged_GEOA
 
 */
 
-global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\"
+global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
 
 struct Warcraft3_Reforged
 (
@@ -877,8 +877,8 @@ struct Warcraft3_Reforged
         local wireColor = color 128 128 128
         for geo in geos do
         (
-            if (geo.MATS.LOD != 0) then continue
-            format "[NOTE] Only LOD 0 is build !!\n"
+            --if (geo.MATS.LOD != 0) then continue
+            --format "[NOTE] Only LOD 0 is build !!\n"
             
             format "Building %\n" geo.MATS.Name
             
@@ -983,7 +983,8 @@ struct Warcraft3_Reforged
                     for anim in layer.KMTA do
                     (
                         with animate on (
-                            at time anim.Time (
+                            at time ( anim.Time + 10 )
+                            (
                                 mat.opacity = anim.Point * 100.0
                             )
                         )
@@ -1000,6 +1001,9 @@ struct Warcraft3_Reforged
     ),
     function BuildATCH atch bpos boneList=
     (
+        if ( atch == undefined ) then return undefined
+        
+        
         local layer = Warcraft3_Reforged.CreateLayer "Attachments"
      
         sliderTime = 0f
@@ -1248,9 +1252,11 @@ struct Warcraft3_Reforged
         try(
             for geo in geos do
             (
-                if (geo.MATS.LOD != 0) then continue
+
                 local msh = geo
                 local obj = geo.meshRef
+
+                if ( obj == undefined ) then continue
                 
                 local mshSkin = skin name:"Skin"
 
@@ -1318,6 +1324,7 @@ struct Warcraft3_Reforged
     ),
     function BuildCLID clid boneList bpos=
     (
+        if (clid == undefined ) then return undefined
         local layer = Warcraft3_Reforged.CreateLayer "Collision Objects"
         for cl in clid do
         (
@@ -1443,7 +1450,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-      --  print tags
+        print tags
             
         -- read tag by tag
         for tag in tags do
@@ -1483,14 +1490,14 @@ struct Warcraft3_Reforged
             
         )
 
-        Warcraft3_Reforged.BuildBONE boneList bpos
-        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-        Warcraft3_Reforged.BuildGEOS geos modl mtls
-        Warcraft3_Reforged.BuildATCH atch bpos boneList
-        Warcraft3_Reforged.BuildSKIN geos boneList
-        Warcraft3_Reforged.BuildSEQS seqs
-        Warcraft3_Reforged.BuildCLID clid boneList bpos
-        Warcraft3_Reforged.BuildGEOA geoa geos
+         Warcraft3_Reforged.BuildBONE boneList bpos
+         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+         Warcraft3_Reforged.BuildGEOS geos modl mtls
+         Warcraft3_Reforged.BuildATCH atch bpos boneList
+         Warcraft3_Reforged.BuildSKIN geos boneList
+         Warcraft3_Reforged.BuildSEQS seqs
+         Warcraft3_Reforged.BuildCLID clid boneList bpos
+         Warcraft3_Reforged.BuildGEOA geoa geos
 
 --      print modl
 --      print seqs
@@ -1510,15 +1517,15 @@ struct Warcraft3_Reforged
 )
 
 ClearListener()
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\azuredragon\azuredragon.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\critters\frog\frog.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\orc\battroll\battroll.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\demon\chaosgrunt\chaosgrunt.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\wendigo\wendigo.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herohalahk\herohalahk.mdx"
 
---file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\critters\frog\frog.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\orc\battroll\battroll.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaosgrunt\chaosgrunt.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\creeps\wendigo\wendigo.mdx"
- -- file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\human\herohalahk\herohalahk.mdx"
-
-file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaospeon\chaospeon.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaospeon\chaospeon.mdx"
 -- file = getOpenFileName \
 -- 			caption:"Heroes of the Storm" \
 -- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
