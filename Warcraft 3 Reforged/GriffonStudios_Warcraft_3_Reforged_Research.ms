@@ -1572,12 +1572,12 @@ struct Warcraft3_Reforged
         fclose stream
         gc()
         local endedAt = timestamp()
-        Format "DONE (import took %seconds" ( (endedAt - startedAt) / 1000.0 as integer )
+        Format "DONE (import took % seconds )  - " ( (endedAt - startedAt) / 1000.0 as integer )
     )
 )
 
 ClearListener()
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\dragonspawnblue\dragonspawnblue.mdx"
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\earthpandarenbrewmaster\earthpandarenbrewmaster.mdx"
 --file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\critters\frog\frog.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\orc\battroll\battroll.mdx"
