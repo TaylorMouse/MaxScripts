@@ -1117,7 +1117,7 @@ struct Warcraft3_Reforged
                 ds.scale.controller = pnt.scale.controller
                 local p0 = ds.transform
                 
-                for anim in a.KGTR do
+                for anim in a.KGSC do
                 (
                     local t = anim.Time + 10
                     local p = anim.Point
