@@ -42,6 +42,8 @@ struct Warcraft3_Reforged_BPOS
 struct Warcraft3_Reforged_Weights
     ( VertexId, BoneIds, Weights )
 
+struct Warcraft3_Reforged_GEOA
+    ( Id, GeoId, KGAO )
 
 /* TAGS
     VERS // version
@@ -835,8 +837,40 @@ struct Warcraft3_Reforged
         )
         return bpos
     ),
-    /*
-        BUILD
+    function ReadGEOA stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        
+        local geoa = #()
+        
+        local len = readLong stream
+        Warcraft3_Reforged.SkipBytes stream (len - 4)
+        local len = readLong stream
+        Warcraft3_Reforged.SkipBytes stream (len - 4)
+        local baseLen= 0
+        while ( (ftell stream) < tag.offset + tag.size ) do
+        (
+            local ga = Warcraft3_Reforged_GEOA()
+            
+            local len = readLong stream -- total chunk size
+            
+            Warcraft3_Reforged.SkipBytes stream 20
+            ga.GeoId = readLong stream + 1
+            local backup = ftell stream
+            local kgao = Warcraft3_Reforged.ReadFixedString stream 4
+            
+            if ( kgao == "KGAO" ) then
+                ga.KGAO = Warcraft3_Reforged.ReadFloatAnim stream
+            else
+                fseek stream backup #seek_set
+            
+            if ( ga.KGAO != undefined ) then append geoa ga
+        )
+
+        return geoa
+    ),
+    /* BUILD
+    
     */
     function BuildGEOS geos modl mtls=
     (
@@ -844,7 +878,10 @@ struct Warcraft3_Reforged
         for geo in geos do
         (
             if (geo.MATS.LOD != 0) then continue
+            format "[NOTE] Only LOD 0 is build !!\n"
+            
             format "Building %\n" geo.MATS.Name
+            
             local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
             local layer = Warcraft3_Reforged.CreateLayer layerName
             
@@ -1070,7 +1107,7 @@ struct Warcraft3_Reforged
                     pnt.Visibility.controller = on_off()
 
                     for anim in a.KATV do 
-                        with animate on at time anim.Time 
+                        with animate on at time ( anim.Time + 10 )
                             if (anim.point == 1) then 
                                 pnt.Visibility = on
                             else
@@ -1341,6 +1378,40 @@ struct Warcraft3_Reforged
             
         )          
     ),
+    function BuildGEOA geoa geos=
+    (
+        
+        for a in geoa do
+        (
+            local theMesh = geos[a.GeoId].meshRef
+            if ( theMesh == undefined ) then continue
+            local isVisibilityTrackRequired = false -- by default evertythng is 1
+                
+            for anim in a.KGAO do
+            (
+                if ( anim.point == 0) then isVisibilityTrackRequired = true
+            )
+            
+            if ( isVisibilityTrackRequired == true ) then
+            (
+                theMesh.Visibility = undefined 
+                theMesh.Visibility = on
+                theMesh.Visibility.controller = on_off()
+
+                for anim in a.KGAO do 
+                    with animate on at time ( anim.Time + 10 )
+                        if (anim.point == 1) then 
+                            theMesh.Visibility = on
+                        else
+                            theMesh.Visibility = off
+            )
+            
+        )
+        
+    ),
+    /*
+        MAIN IMPORT
+    */
     function Import file=
     (
         if ( file == undefined ) then throw("Provide a correct value for the paramete file")
@@ -1356,6 +1427,7 @@ struct Warcraft3_Reforged
         local texs -- texture files
         local mtls -- materials
         local geos -- geometry
+        local geoa -- geometry animation
         local boneList -- bones
         local atch -- attachments
         local clid -- collision spheres
@@ -1371,7 +1443,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-        print tags
+      --  print tags
             
         -- read tag by tag
         for tag in tags do
@@ -1394,11 +1466,13 @@ struct Warcraft3_Reforged
             if( tag.Name == "CLID" ) then clid = Warcraft3_Reforged.ReadCLID stream tag
             -- BPOS // binding position
             if( tag.Name == "BPOS" ) then bpos = Warcraft3_Reforged.ReadBPOS stream tag
+            -- GEOA // geoset animation
+            if( tag.Name == "GEOA" ) then geoa = Warcraft3_Reforged.ReadGEOA stream tag
+
             -- PIVT // pivots
             -- PRE2 // particle emitter
             -- EVTS // events
             -- CORN // conrners ??
-            -- GEOA // geoset animation
             -- RIBB // ribbon emitters
             -- GLBS // globals
             -- TXAN // texture animations
@@ -1410,12 +1484,13 @@ struct Warcraft3_Reforged
         )
 
         Warcraft3_Reforged.BuildBONE boneList bpos
---         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
---         Warcraft3_Reforged.BuildGEOS geos modl mtls
---         Warcraft3_Reforged.BuildATCH atch bpos boneList
---         Warcraft3_Reforged.BuildSKIN geos boneList
---         Warcraft3_Reforged.BuildSEQS seqs
---         Warcraft3_Reforged.BuildCLID clid boneList bpos
+        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+        Warcraft3_Reforged.BuildGEOS geos modl mtls
+        Warcraft3_Reforged.BuildATCH atch bpos boneList
+        Warcraft3_Reforged.BuildSKIN geos boneList
+        Warcraft3_Reforged.BuildSEQS seqs
+        Warcraft3_Reforged.BuildCLID clid boneList bpos
+        Warcraft3_Reforged.BuildGEOA geoa geos
 
 --      print modl
 --      print seqs
