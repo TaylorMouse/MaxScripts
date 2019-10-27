@@ -45,6 +45,8 @@ struct Warcraft3_Reforged_Weights
 struct Warcraft3_Reforged_GEOA
     ( Id, GeoId, KGAO )
 
+struct Warcraft3_Reforged_EVT
+    ( Id, Name, KEVT )
 /* TAGS
     VERS // version
     MODL // model
@@ -154,6 +156,38 @@ struct StarTools_Helpers
     ) 
 )
 
+struct GriffonStudios_Helpers
+(
+    function CreateAttachmentPoint aName=
+    (
+        theName = "SC2AttachPt001"
+
+        ss = SplineShape pos:[0,0,0]
+        ss.renderable = off
+        ss.name = theName
+        if( aName != undefined ) then ss.name = aName
+
+        addNewSpline ss
+        addKnot ss 1 #corner #curve [0,0,10]
+        addKnot ss 1 #corner #curve [0,-4,0]
+        close ss 1
+        addNewSpline ss
+        addKnot ss 2 #corner #curve [-4,0,0]
+        addKnot ss 2 #corner #curve [4,0,0]
+        addKnot ss 2 #corner #curve [0,0,10]
+        close ss 2
+        addNewSpline ss
+        addKnot ss 3 #corner #curve [-4,0,0]
+        addKnot ss 3 #corner #curve [0,-4,0]
+        addKnot ss 3 #corner #curve [4,0,0]
+        close ss 3
+        ss.WireColor = yellow
+        updateShape ss
+        return ss
+    )
+    
+)
+
 struct Warcraft3_Reforged
 (
 
@@ -197,6 +231,18 @@ struct Warcraft3_Reforged
         /* Skip n-bytes without reading them into memory */
         fseek stream nBytesToSkip #seek_cur
     ),
+    function RoundToFrame val=
+    (
+        local a = val * 30 / 1000
+        local b = val * 30 / 1000.0
+        
+        if ( b - a ) > 0.5 then return a + 1 else return a
+       
+    ),
+    /* Warcraft 3 Reforged 
+    
+        READ
+    */
     function ReadTAGS stream streamLen=
     (
         local tags = #() 
@@ -224,18 +270,6 @@ struct Warcraft3_Reforged
         )
         return tags
     ),
-    function RoundToFrame val=
-    (
-        local a = val * 30 / 1000
-        local b = val * 30 / 1000.0
-        
-        if ( b - a ) > 0.5 then return a + 1 else return a
-       
-    ),
-    /* Warcraft 3 Reforged 
-    
-        READ
-    */
     function ReadFloatAnim stream=
     (
         -- Key Attachment visibility
@@ -798,6 +832,7 @@ struct Warcraft3_Reforged
                 
         local clid = #()
         local i=1 -- failsafe
+        local prevId = 0
         while ( (ftell stream) < tag.offset + tag.size ) do
         (
             local cl = Warcraft3_Reforged_CLID()
@@ -805,6 +840,13 @@ struct Warcraft3_Reforged
             local size = readLong stream
             cl.name = Warcraft3_Reforged.ReadFixedString stream 80
             cl.Id = readLong stream + 1
+            if (prevId == 0) then 
+                prevId = cl.Id
+            else
+                if ( prevId + 1 != cl.Id ) then 
+                    exit 
+                else
+                    prevId = cl.Id
             
             local ffff = readLong stream
             local unk1 = readLong stream
@@ -834,7 +876,7 @@ struct Warcraft3_Reforged
                 if ( kg == "KGRT" ) then cl.KGRT = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
                 if ( kg == "KGSC" ) then cl.KGSC = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
 
-                )
+            )
 
             fseek stream cl.OffsetBounding #seek_set
             
@@ -907,6 +949,51 @@ struct Warcraft3_Reforged
 
         return geoa
     ),
+    function ReadEVTS stream tag=
+    (
+        /*
+            for a full understanding what these sounds are, see the official Warcraft III Art Tools documentation
+            Footprints      FPTxyyyy
+            Blood Splats    SPLxyyyy
+            Uber Splat      UBRxyyyy
+            Sound Events    SNDxyyyy
+            Spawn Objects   SPNxyyyy
+            
+        */
+        
+        local evts = #()
+        fseek stream tag.Offset #seek_set
+        
+        while ( ftell stream < tag.Offset + tag.Size  ) do
+        (
+            local evt = Warcraft3_Reforged_EVT()
+            local size = readLong stream
+            evt.name = Warcraft3_Reforged.ReadFixedString stream 80
+            evt.id   = readLong stream + 1
+            local ffff = readLong stream
+            local unk2 = readLong stream
+            local kevt = Warcraft3_Reforged.ReadFixedString stream 4
+            if ( kevt == "KEVT" ) then
+            (
+                local keys = #()
+                local nbr = readLong stream
+                local ffff = readLong stream
+                for i=1 to nbr do 
+                (
+                    local key =  ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
+                    append keys key
+                )
+                evt.KEVT = keys
+            )
+            else
+            (
+                format "Animation not implemented in ReadEVTS (%)"  evts
+            )
+            append evts evt
+        )
+        
+        return evts
+    ),
     /* BUILD
     
     */
@@ -965,6 +1052,8 @@ struct Warcraft3_Reforged
     ),
     function BuildMTLS mtls texs modlName=
     (
+        if ( mtls == undefined ) then return undefined
+        format "Building Materials\n"
         /*
             TODO: map this to SC2 or Warcraft 3 Materials.
         */
@@ -1039,8 +1128,9 @@ struct Warcraft3_Reforged
     ),
     function BuildATCH atch bpos boneList=
     (
-        if ( atch == undefined ) then return undefined
         
+        if ( atch == undefined ) then return undefined
+        format "Building Attachments\n"
         
         local layer = Warcraft3_Reforged.CreateLayer "Attachments"
      
@@ -1048,7 +1138,8 @@ struct Warcraft3_Reforged
         
         for a in atch do 
         (
-            local pnt = Point name:a.name box:off cross:on centermarker:off axistripod:off size:12
+            --local pnt = Point name:a.name box:off cross:on centermarker:off axistripod:off size:12
+            local pnt = GriffonStudios_Helpers.CreateAttachmentPoint a.name
             pnt.wirecolor = color 255 255 0
             pnt.pos = bpos[a.id].matrix.row4
             
@@ -1058,7 +1149,7 @@ struct Warcraft3_Reforged
                 local parentBone = boneList[a.parentBoneId].boneRef
                 if( parentBone == undefined) then
                     parentBone = getnodebyname boneList[a.parentBoneId].name
-                
+                pnt.transform = parentbone.transform
                 pnt.parent = parentBone
             )
             -- KGTR, KGRT, KGSC, KATV
@@ -1163,6 +1254,7 @@ struct Warcraft3_Reforged
     ),
     function BuildBONE boneList bpos=
     (
+        format "Building Bones\n"
         local layer = Warcraft3_Reforged.CreateLayer "Bones"
         
         -- create the bones
@@ -1288,7 +1380,8 @@ struct Warcraft3_Reforged
     ),
     function BuildSKIN geos boneList=
     (
-       
+        if ( geos == undefined or boneList == undefined ) then return undefined
+        
         try(
             for geo in geos do
             (
@@ -1296,6 +1389,8 @@ struct Warcraft3_Reforged
                 local msh = geo
                 local obj = geo.meshRef
 
+                format "Applying Skin modifier to %\n" obj.name
+                
                 if ( obj == undefined ) then continue
                 
                 local mshSkin = skin name:"Skin"
@@ -1331,7 +1426,9 @@ struct Warcraft3_Reforged
     ),
     function BuildSEQS seqs=
     (
+        
         if ( seqs == undefined ) then return undefined
+        format "Setting Animation Sequences\n"
         
         local starAnimTrack = undefined
         local nNoteTracks = numNoteTracks rootNode
@@ -1373,30 +1470,37 @@ struct Warcraft3_Reforged
             startNote.Value = val
             endNote.Value = val
 
-            format "Animation added: %  %-%\n" seq.name seq.startFrame seq.endFrame
+            format "- % (%-%)\n" seq.name seq.startFrame seq.endFrame
 			
         )
     ),
     function BuildCLID clid boneList bpos=
     (
         if (clid == undefined ) then return undefined
+        format "Buidling Collision Objecst\n"
+        
         local layer = Warcraft3_Reforged.CreateLayer "Collision Objects"
         for cl in clid do
         (
             local cap = undefined
             
-            if cl.BoundingType == 0 then cap = capsule name:cl.name radius:cl.radius height:cl.height
+            if ( cl.BoundingType == 0 and cl.name != "B_KGS_Torso" ) then 
+                cap = capsule name:cl.name radius:cl.radius height:cl.height
+            
+            if cl.name == "B_KGS_Torso" then cap = capsule name:cl.name radius:(cl.radius / 2.0 ) height:cl.height
+            
             if cap == undefined then 
             (
                 format "[WARNING] This bounding type is not implemented (Bounding type = %)\n" cl.BoundingType
                 cap = capsule name:cl.name radius:cl.radius height:cl.height
             )
-
+            
+            
             rotate cap (angleaxis 180 [0,1,0])
             cap.boxmode = on
             cap.renderable = off
             cap.showFrozenInGray = off
-            cap.wirecolor = color 100 200 250
+            cap.wirecolor = color 64 128 255
             freeze cap
             resetXform cap
             
@@ -1442,7 +1546,8 @@ struct Warcraft3_Reforged
     ),
     function BuildGEOA geoa geos=
     (
-        
+        if( geoa == undefined ) then return undefined 
+        format "Applying Mesh Animations \n"
         for a in geoa do
         (
             local theMesh = geos[a.GeoId].meshRef
@@ -1471,6 +1576,25 @@ struct Warcraft3_Reforged
         )
         
     ),
+    function BuildEVTS evts=
+    (
+        local layer = Warcraft3_Reforged.CreateLayer "Events"
+        for evt in evts do
+        (
+            local pnt = point name:evt.Name
+
+            pnt.wirecolor = color 0 255 0
+
+            local nt = notetrack "Notes"
+            addNoteTrack pnt nt
+
+            for key in evt.KEVT do
+                AddNewNoteKey nt key
+
+            layer.AddNode pnt
+        )
+        layer.IsHidden = true
+    ),
     /*
         MAIN IMPORT
     */
@@ -1480,6 +1604,8 @@ struct Warcraft3_Reforged
         
         if ( file == undefined ) then throw("Provide a correct value for the paramete file")
         if ( doesFileExist file == false ) then throw("File does not exist!")
+        
+        SetWaitCursor()
         
         local stream = fOpen file "rb"
         local streamLen = Warcraft3_Reforged.GetStreamLength stream
@@ -1496,6 +1622,7 @@ struct Warcraft3_Reforged
         local atch -- attachments
         local clid -- collision spheres
         local bpos -- binding position
+        local evts -- events
         
         -- VERS // version
         for tag in tags do 
@@ -1507,7 +1634,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
---         print tags
+        print tags
             
         -- read tag by tag
         for tag in tags do
@@ -1532,10 +1659,11 @@ struct Warcraft3_Reforged
             if( tag.Name == "BPOS" ) then bpos = Warcraft3_Reforged.ReadBPOS stream tag
             -- GEOA // geoset animation
             if( tag.Name == "GEOA" ) then geoa = Warcraft3_Reforged.ReadGEOA stream tag
-
+            -- EVTS // events
+            if( tag.Name == "EVTS" ) then evts = Warcraft3_Reforged.ReadEVTS stream tag
+            
             -- PIVT // pivots
             -- PRE2 // particle emitter
-            -- EVTS // events
             -- CORN // conrners ??
             -- RIBB // ribbon emitters
             -- GLBS // globals
@@ -1548,23 +1676,26 @@ struct Warcraft3_Reforged
         )
 
         
-         Warcraft3_Reforged.BuildBONE boneList bpos
-         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-         Warcraft3_Reforged.BuildGEOS geos modl mtls
-         Warcraft3_Reforged.BuildATCH atch bpos boneList
-         Warcraft3_Reforged.BuildSKIN geos boneList
-         Warcraft3_Reforged.BuildCLID clid boneList bpos
-         Warcraft3_Reforged.BuildGEOA geoa geos
-         Warcraft3_Reforged.BuildSEQS seqs
+--          Warcraft3_Reforged.BuildBONE boneList bpos
+--          Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+--          Warcraft3_Reforged.BuildGEOS geos modl mtls
+--          Warcraft3_Reforged.BuildATCH atch bpos boneList
+--          Warcraft3_Reforged.BuildSKIN geos boneList
+--          Warcraft3_Reforged.BuildCLID clid boneList bpos
+--          Warcraft3_Reforged.BuildGEOA geoa geos
+--          Warcraft3_Reforged.BuildSEQS seqs
+            Warcraft3_Reforged.BuildEVTS evts
+        
         
 --      print modl
---      print seqs
+--       print seqs
 --      print mtls
 --      print texs        
 --      print geos
---      print boneList
---      print atch
---      print clid
+--       print boneList
+--       print atch
+      print evts
+--       print clid
 --      print bpos
         
 
@@ -1572,24 +1703,19 @@ struct Warcraft3_Reforged
         fclose stream
         gc()
         local endedAt = timestamp()
-        Format "DONE (import took % seconds )  - " ( (endedAt - startedAt) / 1000.0 as integer )
+        setArrowCursor() 
+        txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
+        messagebox txt
     )
 )
 
 ClearListener()
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\earthpandarenbrewmaster\earthpandarenbrewmaster.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\critters\frog\frog.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\ashenvale\plants\ashenbush0\ashenbush0.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\orc\battroll\battroll.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\demon\chaosgrunt\chaosgrunt.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\creeps\wendigo\wendigo.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herohalahk\herohalahk.mdx"
 
---file = @"F:\Blizzard\Warcraft - Reforged\Casc\war3.w3mod\_hd.w3mod\units\demon\chaospeon\chaospeon.mdx"
--- file = getOpenFileName \
--- 			caption:"Heroes of the Storm" \
--- 			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
--- 			historyCategory:"ReforgedPreset"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\peasant\peasant.mdx"
+file = getOpenFileName \
+			caption:"Heroes of the Storm" \
+			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
+			historyCategory:"ReforgedPreset"
 
 
 
