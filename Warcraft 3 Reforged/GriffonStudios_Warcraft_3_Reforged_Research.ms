@@ -183,6 +183,8 @@ struct GriffonStudios_Helpers
         close ss 3
         ss.WireColor = yellow
         updateShape ss
+        
+        setUserPropBuffer  ss "Attachment Point"
         return ss
     )
     
@@ -1582,7 +1584,7 @@ struct Warcraft3_Reforged
         for evt in evts do
         (
             local pnt = point name:evt.Name
-
+            setUserPropBuffer pnt "Event"
             pnt.wirecolor = color 0 255 0
 
             local nt = notetrack "Notes"
@@ -1663,40 +1665,41 @@ struct Warcraft3_Reforged
             if( tag.Name == "EVTS" ) then evts = Warcraft3_Reforged.ReadEVTS stream tag
             
             -- PIVT // pivots
+            -- CAMS // camera
+            -- FAFX // facial effects
+            
             -- PRE2 // particle emitter
             -- CORN // conrners ??
             -- RIBB // ribbon emitters
             -- GLBS // globals
             -- TXAN // texture animations
-            -- CAMS // camera
             -- LITE // lites
-            -- FAFX // facial effects
             -- PREM // particle emitters    
             
         )
 
         
---          Warcraft3_Reforged.BuildBONE boneList bpos
---          Warcraft3_Reforged.BuildMTLS mtls texs modl.name
---          Warcraft3_Reforged.BuildGEOS geos modl mtls
---          Warcraft3_Reforged.BuildATCH atch bpos boneList
---          Warcraft3_Reforged.BuildSKIN geos boneList
---          Warcraft3_Reforged.BuildCLID clid boneList bpos
---          Warcraft3_Reforged.BuildGEOA geoa geos
---          Warcraft3_Reforged.BuildSEQS seqs
-            Warcraft3_Reforged.BuildEVTS evts
+-- Warcraft3_Reforged.BuildBONE boneList bpos
+-- Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+-- Warcraft3_Reforged.BuildGEOS geos modl mtls
+-- Warcraft3_Reforged.BuildATCH atch bpos boneList
+-- Warcraft3_Reforged.BuildSKIN geos boneList
+-- Warcraft3_Reforged.BuildCLID clid boneList bpos
+-- Warcraft3_Reforged.BuildGEOA geoa geos
+-- Warcraft3_Reforged.BuildSEQS seqs
+-- Warcraft3_Reforged.BuildEVTS evts
         
         
---      print modl
---       print seqs
---      print mtls
---      print texs        
---      print geos
---       print boneList
---       print atch
-      print evts
---       print clid
---      print bpos
+-- print modl
+-- print seqs
+-- print mtls
+-- print texs        
+-- print geos
+-- print boneList
+-- print atch
+-- print evts
+-- print clid
+-- print bpos
         
 
         
@@ -1707,6 +1710,35 @@ struct Warcraft3_Reforged
         txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
         messagebox txt
     )
+)
+
+utility Warcraft3_Reforged_UserProperties "Reforged User Properties"
+(
+    rollout aboutThis "User Property Editor"
+    (
+        label lbl1 "©2020"
+        label lbl2 "Written by Taylor Mouse"
+    )
+    rollout genObjProps "Generic Object Properties"
+    (
+        group "BillBoarding"
+        (
+            radiobuttons billBoarding "" columns:1 labels:#("None", "Full", "Pivot On X Axis", "Pivot On Y Axis", "Pivot On Z Axis")
+        )
+    )
+    
+    on Warcraft3_Reforged_UserProperties open do
+    (
+        addRollout aboutThis
+        addRollout genObjProps
+    )
+    on Warcraft3_Reforged_UserProperties close do
+    (
+        removeRollout aboutTHis
+        removeRollout genObjProps
+    )
+    
+    
 )
 
 ClearListener()
