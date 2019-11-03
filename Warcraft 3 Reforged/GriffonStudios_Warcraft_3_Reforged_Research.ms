@@ -1,5 +1,9 @@
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Ribbon.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Attachment.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Event.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
 
--- https://www.hiveworkshop.com/threads/mdx-specifications.240487/
+
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
 
@@ -31,10 +35,10 @@ struct Warcraft3_Reforged_TEXS
     ( Id, replacableId, fileNameOnly, path,  extension, flags )
 
 struct Warcraft3_Reforged_MTLS
-    ( Id, materialRef, ShaderName,  LAYS )
+    ( Id, materialRef, ShaderName,  LAYS, priorityPlane )
 
 struct Warcraft3_Reforged_LAYS
-    ( Id, ParentId, filterMode, shadingFlags, TextureId, KMTA, KMTE )
+    ( Id, ParentId, filterMode, shadingFlags, TextureId, KMTA, KMTE, alpha )
 
 struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
@@ -68,6 +72,10 @@ struct Warcraft3_Reforged_ANIM
 
 struct Warcraft3_Reforged_TXAN
     ( KTAT, KTAR, KTAS ) 
+
+struct Warcraft3_Reforged_RIBB
+    ( Id, Name, ParentBoneId, Flags, KGRT, KGTR, KGSC, staticHeightAbove, staticHeightBelow, staticAlpha, staticColor, lifeSpan, textureId, emissionRate, flipbookRows, flipbookColumns, mtlsId, gravity, KRHA, KRHB, KRAL, KRCO, KRTX, KRVS )
+
 
 /* TAGS
     VERS // version
@@ -149,6 +157,17 @@ struct Warcraft3_Reforged_TXAN
 
 
 */
+/*
+flags --> use this to export !!
+    Bone:256
+    Light:512
+    Attachment:2048
+    ParticleEmitter:4096
+    ParticleEmitter2:4096
+    RibbonEmitter:16384
+    Event:1024
+    CollisionShape:8192
+*/
 
 global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
 global Warcraft3_ImportAllLOD = false
@@ -180,58 +199,6 @@ struct StarTools_Helpers
 
 struct GriffonStudios_Helpers
 (
-    function CreateAttachmentPoint aName=
-    (
-        theName = "SC2AttachPt001"
-
-        ss = SplineShape pos:[0,0,0]
-        ss.renderable = off
-        ss.name = theName
-        if( aName != undefined ) then ss.name = aName
-
-        addNewSpline ss
-        addKnot ss 1 #corner #curve [0,0,10]
-        addKnot ss 1 #corner #curve [0,-4,0]
-        close ss 1
-        addNewSpline ss
-        addKnot ss 2 #corner #curve [-4,0,0]
-        addKnot ss 2 #corner #curve [4,0,0]
-        addKnot ss 2 #corner #curve [0,0,10]
-        close ss 2
-        addNewSpline ss
-        addKnot ss 3 #corner #curve [-4,0,0]
-        addKnot ss 3 #corner #curve [0,-4,0]
-        addKnot ss 3 #corner #curve [4,0,0]
-        close ss 3
-        ss.WireColor = yellow
-        updateShape ss
-        
-        setUserProp ss "Type" "Attachment Point"
-        return ss
-    ),
-    function CreateFacialEffectsSpline=
-    (
-        fafxText = Text size:20 alignment:2 text:"FAFX" kerning:-1 wirecolor:yellow 
-        centerPivot fafxText
-        fafxText.pos = [0,0,0]
-        fafxCircle = Circle radius:22.3 wirecolor:yellow pos:[0,0,0]
-        
-        convertToSplineShape fafxText
-        convertToSplineShape fafxCircle
-        addAndWeld fafxText fafxCircle -1
-        
-        fafxText.Name = "FAFX\n"
-        setUserProp fafxText "Type" "Facial FX"
-        return fafxText
-    )
-    
-)
-
-struct Warcraft3_Reforged
-(
-
-    /* Helper functions 
-    */
     function CreateLayer layerName =
     (
         layer = LayerManager.GetLayerFromName layerName
@@ -278,23 +245,91 @@ struct Warcraft3_Reforged
         if ( b - a ) > 0.5 then return a + 1 else return a
        
     ),
-    function ReadColor stream=
+    function CreateAttachmentPoint aName=
     (
-        local r = (readFloat stream * 255.0) as integer
-        local g = (readFloat stream * 255.0) as integer
-        local b = (readFloat stream * 255.0) as integer
-        return ( color r g b )
+        theName = "AttachmentPoint"
+
+        ss = SplineShape pos:[0,0,0]
+        ss.renderable = off
+        ss.name = theName
+        if( aName != undefined ) then ss.name = aName
+
+        addNewSpline ss
+        addKnot ss 1 #corner #curve [0,0,10]
+        addKnot ss 1 #corner #curve [5,0,0]
+        close ss 1
+        addNewSpline ss
+        addKnot ss 2 #corner #curve [5,0,0]
+        addKnot ss 2 #corner #curve [0,5,0]
+        addKnot ss 2 #corner #curve [0,-5,0]
+        close ss 2
+        addNewSpline ss
+        addKnot ss 3 #corner #curve [0,0,10]
+        addKnot ss 3 #corner #curve [0,5,0]
+        addKnot ss 3 #corner #curve [0,-5,0]
+        close ss 3
+        ss.WireColor = yellow
+        updateShape ss
+        setUserProp ss "Type" "Attachment Point"
+        return ss
     ),
-    /* Warcraft 3 Reforged 
+    function CreateAttachmentPoint2 aName=
+    (
+        theName = "AttachmentPoint"
+
+        ss = SplineShape pos:[0,0,0]
+        ss.renderable = off
+        ss.name = theName
+        if( aName != undefined ) then ss.name = aName
+
+        addNewSpline ss
+        addKnot ss 1 #corner #curve [0,0,10]
+        addKnot ss 1 #corner #curve [0,-4,0]
+        close ss 1
+        addNewSpline ss
+        addKnot ss 2 #corner #curve [-4,0,0]
+        addKnot ss 2 #corner #curve [4,0,0]
+        addKnot ss 2 #corner #curve [0,0,10]
+        close ss 2
+        addNewSpline ss
+        addKnot ss 3 #corner #curve [-4,0,0]
+        addKnot ss 3 #corner #curve [0,-4,0]
+        addKnot ss 3 #corner #curve [4,0,0]
+        close ss 3
+        ss.WireColor = yellow
+        updateShape ss
+        
+        setUserProp ss "Type" "Attachment Point"
+        return ss
+    ),
+    function CreateFacialEffectsSpline=
+    (
+        fafxText = Text size:20 alignment:2 text:"FAFX" kerning:-1 wirecolor:yellow 
+        centerPivot fafxText
+        fafxText.pos = [0,0,0]
+        fafxCircle = Circle radius:22.3 wirecolor:yellow pos:[0,0,0]
+        
+        convertToSplineShape fafxText
+        convertToSplineShape fafxCircle
+        addAndWeld fafxText fafxCircle -1
+        
+        fafxText.Name = "FAFX\n"
+        setUserProp fafxText "Type" "Facial FX"
+        return fafxText
+    )
     
-        READ
+)
+
+struct Warcraft3_Reforged
+(
+    /* Warcraft 3 Reforged READ
     */
     function ReadTAGS stream streamLen=
     (
         local tags = #() 
         local mainTag = Warcraft3_Reforged_TAG()
 
-        mainTag.Name = Warcraft3_Reforged.ReadFixedString stream 4
+        mainTag.Name = GriffonStudios_Helpers.ReadFixedString stream 4
         mainTag.Offset = 0
         mainTag.Size = 0
         
@@ -305,16 +340,76 @@ struct Warcraft3_Reforged
             local tag = Warcraft3_Reforged_TAG()
             
             tag.Offset = ftell stream + 8 -- the +8 indicates where the data starts
-            tag.Name = Warcraft3_Reforged.ReadFixedString stream 4
+            tag.Name = GriffonStudios_Helpers.ReadFixedString stream 4
             tag.Size = ReadLong stream
             
-            Warcraft3_Reforged.SkipBytes stream tag.Size
+            GriffonStudios_Helpers.SkipBytes stream tag.Size
 
             currentStreamPos = ftell stream
             
             append tags tag
         )
         return tags
+    ),
+    function ReadColor stream=
+    (
+        local r = (readFloat stream * 255.0) as integer
+        local g = (readFloat stream * 255.0) as integer
+        local b = (readFloat stream * 255.0) as integer
+        return ( color r g b )
+    ),
+    function ReadColorAnim stream=
+    (
+        local anim = Warcraft3_Reforged_ANIM()
+        local kg = #()
+        
+        anim.numPts = readLong stream
+        anim.lineType = readLong stream
+        anim.parentId = readLong stream + 1
+        
+        for i=1 to anim.numPts do
+        (
+            local k = Warcraft3_Reforged_KG()
+            
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
+            k.Point = Warcraft3_Reforged.ReadColor stream -- always 1, indicating it starts or ends
+
+            if( anim.lineType > 1)  then
+            (
+                k.inTan = readFloat stream
+                k.outTan = readFloat stream
+            )
+            append kg k
+        )
+        anim.KG = kg
+        return anim
+    ),
+    function ReadLongAnim stream=
+    (
+        local anim = Warcraft3_Reforged_ANIM()
+        local kg = #()
+        
+        anim.numPts = readLong stream
+        anim.lineType = readLong stream
+        anim.parentId = readLong stream + 1
+        
+        for i=1 to anim.numPts do
+        (
+            local k = Warcraft3_Reforged_KG()
+            
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
+            k.Point = readLong stream -- always 1, indicating it starts or ends
+
+            if( anim.lineType > 1)  then
+            (
+                k.inTan = readFloat stream
+                k.outTan = readFloat stream
+            )
+            append kg k
+        )
+        anim.KG = kg
+        return anim
+        
     ),
     function ReadFloatAnim stream=
     (
@@ -332,7 +427,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
             k.Point = readFloat stream -- always 1, indicating it starts or ends
 
             if( anim.lineType > 1)  then
@@ -358,7 +453,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
             k.Point = [readFloat stream, readFloat stream, readFloat stream]
 
             if( anim.lineType > 1)  then
@@ -384,7 +479,7 @@ struct Warcraft3_Reforged
         (
             local k = Warcraft3_Reforged_KG()
             
-            k.Time = Warcraft3_Reforged.RoundToFrame ( ReadLong stream )
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
             k.Point = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
             k.LineType = lineType
             if( anim.lineType > 1)  then
@@ -403,8 +498,8 @@ struct Warcraft3_Reforged
         local modl = Warcraft3_Reforged_MODL()
         fseek stream tag.offset #seek_set
         
-        modl.name = Warcraft3_Reforged.ReadFixedString stream 80
-        Warcraft3_Reforged.SkipBytes stream (tag.size - 80 - 28)
+        modl.name = GriffonStudios_Helpers.ReadFixedString stream 80
+        GriffonStudios_Helpers.SkipBytes stream (tag.size - 80 - 28)
         
         
         modl.PointA = [readFloat stream, readFloat stream, readFloat stream]
@@ -434,7 +529,7 @@ struct Warcraft3_Reforged
             t.Id = i
             
             t.replacableId = readLong stream -- 0 or 1 for now ??
-            local name = Warcraft3_Reforged.ReadFixedString stream 260
+            local name = GriffonStudios_Helpers.ReadFixedString stream 260
             t.path = getFilenamePath name
             t.fileNameOnly = getFilenameFile name
             t.extension = getFilenameType name 
@@ -464,7 +559,7 @@ struct Warcraft3_Reforged
             
             /* Vertices */
             local verts = #()
-            local vrtx = Warcraft3_Reforged.ReadFixedString stream 4
+            local vrtx = GriffonStudios_Helpers.ReadFixedString stream 4
             local nVerts = readLong stream
             for v=1 to nVerts do 
             (
@@ -475,7 +570,7 @@ struct Warcraft3_Reforged
             
             /* Normals */
             local norms = #()
-            local nrms = Warcraft3_Reforged.ReadFixedString stream 4
+            local nrms = GriffonStudios_Helpers.ReadFixedString stream 4
             local nNorms = readLong stream
             for n=1 to nNorms do 
             (
@@ -486,7 +581,7 @@ struct Warcraft3_Reforged
             
             /* Types */
             local types = #()
-            local ptyp = Warcraft3_Reforged.ReadFixedString stream 4
+            local ptyp = GriffonStudios_Helpers.ReadFixedString stream 4
             local nPtyp = readLong stream
             for p=1 to nPtyp do 
             (
@@ -509,7 +604,7 @@ struct Warcraft3_Reforged
 
             /* Corners */
             local corners = #()
-            local pcnt = Warcraft3_Reforged.ReadFixedString stream 4
+            local pcnt = GriffonStudios_Helpers.ReadFixedString stream 4
             local nPcnt = readLong stream
             for p=1 to nPcnt do 
             (
@@ -520,7 +615,7 @@ struct Warcraft3_Reforged
             
             /* Indices */  
             local indices = #()
-            local pvtx = Warcraft3_Reforged.ReadFixedString stream 4
+            local pvtx = GriffonStudios_Helpers.ReadFixedString stream 4
             local nPvtx = readLong stream
             for i=1 to nPvtx/3 do
             (
@@ -530,7 +625,7 @@ struct Warcraft3_Reforged
             geo.PVTX = indices
             
             /* Groups */
-            local gndx = Warcraft3_Reforged.ReadFixedString stream 4
+            local gndx = GriffonStudios_Helpers.ReadFixedString stream 4
             local nGndx = readLong stream
             local groups = #()
             for g=1 to nGndx do append groups ( readByte stream + 1 )
@@ -538,7 +633,7 @@ struct Warcraft3_Reforged
             
             /* Matrix Groups or bone groups */
             local matrixGroups = #()
-            local mtgc = Warcraft3_Reforged.ReadFixedString stream 4
+            local mtgc = GriffonStudios_Helpers.ReadFixedString stream 4
             local nMtgc = readLong stream
             for m=1 to nMtgc do append matrixGroups (readLong stream)
             geo.MTGC = matrixGroups
@@ -546,7 +641,7 @@ struct Warcraft3_Reforged
             /* Matrices */
             local gMats = Warcraft3_Reforged_MATS()
             local matrices = #()
-            local mats = Warcraft3_Reforged.ReadFixedString stream 4
+            local mats = GriffonStudios_Helpers.ReadFixedString stream 4
             local nMats = readLong stream
             for m=1 to nMats do
             (
@@ -555,16 +650,16 @@ struct Warcraft3_Reforged
             gMats.Matrices = matrices
             gMats.ID = readLong stream + 1 --> reference to the MAT ID in MTLS
             
-            Warcraft3_Reforged.SkipBytes stream 8
+            GriffonStudios_Helpers.SkipBytes stream 8
             gMats.LOD = readLong stream
-            gMats.Name = Warcraft3_Reforged.ReadFixedString stream 112
+            gMats.Name = GriffonStudios_Helpers.ReadFixedString stream 112
             geo.MATS = gMats
             
             -- print gMats
             
             /* Tangents */
             local tangents = #()
-            local tang = Warcraft3_Reforged.ReadFixedString stream 4
+            local tang = GriffonStudios_Helpers.ReadFixedString stream 4
             local nTang = readLong stream
             
             for t=1 to nTang do
@@ -575,7 +670,7 @@ struct Warcraft3_Reforged
             
             /* SKIN */
             local skins = #()
-            local skn = Warcraft3_Reforged.ReadFixedString stream 4
+            local skn = GriffonStudios_Helpers.ReadFixedString stream 4
             local nSkn = readLong stream
             
             for s=1 to nSkn / 8 do
@@ -624,7 +719,7 @@ struct Warcraft3_Reforged
             
             
             /* Nbr of UV Maps */
-            local uvas = Warcraft3_Reforged.ReadFixedString stream 4
+            local uvas = GriffonStudios_Helpers.ReadFixedString stream 4
             local nUvas = readLong stream --> nbr of uv coordinates
 
             /* UV Coordinates */
@@ -632,7 +727,7 @@ struct Warcraft3_Reforged
             for i=1 to nUvas do
             (
                 local uvs = #()
-                local uvbs = Warcraft3_Reforged.ReadFixedString stream 4
+                local uvbs = GriffonStudios_Helpers.ReadFixedString stream 4
                 local nUvbs = readLong stream
 
                 for u=1 to nUvbs do
@@ -659,14 +754,14 @@ struct Warcraft3_Reforged
             
             local size = readLong stream
         
-            b.Name = Warcraft3_Reforged.ReadFixedString stream 80
+            b.Name = GriffonStudios_Helpers.ReadFixedString stream 80
             b.Id = readLong stream + 1
             b.ParentBoneId = readLong stream + 1
             
             b.Flags = readLong stream
             b.offset = ftell stream
             
-            Warcraft3_Reforged.SkipBytes stream ( size - 80 - 12 )
+            GriffonStudios_Helpers.SkipBytes stream ( size - 80 - 12 )
             
             local ffff =  readlong stream
 
@@ -683,7 +778,7 @@ struct Warcraft3_Reforged
             
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
 
                 if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
                 if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
@@ -713,10 +808,10 @@ struct Warcraft3_Reforged
             local size = readLong stream -- size is usually 620 bytes
             totalSize -= size
             
-            local priorityPlane = readLong stream
+            mtl.priorityPlane = readLong stream
             local unk2 = readLong stream
-            mtl.shaderName = Warcraft3_Reforged.ReadFixedString stream 80
-            local lays = Warcraft3_Reforged.ReadFixedString stream 4
+            mtl.shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
+            local lays = GriffonStudios_Helpers.ReadFixedString stream 4
             local nLays = readLong stream
             
             local laysList = #()
@@ -756,11 +851,11 @@ struct Warcraft3_Reforged
                 
                 local textureAnimationId = readLong stream
                 local coordId = readFloat stream
-                local alpha = readFloat stream
+                lay.alpha = readFloat stream
                 
                 for i=1 to 2 do
                 (
-                    local km = Warcraft3_Reforged.ReadFixedString stream 4
+                    local km = GriffonStudios_Helpers.ReadFixedString stream 4
                     if ( km == "KMTA" ) then lay.KMTA = Warcraft3_Reforged.ReadFloatAnim stream
                     if ( km == "KMTE" ) then lay.KMTE = Warcraft3_Reforged.ReadFloatAnim stream
                     
@@ -793,7 +888,7 @@ struct Warcraft3_Reforged
             local size = readLong stream
             local unk1 = readLong stream
             
-            att.name = Warcraft3_Reforged.ReadFixedString stream 80
+            att.name = GriffonStudios_Helpers.ReadFixedString stream 80
             att.Id = readLong stream + 1
             att.ParentBoneId = readLong stream + 1
             att.flags = readLong stream
@@ -801,7 +896,7 @@ struct Warcraft3_Reforged
             att.Offset = ftell stream
             att.Size = size - 4 - 4 - 80 - 8 - 4
             
-            Warcraft3_Reforged.SkipBytes stream att.Size
+            GriffonStudios_Helpers.SkipBytes stream att.Size
         
             append atchs att
         )
@@ -815,7 +910,7 @@ struct Warcraft3_Reforged
             
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
 
                 if ( kg == "KGTR" ) then kgtr = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
                 if ( kg == "KGRT" ) then kgrt = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
@@ -830,9 +925,9 @@ struct Warcraft3_Reforged
             if ( kgrt == undefined ) then correction = correction + 4
             if ( kgsc == undefined ) then correction = correction + 4
            
-            Warcraft3_Reforged.SkipBytes stream ( 264 - correction)
+            GriffonStudios_Helpers.SkipBytes stream ( 264 - correction)
 
-            local katv = Warcraft3_Reforged.ReadFixedString stream 4
+            local katv = GriffonStudios_Helpers.ReadFixedString stream 4
             
             if( katv == "KATV") then att.katv = Warcraft3_Reforged.ReadFloatAnim stream -- visibility track ?
 
@@ -852,13 +947,13 @@ struct Warcraft3_Reforged
         for i=1 to nbrSeqs do
         (
             local seq = Warcraft3_Reforged_SEQS()
-            seq.Name = Warcraft3_Reforged.ReadFixedString stream 80
-            seq.StartFrame = ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
-            seq.EndFrame = ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
+            seq.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+            seq.StartFrame = ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
+            seq.EndFrame = ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
-            Warcraft3_Reforged.SkipBytes stream (8*4)
+            GriffonStudios_Helpers.SkipBytes stream (8*4)
 
             append seqs seq
         )
@@ -881,7 +976,7 @@ struct Warcraft3_Reforged
             local cl = Warcraft3_Reforged_CLID()
             
             local size = readLong stream
-            cl.name = Warcraft3_Reforged.ReadFixedString stream 80
+            cl.name = GriffonStudios_Helpers.ReadFixedString stream 80
             cl.Id = readLong stream + 1
             if (prevId == 0) then 
                 prevId = cl.Id
@@ -897,9 +992,9 @@ struct Warcraft3_Reforged
             cl.Offset = ftell stream
             cl.Size = size - 80 - 16
             
-            Warcraft3_Reforged.SkipBytes stream cl.Size
+            GriffonStudios_Helpers.SkipBytes stream cl.Size
             cl.OffsetBounding = ftell stream
-            Warcraft3_Reforged.SkipBytes stream 28
+            GriffonStudios_Helpers.SkipBytes stream 28
             
             append clid cl
             
@@ -913,7 +1008,7 @@ struct Warcraft3_Reforged
             
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
                 
                 if ( kg == "KGTR" ) then cl.KGTR = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
                 if ( kg == "KGRT" ) then cl.KGRT = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
@@ -967,9 +1062,9 @@ struct Warcraft3_Reforged
         local geoa = #()
         
         local len = readLong stream
-        Warcraft3_Reforged.SkipBytes stream (len - 4)
+        GriffonStudios_Helpers.SkipBytes stream (len - 4)
         local len = readLong stream
-        Warcraft3_Reforged.SkipBytes stream (len - 4)
+        GriffonStudios_Helpers.SkipBytes stream (len - 4)
         local baseLen= 0
         while ( (ftell stream) < tag.offset + tag.size ) do
         (
@@ -977,10 +1072,10 @@ struct Warcraft3_Reforged
             
             local len = readLong stream -- total chunk size
             
-            Warcraft3_Reforged.SkipBytes stream 20
+            GriffonStudios_Helpers.SkipBytes stream 20
             ga.GeoId = readLong stream + 1
             local backup = ftell stream
-            local kgao = Warcraft3_Reforged.ReadFixedString stream 4
+            local kgao = GriffonStudios_Helpers.ReadFixedString stream 4
             
             if ( kgao == "KGAO" ) then
                 ga.KGAO = Warcraft3_Reforged.ReadFloatAnim stream
@@ -1004,26 +1099,29 @@ struct Warcraft3_Reforged
             
         */
         
-        local evts = #()
-        fseek stream tag.Offset #seek_set
         
-        while ( ftell stream < tag.Offset + tag.Size  ) do
+        fseek stream tag.Offset #seek_set
+        local evts = #()
+              
+        
+        while ( ftell stream < (tag.offset + tag.size)) do
         (
             local evt = Warcraft3_Reforged_EVTS()
             local size = readLong stream
-            evt.name = Warcraft3_Reforged.ReadFixedString stream 80
+            
+            evt.name = GriffonStudios_Helpers.ReadFixedString stream 80
             evt.id  = readLong stream + 1
-            evt.parentId = readLong stream
+            evt.parentId = readLong stream + 1
             evt.flags = readLong stream
-            local kevt = Warcraft3_Reforged.ReadFixedString stream 4
+            local kevt = GriffonStudios_Helpers.ReadFixedString stream 4
             if ( kevt == "KEVT" ) then
             (
                 local keys = #()
                 local nbr = readLong stream
-                local ffff = readLong stream
+                local parentId = readLong stream + 1
                 for i=1 to nbr do 
                 (
-                    local key =  ( Warcraft3_Reforged.RoundToFrame ( readLong stream ) ) + 10
+                    local key =  ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
                     append keys key
                 )
                 evt.KEVT = keys
@@ -1033,6 +1131,8 @@ struct Warcraft3_Reforged
                 format "Animation not implemented in ReadEVTS (%)"  evts
             )
             append evts evt
+            
+           
         )
         
         return evts
@@ -1065,8 +1165,8 @@ struct Warcraft3_Reforged
         (
             local f = Warcraft3_Reforged_FAFX()
             f.Id = i
-            f.Name = Warcraft3_Reforged.ReadFixedString stream 80
-            f.ExternalFileName = Warcraft3_Reforged.ReadFixedString stream 260
+            f.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+            f.ExternalFileName = GriffonStudios_Helpers.ReadFixedString stream 260
             
             append fafx f
         )
@@ -1079,13 +1179,13 @@ struct Warcraft3_Reforged
         fseek stream tag.Offset #seek_set
         
         local cams = #()
-        local failSafe = 4
-        while ( ftell stream < tag.Offset + tag.Size  ) do
+        
+        while ( ftell stream < (tag.offset + tag.size)) do
         (
             local size = readFloat stream
             local cam = Warcraft3_Reforged_CAMS()
 
-            cam.Name = Warcraft3_Reforged.ReadFixedString stream 80
+            cam.Name = GriffonStudios_Helpers.ReadFixedString stream 80
             cam.Pos = [readFloat stream,readFloat stream,readFloat stream]
             cam.FOV = radToDeg ( readFloat stream )
             cam.FarClip = readFloat stream
@@ -1094,7 +1194,7 @@ struct Warcraft3_Reforged
 
             for i=1 to 3 do
             (
-                local anim = Warcraft3_Reforged.ReadFixedString stream 4
+                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
                 if ( anim == "KCTR" ) then cam.KCTR = Warcraft3_Reforged.ReadVector3Anim stream
                 if ( anim == "KTTR" ) then cam.KTTR = Warcraft3_Reforged.ReadVector3Anim stream
                 if ( anim == "KCRL" ) then cam.KCRL = Warcraft3_Reforged.ReadQuatAnim stream
@@ -1105,8 +1205,6 @@ struct Warcraft3_Reforged
             if ( cam.KCRL == undefined ) then fseek stream -4 #seek_cur
             append cams cam
 
-            failSafe -=1
-            if (failSafe == 0) then exit
         )
         
         return cams
@@ -1125,14 +1223,14 @@ struct Warcraft3_Reforged
             totalSize -= chunkSize
             
             local miniSize = readLong stream
-            cor.name = Warcraft3_Reforged.ReadFixedString stream 80
+            cor.name = GriffonStudios_Helpers.ReadFixedString stream 80
             cor.id = readLong stream + 1
             cor.parentId = readLong stream + 1
             cor.flags = readLong stream
 
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
                 if( kg == "KGSC" ) then cor.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
                 if( kg == "KGTR" ) then cor.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
                 if( kg == "KGRT" ) then cor.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
@@ -1144,14 +1242,14 @@ struct Warcraft3_Reforged
             for i=1 to 8 do 
                 local f = readFloat stream
             
-            cor.filename = Warcraft3_Reforged.ReadFixedString stream 260
-            local props = Warcraft3_Reforged.ReadFixedString stream 260
+            cor.filename = GriffonStudios_Helpers.ReadFixedString stream 260
+            local props = GriffonStudios_Helpers.ReadFixedString stream 260
             
             cor.properties = filterString props ", "
             
             for i=1 to 2 do
             (
-                local anim = Warcraft3_Reforged.ReadFixedString stream 4
+                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
                 
                 if (anim == "KPPA") then cor.kppa = Warcraft3_Reforged.ReadFloatAnim stream -- alpha
                 if (anim == "KPPV") then cor.kppv = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
@@ -1185,14 +1283,14 @@ struct Warcraft3_Reforged
             local l = Warcraft3_Reforged_LITE()
             
             local ninetySix = readLong stream -- usually 96 appears before a name ???
-            l.name = Warcraft3_Reforged.ReadFixedString stream 80
+            l.name = GriffonStudios_Helpers.ReadFixedString stream 80
             l.Id = readLong stream + 1
             l.ParentId = readLong stream + 1
             l.Flags = readLong stream 
             
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
                 if( kg == "KGSC" ) then l.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
                 if( kg == "KGTR" ) then l.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
                 if( kg == "KGRT" ) then l.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
@@ -1213,15 +1311,18 @@ struct Warcraft3_Reforged
         )
         return lites
     ),
-    function ReadGBLS stream tag=
+    function ReadGLBS stream tag=
     (
         fseek stream tag.offset #seek_set
         local gbls = #()
         
         local nbr = tag.Size / 4
         
-        for i=1 to nbr do append gbls (readLong stream)
-        
+        for i=1 to nbr do 
+        (
+            local endFrame = (GriffonStudios_Helpers.RoundToFrame (readLong stream)) + 10
+            append gbls endFrame
+        )
         return gbls
         
     ),
@@ -1230,6 +1331,7 @@ struct Warcraft3_Reforged
         fseek stream tag.offset #seek_set
         local txans = #()
         local totalSize = tag.Size
+        
         while ( totalSize > 0 ) do
         (
             local size = readLong stream
@@ -1238,7 +1340,7 @@ struct Warcraft3_Reforged
             
             for i=1 to 3 do
             (
-                local kg = Warcraft3_Reforged.ReadFixedString stream 4
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
                 if( kg == "KTAT" ) then txan.KTAT = Warcraft3_Reforged.ReadVector3Anim stream
                 if( kg == "KTAR" ) then txan.KTAR = Warcraft3_Reforged.ReadQuatAnim stream
                 if( kg == "KTAS" ) then txan.KTAS = Warcraft3_Reforged.ReadVector3Anim stream
@@ -1251,6 +1353,70 @@ struct Warcraft3_Reforged
         )
         
         return txans
+    ),
+    function ReadRIBB stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        
+        local totalSize = tag.size
+        local ribbs = #()
+        
+        while (totalSize > 0 ) do
+        (
+            local ribb = Warcraft3_Reforged_RIBB()
+            
+            local size = readLong stream
+            totalSize -=size
+            local unk readLong stream
+            ribb.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            ribb.id = readLong stream + 1
+            ribb.parentBoneId = readLong stream + 1
+            ribb.flags = readLong stream
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KGTR" ) then ribb.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KGRT" ) then ribb.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+                if( kg == "KGSC" ) then ribb.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+            )
+            
+            if( ribb.KGSC == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGTR == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGRT == undefined ) then fseek stream -4 #seek_cur
+            
+            ribb.staticHeightAbove = readFloat stream
+            ribb.staticHeightBelow = readFloat stream
+            ribb.staticAlpha = readFloat stream
+            ribb.staticColor = Warcraft3_Reforged.ReadColor stream
+            ribb.lifeSpan = readFloat stream
+            ribb.textureId = readLong stream + 1
+            ribb.emissionRate = readLong stream
+            ribb.flipbookRows = readLong stream
+            ribb.flipbookColumns = readLong stream
+            ribb.mtlsId = readLong stream + 1
+            ribb.gravity= readFloat stream
+            
+            for i=1 to 6 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KRHA" ) then ribb.KRHA = Warcraft3_Reforged.ReadFloatAnim stream -- heightAbove
+                if( kg == "KRHB" ) then ribb.KRHB = Warcraft3_Reforged.ReadFloatAnim stream  -- heightBelow
+                if( kg == "KRAL" ) then ribb.KRAL = Warcraft3_Reforged.ReadFloatAnim stream -- alpha
+                if( kg == "KRCO" ) then ribb.KRCO = Warcraft3_Reforged.ReadColorAnim stream -- color
+                if( kg == "KRTX" ) then ribb.KRTX = Warcraft3_Reforged.ReadLongAnim stream  -- texture
+                if( kg == "KRVS" ) then ribb.KRVS = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
+            )
+            if( ribb.KRHA == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRHB == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRAL == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRCO == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRTX == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRVS == undefined ) then fseek stream -4 #seek_cur
+            
+            append ribbs ribb
+        )
+        return ribbs
     ),
     /* BUILD
     
@@ -1266,7 +1432,7 @@ struct Warcraft3_Reforged
             format "Building %\n" geo.MATS.Name
             
             local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
-            local layer = Warcraft3_Reforged.CreateLayer layerName
+            local layer = GriffonStudios_Helpers.CreateLayer layerName
             
             if (geo.MATS.LOD != 0 ) then layer.isHidden = true
             
@@ -1318,9 +1484,9 @@ struct Warcraft3_Reforged
         for mtl in mtls do
         (
 
-            local mat = standardMaterial()
+            local mat = WC3RefMaterial()
             mat.Name = modlName + "_MAT_" + (mtl.id as string )
-            if ( mtl.ShaderName == "Shader_HD_DefaultUnit" ) then mat.shaderType = 0
+            if ( mtl.ShaderName == "Shader_HD_DefaultUnit" ) then mat.filtermode = 1
             
             for layer in mtl.lays do
             (
@@ -1330,37 +1496,32 @@ struct Warcraft3_Reforged
 
                 case of 
                 (
-                    (layer.id == 1): ( -- Diffuse or Albedo
-                        mat.diffuseMap = Bitmaptexture fileName:textureFile
-                        mat.opacityMap = Bitmaptexture fileName:textureFile
-                        mat.opacityMapEnable = on
-                        mat.opacityMap.monooutput = 1
+                    (layer.id == 1): ( 
+                        mat.diffuse_map = Bitmaptexture fileName:textureFile
+                        mat.alphamask_map = Bitmaptexture fileName:textureFile
                     )
-                    (layer.id == 2): ( -- Bump Map or Normal map
-                        mat.bumpMap = Bitmaptexture fileName:textureFile
-                        mat.bumpMapEnable = on
-                        mat.bumpMapAmount = 80
+                    (layer.id == 2): ( 
+                        mat.normal_map = Bitmaptexture fileName:textureFile
                     )
-                    (layer.id == 3): ( -- ORM...Red = Occlusion, Green = Roughness, Blue = metalness
-                        mat.specularLevelMap = Bitmaptexture fileName:textureFile
-                        mat.Specular = color 128 128 128
+                    (layer.id == 3): ( 
+                        mat.orm_map = Bitmaptexture fileName:textureFile
+                        mat.teamcolor_map = Bitmaptexture fileName:textureFile
                     )
                     (layer.id == 4): ( -- black ?? maybe emission ?
-                        mat.selfIllumMap = Bitmaptexture fileName:textureFile
-                        
+                        mat.emissive_map = Bitmaptexture fileName:textureFile
+                        mat.emissive_alpha = layer.alpha * 100.0
                     )
                     (layer.id == 5): ( -- TeamColor
-                        mat.glossinessMap = Bitmaptexture fileName:textureFile
+                        mat.teamcolor_map = Bitmaptexture fileName:textureFile
                         
                     )
                     (layer.id == 6): ( -- refelection
-                        mat.reflectionMap = Bitmaptexture fileName:textureFile
-                        mat.reflectionMapEnable = on
+                        mat.reflection_map = Bitmaptexture fileName:textureFile
                     )
                 )
                 
                 
-                showTextureMap mat mat.diffuseMap true
+                showTextureMap mat mat.diffuse_Map true
                 
                 /* animated texture */
                 if ( layer.KMTA != undefined ) then
@@ -1370,7 +1531,7 @@ struct Warcraft3_Reforged
                         with animate on (
                             at time ( anim.Time + 10 )
                             (
-                                mat.opacity = anim.Point * 100.0
+                                mat.material_alpha = anim.Point * 100.0
                             )
                         )
                     )
@@ -1390,15 +1551,14 @@ struct Warcraft3_Reforged
         if ( atch == undefined ) then return undefined
         format "Building Attachments\n"
         
-        local layer = Warcraft3_Reforged.CreateLayer "Attachments"
+        local layer = GriffonStudios_Helpers.CreateLayer "Attachments"
      
         sliderTime = 0f
         
         for a in atch do 
         (
             --local pnt = Point name:a.name box:off cross:on centermarker:off axistripod:off size:12
-            local pnt = GriffonStudios_Helpers.CreateAttachmentPoint a.name
-            pnt.wirecolor = color 255 255 0
+            local pnt = WC3RefAttachment name:a.name
             pnt.pos = bpos[a.id].matrix.row4
             
             layer.AddNode pnt
@@ -1513,7 +1673,7 @@ struct Warcraft3_Reforged
     function BuildBONE boneList bpos pivts=
     (
         format "Building Bones\n"
-        local layer = Warcraft3_Reforged.CreateLayer "Bones"
+        local layer = GriffonStudios_Helpers.CreateLayer "Bones"
         
         -- create the bones
         local uniqueId = 1
@@ -1561,18 +1721,16 @@ struct Warcraft3_Reforged
                 local dr = dummy name:"DummyRotationController"
                 dr.rotation.controller = b.rotation.controller
                 local q0 = dr.transform
-                
+                local prevTime = 0
                 for anim in obj.KGRT.KG do
                 (
                     local t = anim.Time + 10
                     local q = anim.Point
-                    
+                    if ( prevTime == t ) then continue else prevTime = t
                     with animate on 
                         at time t
                         (
                             in coordsys q0 dr.rotation = q
-                            
-                            
                         )
                 )
                 with animate on b.rotation.controller = copy dr.rotation.controller
@@ -1592,11 +1750,14 @@ struct Warcraft3_Reforged
                     local dp = dummy name:"DummyPositionController" 
                     dp.position.controller = b.position.controller
                     local p0 = dp.transform
-                    
+                    local prevTime = 0
+
                     for anim in obj.KGTR.KG do
                     (
                         local t = anim.Time + 10
                         local p = anim.Point
+                        
+                        if ( prevTime == t ) then continue else prevTime = t
                         
                         with animate on 
                             at time t
@@ -1735,17 +1896,15 @@ struct Warcraft3_Reforged
     function BuildCLID clid boneList bpos=
     (
         if (clid == undefined ) then return undefined
-        format "Buidling Collision Objecst\n"
+        format "Buidling Collision Objects\n"
         
-        local layer = Warcraft3_Reforged.CreateLayer "Collision Objects"
+        local layer = GriffonStudios_Helpers.CreateLayer "Collision Objects"
         for cl in clid do
         (
             local cap = undefined
             
-            if ( cl.BoundingType == 0 and cl.name != "B_KGS_Torso" ) then 
-                cap = capsule name:cl.name radius:cl.radius height:cl.height
-            
-            if cl.name == "B_KGS_Torso" then cap = capsule name:cl.name radius:(cl.radius / 2.0 ) height:cl.height
+            if ( cl.BoundingType == 0 ) then 
+                cap = capsule name:cl.name radius:cl.radius height:cl.height heighttype:0
             
             if cap == undefined then 
             (
@@ -1756,9 +1915,12 @@ struct Warcraft3_Reforged
             cl.objRef = cap
             rotate cap (angleaxis 180 [0,1,0])
             cap.boxmode = on
+            cap.castShadows = false
             cap.renderable = off
             cap.showFrozenInGray = off
             cap.wirecolor = color 64 128 255
+            
+            if (cap.name == "B_KGS_Root" ) then cap.wirecolor = color 255 64 64 
 
             freeze cap
             resetXform cap
@@ -1786,12 +1948,14 @@ struct Warcraft3_Reforged
             if ( cl.KGTR != undefined ) then 
             (
                 -- initial pose
-                 with animate on at time 0 in coordsys mtrx cap.pos = cl.KGTR.KG[1].point
-                     
+                with animate on at time 0 in coordsys mtrx cap.pos = cl.KGTR.KG[1].point
+                local prevTime = 0
                 for anim in cl.KGTR.KG do
                 (
                     local t = anim.time + 10
                     local p = anim.Point
+                    
+                    if ( prevTime == t ) then continue else prevTime = t
                     
                     with animate on at time t in coordsys mtrx cap.pos = p
                 )
@@ -1839,33 +2003,33 @@ struct Warcraft3_Reforged
     (
         format "Building Events\n"
         if (evts == undefined ) then return undefined
-        local layer = Warcraft3_Reforged.CreateLayer "Events"
+        local layer = GriffonStudios_Helpers.CreateLayer "Events"
+        
         for evt in evts do
         (
-            local pnt = point name:evt.Name
-            evt.objRef = pnt
-            setUserProp pnt "Type" "Event"
-            pnt.wirecolor = color 0 255 0
-
-            local nt = notetrack "Notes"
-            addNoteTrack pnt nt
+            local pnt = WC3RefEvent()  -- point name:evt.Name
+            
+            pnt.Name = evt.name
 
             for key in evt.KEVT do
-                AddNewNoteKey nt key
-
+                pnt.AddKey key
+            
+            evt.objRef = pnt
             layer.AddNode pnt
         )
         
     ),
-    function BuildPIVT pivts boneList atch evts clid lite corn=
+    function BuildPIVT pivts boneList atch evts clid lite corn ribb=
     (
         format "Building Pivots \n"
         if ( pivts == undefined ) then return undefined
         
-        local layerBones = Warcraft3_Reforged.CreateLayer "PIVT - Bones"
-        local layerAttachments = Warcraft3_Reforged.CreateLayer "PIVT - Attachments"
-        local layerEvents = Warcraft3_Reforged.CreateLayer "PIVT - Events"
-        local layerCol = Warcraft3_Reforged.CreateLayer "PIVT - Collision Objects"
+        local layerBones = GriffonStudios_Helpers.CreateLayer "PIVT - Bones"
+        local layerAttachments = GriffonStudios_Helpers.CreateLayer "PIVT - Attachments"
+        local layerEvents = GriffonStudios_Helpers.CreateLayer "PIVT - Events"
+        local layerCol = GriffonStudios_Helpers.CreateLayer "PIVT - Collision Objects"
+        local layerCorn = GriffonStudios_Helpers.CreateLayer "PIVT - Popcorn Effects"
+        local layerRibb = GriffonStudios_Helpers.CreateLayer "PIVT - Ribbon Emitters"
         
         for pivt in pivts do
         (
@@ -1924,9 +2088,16 @@ struct Warcraft3_Reforged
                 if ( c.Id == pivt.Id ) then 
                 (
                     p.Name = "PIVOT - " + c.name
-                    layerCol.AddNode p
+                    layerCorn.AddNode p
                 )
-                
+            
+            if ( ribb != undefined ) then
+            for r in ribb do 
+                if ( r.Id == pivt.Id ) then 
+                (
+                    p.Name = "PIVOT - " + r.name
+                    layerRibb.AddNode p
+                )
                 
             if ( substring p.Name 1 7 == "Unknown" ) then format "[Warning] Object with Id = % not found \n" ( pivt.id as integer)
         )
@@ -1935,12 +2106,14 @@ struct Warcraft3_Reforged
         layerAttachments.IsHidden = true
         layerEvents.IsHidden = true
         layerCol.IsHidden = true
+        layerRibb.IsHidden = true
+        layerCorn.IsHidden = true
     ),
     function BuildFAFX fafx=
     (
         format "Building Facial Effects\n"
         if ( fafx == undefined ) then return undefined
-        local layer = Warcraft3_Reforged.CreateLayer "Facial Effects"
+        local layer = GriffonStudios_Helpers.CreateLayer "Facial Effects"
  
         for f=1 to fafx.Count do
         (
@@ -1960,7 +2133,7 @@ struct Warcraft3_Reforged
         format "Building Cameras \n"
         if (cams == undefined ) then return undefined
         
-        local layer = Warcraft3_Reforged.CreateLayer "Cameras"
+        local layer = GriffonStudios_Helpers.CreateLayer "Cameras"
         for i=1 to cams.count do
         (   
             local c = cams[i]
@@ -2015,7 +2188,7 @@ struct Warcraft3_Reforged
             */
             local l = undefined
             
-            local layer = Warcraft3_Reforged.CreateLayer "Lights"
+            local layer = GriffonStudios_Helpers.CreateLayer "Lights"
             
             if ( lite.Type == 0 ) then 
                 l = Omnilight name:lite.name rgb:lite.rgbColor multiplier:lite.rgbIntensity farAttenStart:lite.FarAttenStart farAttenEnd:lite.FarAttenEnd
@@ -2068,6 +2241,108 @@ struct Warcraft3_Reforged
             )
         )
     ),
+    function BuildRIBB ribb boneList mtls=
+    (
+        if (ribb == undefined ) then return undefined
+        
+        format "Building ribbons\n"
+        
+        local layer = GriffonStudios_Helpers.CreateLayer "Ribbons"
+        
+        for r in ribb do
+        (
+            local ribbon = undefined
+            try ( ribbon = WC3RefRibbon() )
+            catch ( format "WC3ReforgedRibbon plugin not found\n"; exit )
+
+            layer.addNode ribbon
+            
+            ribbon.name = r.name
+            if ( boneList != undefined ) then 
+            (
+                ribbon.transform = boneList[r.parentBoneId].boneRef.transform
+                ribbon.parent = boneList[r.parentBoneId].boneref
+            )
+            ribbon.staticHeightAbove = r.staticHeightAbove
+            ribbon.staticHeightBelow = r.staticHeightBelow
+            ribbon.staticAlpha = r.staticAlpha
+            ribbon.staticColor = r.staticColor
+            ribbon.lifeSpan = r.lifeSpan
+            ribbon.emissionRate = r.emissionRate
+            ribbon.flipbookRows = r.flipbookRows
+            ribbon.flipbookColumns = r.flipbookColumns
+            ribbon.gravity = r.gravity
+            if ( mtls != undefined) then ribbon.mtlsId = mtls[r.mtlsId].materialRef
+            
+            -- animation time !
+            -- heightAbove
+            if ( r.KRHA != undefined ) then
+            for anim in r.KRHA.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticHeightAbove = p
+            )
+            -- heightBelow
+            if ( r.KRHB != undefined ) then
+            for anim in r.KRHB.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticHeightBelow = p
+            )
+            -- alpha
+            if ( r.KRAL != undefined ) then
+            for anim in r.KRAL.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticAlpha = p
+            )
+            -- color
+            if ( r.KRCO != undefined ) then
+            for anim in r.KRCO.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticColor = p
+            )
+            -- texture
+            if ( r.KRTX != undefined ) then
+            for anim in r.KRTX.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point + 1
+                with animate on at time t ribbon.mtlsId = mtls[p].materialRef
+            )
+            -- visibility
+            if ( r.KRVS != undefined ) then
+            (
+                local isVisibilityTrackRequired = false
+                for anim in r.KRVS.KG do
+                (
+                    if ( anim.point == 0) then isVisibilityTrackRequired = true
+                )
+                if ( isVisibilityTrackRequired == true ) then
+                (
+                    ribbon.Visibility = undefined 
+                    ribbon.Visibility = on
+                    ribbon.Visibility.controller = on_off()
+
+                    for anim in r.KRVS.KG do 
+                        with animate on at time ( anim.Time + 10 )
+                            if (anim.point == 1) then 
+                                ribbon.Visibility = on
+                            else
+                                ribbon.Visibility = off
+                )
+            )
+            
+            
+        )
+    
+        
+    ),
     /*
         MAIN IMPORT
     */
@@ -2075,13 +2350,13 @@ struct Warcraft3_Reforged
     (
         local startedAt = timestamp()
         
-        if ( file == undefined ) then throw("Provide a correct value for the parameter 'file'")
-        if ( doesFileExist file == false ) then throw("File does not exist!")
+        if ( file == undefined ) then ( throw ( "Provide a correct value for the parameter 'file'"); return undefined )
+        if ( doesFileExist file == false ) then ( throw("File does not exist!"); return undefined )
         
         SetWaitCursor()
         
         local stream = fOpen file "rb"
-        local streamLen = Warcraft3_Reforged.GetStreamLength stream
+        local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         local tags = Warcraft3_Reforged.ReadTags stream streamLen
         
         local vers -- version
@@ -2101,7 +2376,9 @@ struct Warcraft3_Reforged
         local corn -- particle emitter based on external .pkfx files
         local fafx -- facial effects based on on external .facefx_ingame files
         local lite -- lights
-        local gbls
+        local gbls -- global sequences, although it is just a number ...
+        local txan -- texture animation
+        local ribb -- ribbons
         
         -- VERS // version
         for tag in tags do 
@@ -2113,7 +2390,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-        print tags
+--         print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2154,48 +2431,58 @@ struct Warcraft3_Reforged
             if( tag.Name == "GLBS" ) then gbls = Warcraft3_Reforged.ReadGLBS stream tag
             -- TXAN // texture animations
             if( tag.Name == "TXAN" ) then txan = Warcraft3_Reforged.ReadTXAN stream tag
+            -- RIBB // ribbon emitters
+            if( tag.Name == "RIBB" ) then ribb = Warcraft3_Reforged.ReadRIBB stream tag
             
             -- PRE2 // particle emitter
-            -- RIBB // ribbon emitters
+            
             -- PREM // particle emitters    
             
         )
 
       
-Warcraft3_Reforged.BuildBONE boneList bpos pivt
-Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-Warcraft3_Reforged.BuildGEOS geos modl mtls
-Warcraft3_Reforged.BuildATCH atch bpos boneList
-Warcraft3_Reforged.BuildSKIN geos boneList
-Warcraft3_Reforged.BuildCLID clid boneList bpos
-Warcraft3_Reforged.BuildGEOA geoa geos
-Warcraft3_Reforged.BuildSEQS seqs
-Warcraft3_Reforged.BuildEVTS evts
-Warcraft3_Reforged.BuildFAFX fafx
-Warcraft3_Reforged.BuildCAMS cams
-Warcraft3_Reforged.BuildLITE lite pivt
-Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn        
---         
+    Warcraft3_Reforged.BuildBONE boneList bpos pivt
+    Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+    Warcraft3_Reforged.BuildGEOS geos modl mtls
+    Warcraft3_Reforged.BuildATCH atch bpos boneList
+    Warcraft3_Reforged.BuildSKIN geos boneList
+    Warcraft3_Reforged.BuildCLID clid boneList bpos
+    Warcraft3_Reforged.BuildGEOA geoa geos
+    Warcraft3_Reforged.BuildSEQS seqs
+    Warcraft3_Reforged.BuildEVTS evts
+    Warcraft3_Reforged.BuildFAFX fafx
+    Warcraft3_Reforged.BuildCAMS cams
+    Warcraft3_Reforged.BuildLITE lite pivt
+    Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn ribb     
+    Warcraft3_Reforged.BuildRIBB ribb bonelist mtls
+        
 /* TODO:         
     Build CORN
+    Build TXAN
+    Build GLBS
         
-   */     
+   */   
+   
 -- print modl
 -- print seqs
 -- print mtls
 -- print texs        
 -- print geos
+-- print cams
+-- print bpos
+-- print lite
+-- print txan
+-- print gbls
+
 -- print boneList
 -- print atch
+-- print ribb
+-- print corn
 -- print evts
 -- print clid
 -- print pivt
--- print bpos
--- print cams
--- print corn
--- print lite
- print txan
- 
+
+
         fclose stream
         gc()
         local endedAt = timestamp()
