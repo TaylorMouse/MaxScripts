@@ -2861,51 +2861,22 @@ struct Warcraft3_Reforged
         )
 
       
-    Warcraft3_Reforged.BuildBONE boneList bpos pivt
-    Warcraft3_Reforged.BuildMTLS mtls texs modl.name
-    Warcraft3_Reforged.BuildGEOS geos modl mtls
-    Warcraft3_Reforged.BuildATCH atch bpos boneList
-    Warcraft3_Reforged.BuildSKIN geos boneList
-    Warcraft3_Reforged.BuildCLID clid boneList bpos
-    Warcraft3_Reforged.BuildGEOA geoa geos
-    Warcraft3_Reforged.BuildSEQS seqs
-    Warcraft3_Reforged.BuildEVTS evts
-    Warcraft3_Reforged.BuildFAFX fafx
-    Warcraft3_Reforged.BuildCAMS cams
-    Warcraft3_Reforged.BuildLITE lite pivt
-    Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn ribb     
-    Warcraft3_Reforged.BuildRIBB ribb bonelist mtls
-    Warcraft3_Reforged.BuildPRE2 pre2 bonelist texs
-    Warcraft3_Reforged.BuildCORN corn bonelist
-        
-        
-/* TODO:         
-    Build TXAN
-    Build GLBS
-        
-   */   
-   
--- print modl
--- print seqs
--- print mtls
--- print texs        
--- print geos
--- print cams
--- print bpos
--- print lite
--- print txan
--- print gbls
-
--- print boneList
--- print atch
--- print ribb
---  print corn -- contains a reference to a shader file
---  print pre2
--- print fafx
--- print evts
--- print clid
--- print pivt
-
+        Warcraft3_Reforged.BuildBONE boneList bpos pivt
+        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+        Warcraft3_Reforged.BuildGEOS geos modl mtls
+        Warcraft3_Reforged.BuildATCH atch bpos boneList
+        Warcraft3_Reforged.BuildSKIN geos boneList
+        Warcraft3_Reforged.BuildCLID clid boneList bpos
+        Warcraft3_Reforged.BuildGEOA geoa geos
+        Warcraft3_Reforged.BuildSEQS seqs
+        Warcraft3_Reforged.BuildEVTS evts
+        Warcraft3_Reforged.BuildFAFX fafx
+        Warcraft3_Reforged.BuildCAMS cams
+        Warcraft3_Reforged.BuildLITE lite pivt
+        Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn ribb     
+        Warcraft3_Reforged.BuildRIBB ribb bonelist mtls
+        Warcraft3_Reforged.BuildPRE2 pre2 bonelist texs
+        Warcraft3_Reforged.BuildCORN corn bonelist
 
         fclose stream
         gc()
