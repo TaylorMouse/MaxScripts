@@ -1,10 +1,4 @@
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Ribbon.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Attachment.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Event.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Emitter.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_FaceFX.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Popcorn.ms"
+
 
 
 struct Warcraft3_Reforged_TAG
@@ -217,9 +211,7 @@ flags --> use this to export !!
     CollisionShape:8192
 */
 
-global Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
-global Warcraft3_ImportAllLOD = false
-global Warcraft3_ConvertToSC2 = true
+
 
 struct StarTools_Helpers
 (
