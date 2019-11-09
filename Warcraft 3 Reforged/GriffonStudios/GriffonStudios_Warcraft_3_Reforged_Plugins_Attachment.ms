@@ -5,12 +5,13 @@
 
 */
 
-
 plugin simpleManipulator WC3RefAttachment
     name: "Attachment"
-    classID:#(0x516e789, 0x5987888c)
+    classID:#(0xbf7f681, 0x44ab1223)
     category:"Warcraft 3 Reforged"
 (
+    
+        
     tool create
     (
         on mousePoint click do

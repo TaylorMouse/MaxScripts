@@ -33,7 +33,7 @@ plugin Material WC3RefMaterial
         diffuse_map     type:#texturemap animatable:false ui:mb_diffuse
         normal_map      type:#texturemap animatable:false ui:mb_normal
         orm_map         type:#texturemap animatable:false ui:mb_orm  --> R = occlusion, G = Roughness, B = Metal
-        teamcolor_map   type:#texturemap animatable:false ui:mb_teamcolor--> usually Alpha layer of the orm map
+        teamcolor_map   type:#texturemap animatable:false ui:mb_teamcolor --> usually Alpha layer of the orm map
         emissive_map    type:#texturemap animatable:false ui:mb_emissive
         emissive_alpha  type:#float      animatable:true  ui:spn_emissive
         alphamask_map   type:#texturemap animatable:false ui:mb_alphamask

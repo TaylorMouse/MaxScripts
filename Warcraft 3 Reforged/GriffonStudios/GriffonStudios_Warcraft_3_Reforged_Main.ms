@@ -1,7 +1,10 @@
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
 filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Ribbon.ms"
 filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Attachment.ms"
 filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Event.ms"
-filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Emitter.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_FaceFX.ms"
+filein "GriffonStudios_Warcraft_3_Reforged_Plugins_Popcorn.ms"
 
 
 struct Warcraft3_Reforged_TAG
@@ -76,7 +79,52 @@ struct Warcraft3_Reforged_TXAN
 struct Warcraft3_Reforged_RIBB
     ( Id, Name, ParentBoneId, Flags, KGRT, KGTR, KGSC, staticHeightAbove, staticHeightBelow, staticAlpha, staticColor, lifeSpan, textureId, emissionRate, flipbookRows, flipbookColumns, mtlsId, gravity, KRHA, KRHB, KRAL, KRCO, KRTX, KRVS )
 
+struct Warcraft3_Reforged_PRE2_FLAGS
+    ( DONT_INHERIT_TRANSLATION ,DONT_INHERIT_SCALING ,DONT_INHERIT_ROTATION,BILLBOARDED,BILLBOARD_LOCK_X,BILLBOARD_LOCK_Y,BILLBOARD_LOCK_Z,GENOBJECT_MDLBONESECTION,GENOBJECT_MDLLIGHTSECTION, GENOBJECT_MDLEVENTSECTION,GENOBJECT_MDLATTACHMENTSECTION,GENOBJECT_MDLPARTICLEEMITTER2,GENOBJECT_MDLHITTESTSHAPE,GENOBJECT_MDLRIBBONEMITTER,PROJECT,UNSHADED,SORT_PRIMITIVES_FAR_Z,LINE_EMITTER,PARTICLE_UNFOGGED,PARTICLE_USE_MODEL_SPACE, PARTICLE_INHERIT_SCALE,PARTICLE_INSTANT_VELOCITY_LIN,PARTICLE_0XKILL,PARTICLE_Z_VELOCITY_ONLY,PARTICLE_TUMBLER,PARTICLE_TAIL_GROWS,PARTICLE_EXTRUDE,PARTICLE_XYQUADS,PARTICLE_PROJECT,PARTICLE_FOLLOW )
 
+struct Warcraft3_Reforged_PRE2
+    ( Id, name, ParentId, KGRT, KGTR, KGSC, KP2V, KP2E, Flags, 
+        speed , 
+        variation, 
+        coneAngle , 
+        gravity, 
+        lifespan, 
+        emissionrate, 
+        length, 
+        width , 
+        emitterType, --> line emitter or not
+        rowCount, 
+        colCount, 
+        particleType,
+        tailLength, 
+        midTime, 
+        startColor, 
+        midColor, 
+        endColor, 
+        startAlpha, 
+        midAlpha, 
+        endAlpha, 
+        startSize, 
+        midSize, 
+        endSize, 
+        startLifespanUVAnim, 
+        midLifespanUVAnim, 
+        endLifespanUVAnim, 
+        startDecayUVAnim, 
+        midDecayUVAnim, 
+        endDecayUVAnim, 
+        startTailUVAnim, 
+        midTailUVAnim, 
+        endTailUVAnim, 
+        startTailDecayUVAnim, 
+        midTailDecayUVAnim, 
+        endTailDecayUVAnim, 
+        blendMode, 
+        textureId, 
+        priorityPlane, 
+        replacableTextureId  
+    )
+    
 /* TAGS
     VERS // version
     MODL // model
@@ -199,6 +247,10 @@ struct StarTools_Helpers
 
 struct GriffonStudios_Helpers
 (
+    function IsUndefinedBoolean val=
+    (
+        if (val == undefined ) then false else true
+    ),
     function CreateLayer layerName =
     (
         layer = LayerManager.GetLayerFromName layerName
@@ -846,6 +898,8 @@ struct Warcraft3_Reforged
                  0x100: Fallback
                 */
                 
+                
+                                
                 lay.textureId   = readLong stream + 1
                 lay.parentId    = readLong stream + 1
                 
@@ -1418,6 +1472,158 @@ struct Warcraft3_Reforged
         )
         return ribbs
     ),
+    function ReadPRE2 stream tag=
+    (
+        fseek stream tag.offset #seek_set
+       
+        local pre2s = #()
+        local totalSize = tag.Size
+        
+        while (totalSize > 0 ) do
+        (
+            local size = readLong stream
+            totalSize -= size
+            
+            local pe = Warcraft3_Reforged_PRE2()
+            local unk    = readLong stream -- always 96
+            pe.name      = GriffonStudios_Helpers.ReadFixedString stream 80
+            pe.id        = readLong stream + 1
+            pe.parentId  = readLong stream + 1
+            local flags     = readLong stream
+            
+            local flagSettings = Warcraft3_Reforged_PRE2_FLAGS()
+            if (flags > 0) then 
+            (
+                if ( (bit.and flags 0x00000001) > 0 ) then flagSettings.DONT_INHERIT_TRANSLATION = true
+                if ( (bit.and flags 0x00000002) > 0 ) then flagSettings.DONT_INHERIT_SCALING = true
+                if ( (bit.and flags 0x00000004) > 0 ) then flagSettings.DONT_INHERIT_ROTATION = true
+                if ( (bit.and flags 0x00000008) > 0 ) then flagSettings.BILLBOARDED = true
+                if ( (bit.and flags 0x00000010) > 0 ) then flagSettings.BILLBOARD_LOCK_X = true
+                if ( (bit.and flags 0x00000020) > 0 ) then flagSettings.BILLBOARD_LOCK_Y = true
+                if ( (bit.and flags 0x00000040) > 0 ) then flagSettings.BILLBOARD_LOCK_Z = true
+                if ( (bit.and flags 0x00000080) > 0 ) then flagSettings.GENOBJECT_MDLBONESECTION = true
+                if ( (bit.and flags 0x00000100) > 0 ) then flagSettings.GENOBJECT_MDLLIGHTSECTION = true
+                if ( (bit.and flags 0x00000200) > 0 ) then flagSettings.GENOBJECT_MDLEVENTSECTION = true
+                if ( (bit.and flags 0x00000400) > 0 ) then flagSettings.GENOBJECT_MDLATTACHMENTSECTION = true
+                if ( (bit.and flags 0x00000800) > 0 ) then flagSettings.GENOBJECT_MDLPARTICLEEMITTER2 = true
+                if ( (bit.and flags 0x00001000) > 0 ) then flagSettings.GENOBJECT_MDLHITTESTSHAPE = true
+                if ( (bit.and flags 0x00002000) > 0 ) then flagSettings.GENOBJECT_MDLRIBBONEMITTER = true
+                if ( (bit.and flags 0x00004000) > 0 ) then flagSettings.PROJECT = true
+                if ( (bit.and flags 0x00008000) > 0 ) then flagSettings.UNSHADED = true
+                if ( (bit.and flags 0x00010000) > 0 ) then flagSettings.SORT_PRIMITIVES_FAR_Z = true
+                if ( (bit.and flags 0x00020000) > 0 ) then flagSettings.LINE_EMITTER = true
+                if ( (bit.and flags 0x00040000) > 0 ) then flagSettings.PARTICLE_UNFOGGED = true
+                if ( (bit.and flags 0x00080000) > 0 ) then flagSettings.PARTICLE_USE_MODEL_SPACE = true
+                if ( (bit.and flags 0x00100000) > 0 ) then flagSettings.PARTICLE_INHERIT_SCALE = true
+                if ( (bit.and flags 0x00200000) > 0 ) then flagSettings.PARTICLE_INSTANT_VELOCITY_LIN = true
+                if ( (bit.and flags 0x00400000) > 0 ) then flagSettings.PARTICLE_0XKILL = true
+                if ( (bit.and flags 0x00800000) > 0 ) then flagSettings.PARTICLE_Z_VELOCITY_ONLY = true
+                if ( (bit.and flags 0x01000000) > 0 ) then flagSettings.PARTICLE_TUMBLER = true
+                if ( (bit.and flags 0x02000000) > 0 ) then flagSettings.PARTICLE_TAIL_GROWS = true
+                if ( (bit.and flags 0x04000000) > 0 ) then flagSettings.PARTICLE_EXTRUDE = true
+                if ( (bit.and flags 0x08000000) > 0 ) then flagSettings.PARTICLE_XYQUADS = true
+                if ( (bit.and flags 0x10000000) > 0 ) then flagSettings.PARTICLE_PROJECT = true
+                if ( (bit.and flags 0x20000000) > 0 ) then flagSettings.PARTICLE_FOLLOW = true
+            )
+            pe.flags = flagSettings
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KGTR" ) then pe.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KGRT" ) then pe.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+                if( kg == "KGSC" ) then pe.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+            )
+            
+            if( pe.KGSC == undefined ) then fseek stream -4 #seek_cur
+            if( pe.KGTR == undefined ) then fseek stream -4 #seek_cur
+            if( pe.KGRT == undefined ) then fseek stream -4 #seek_cur
+
+            pe.speed         = readFloat stream
+            pe.variation     = readFloat stream
+            pe.coneAngle      = readFloat stream
+            pe.gravity       = readFloat stream
+
+            pe.lifespan      = readFloat stream
+            pe.emissionrate  = readFloat stream
+           
+            pe.length        = readFloat stream
+            pe.width         = readFloat stream
+            
+            pe.emitterType   = readLong stream
+            pe.rowCount      = readLong stream
+            pe.colCount      = readLong stream
+            pe.particleType  = readLong stream
+            
+            pe.tailLength    = readFloat stream
+            pe.midTime       = readFloat stream
+            
+            local r = ( readFloat stream * 255 ) as integer
+            local g = ( readFloat stream * 255 ) as integer
+            local b = ( readFloat stream * 255 ) as integer
+            
+            pe.startColor    = color r g b
+            
+            local r = ( readFloat stream * 255 ) as integer
+            local g = ( readFloat stream * 255 ) as integer
+            local b = ( readFloat stream * 255 ) as integer
+            
+            pe.midColor      = color r g b
+            
+            local r = ( readFloat stream * 255 ) as integer
+            local g = ( readFloat stream * 255 ) as integer
+            local b = ( readFloat stream * 255 ) as integer
+            
+            pe.endColor      = color r g b
+            
+            pe.startAlpha    = readByte stream
+            pe.midAlpha      = readByte stream
+            pe.endAlpha      = readByte stream 
+
+            pe.startSize    = readFloat stream
+            pe.midSize      = readFloat stream
+            pe.endSize      = readFloat stream
+
+            pe.startLifespanUVAnim   = readLong stream
+            pe.midLifespanUVAnim     = readLong stream
+            pe.endLifespanUVAnim     = readLong stream
+            pe.startDecayUVAnim      = readLong stream
+            pe.midDecayUVAnim        = readLong stream
+            pe.endDecayUVAnim        = readLong stream
+            pe.startTailUVAnim       = readLong stream
+            pe.midTailUVAnim         = readLong stream
+            pe.endTailUVAnim         = readLong stream
+            pe.startTailDecayUVAnim  = readLong stream
+            pe.midTailDecayUVAnim    = readLong stream
+            pe.endTailDecayUVAnim    = readLong stream
+            pe.blendMode             = readLong stream
+            pe.textureId             = readLong stream
+            pe.replacableTextureId   = readLong stream 
+            pe.priorityPlane         = readLong stream
+              
+            /*
+                BASE = 0x0,
+                PLANE = 0x1,
+                SPHERE = 0x2,
+                SPLINE = 0x3,
+            */
+
+            for i=1 to 2 do
+            (
+                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
+                
+                if (anim == "KP2V" ) then pe.kp2v = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
+                if (anim == "KP2E" ) then pe.kp2e = Warcraft3_Reforged.ReadFloatAnim stream -- emission
+                
+            )
+            if( pe.kp2v == undefined ) then fseek stream -4 #seek_cur
+            if( pe.kp2e == undefined ) then fseek stream -4 #seek_cur
+            
+            append pre2s pe
+        )
+        return pre2s
+    ),
+        
     /* BUILD
     
     */
@@ -1486,14 +1692,17 @@ struct Warcraft3_Reforged
 
             local mat = WC3RefMaterial()
             mat.Name = modlName + "_MAT_" + (mtl.id as string )
-            if ( mtl.ShaderName == "Shader_HD_DefaultUnit" ) then mat.filtermode = 1
+            
+            if (mtl.lays.count > 0) then mat.filtermode = mtl.lays[1].filterMode
             
             for layer in mtl.lays do
             (
                 local textureId = layer.TextureId
                 local parts = filterString texs[textureId].path @"\"
-                local textureFile = Warcraft3_AssetFolder + texs[textureId]. path + texs[textureId].fileNameOnly + ".dds"
+                local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
+                if ( texs[textureId].fileNameOnly == "" or texs[textureId].fileNameOnly == undefined ) then continue
+                
                 case of 
                 (
                     (layer.id == 1): ( 
@@ -1511,9 +1720,10 @@ struct Warcraft3_Reforged
                         mat.emissive_map = Bitmaptexture fileName:textureFile
                         mat.emissive_alpha = layer.alpha * 100.0
                     )
-                    (layer.id == 5): ( -- TeamColor
-                        mat.teamcolor_map = Bitmaptexture fileName:textureFile
-                        
+                    (layer.id == 5): ( -- ?? this is usually TeamColor00.dds probably the texture used on the CORN particle effects
+                      
+                        format "Unknown texture usage '%'\n" textureFile
+
                     )
                     (layer.id == 6): ( -- refelection
                         mat.reflection_map = Bitmaptexture fileName:textureFile
@@ -1539,7 +1749,7 @@ struct Warcraft3_Reforged
                 
                
             )
-            meditMaterials[mtl.id] = mat
+            if( mtl.id < 25 ) then meditMaterials[mtl.id] = mat
             
             mtl.materialRef = mat
         )
@@ -2117,12 +2327,11 @@ struct Warcraft3_Reforged
  
         for f=1 to fafx.Count do
         (
-            local fafxObj = GriffonStudios_Helpers.CreateFacialEffectsSpline()    
+            local fafxObj = WC3RefFaceFX()   
             
             fafxObj.Name = fafx[f].Name
-            setUserProp fafxObj "FileName" fafx[f].ExternalFileName
-            fafx[f].objRef = fafxObj
-        
+            fafxObj.fileName = fafx[f].ExternalFileName
+            
             layer.AddNode fafxObj
         )
         
@@ -2343,6 +2552,224 @@ struct Warcraft3_Reforged
     
         
     ),
+    function BuildPRE2 particleEmitters boneList textures=
+    (
+        format "Building Particle Emitters \n"
+        if( particleEmitters == undefined ) then return undefined
+        
+        local layer = GriffonStudios_Helpers.CreateLayer "Emitters"
+        
+        for pe in particleEmitters do
+        (
+            local emitter = WC3RefEmitter()
+            layer.addNode emitter
+            emitter.name =  pe.name
+            if ( boneList != undefined ) then 
+            (
+                if pe.ParentId > 0 then 
+                (
+                    emitter.transform = boneList[pe.ParentId].boneRef.transform
+                    emitter.parent = boneList[pe.ParentId].boneRef
+                )
+            )
+            if (pe.Flags != undefined ) then
+            (
+                emitter.DONT_INHERIT_TRANSLATION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.DONT_INHERIT_TRANSLATION
+                emitter.DONT_INHERIT_SCALING = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.DONT_INHERIT_SCALING
+                emitter.DONT_INHERIT_ROTATION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.DONT_INHERIT_ROTATION
+                emitter.BILLBOARDED = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.BILLBOARDED
+                emitter.BILLBOARD_LOCK_X = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.BILLBOARD_LOCK_X
+                emitter.BILLBOARD_LOCK_Y = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.BILLBOARD_LOCK_Y
+                emitter.BILLBOARD_LOCK_Z = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.BILLBOARD_LOCK_Z
+                emitter.GENOBJECT_MDLBONESECTION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLBONESECTION
+                emitter.GENOBJECT_MDLLIGHTSECTION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLLIGHTSECTION
+                emitter.GENOBJECT_MDLEVENTSECTION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLEVENTSECTION
+                emitter.GENOBJECT_MDLATTACHMENTSECTION = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLATTACHMENTSECTION
+                emitter.GENOBJECT_MDLPARTICLEEMITTER2 = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLPARTICLEEMITTER2
+                emitter.GENOBJECT_MDLHITTESTSHAPE = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLHITTESTSHAPE
+                emitter.GENOBJECT_MDLRIBBONEMITTER = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.GENOBJECT_MDLRIBBONEMITTER
+                emitter.PROJECT = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PROJECT
+                emitter.UNSHADED = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.UNSHADED
+                emitter.SORT_PRIMITIVES_FAR_Z = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.SORT_PRIMITIVES_FAR_Z
+                emitter.LINE_EMITTER = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.LINE_EMITTER
+                emitter.PARTICLE_UNFOGGED = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_UNFOGGED
+                emitter.PARTICLE_USE_MODEL_SPACE = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_USE_MODEL_SPACE
+                emitter.PARTICLE_INHERIT_SCALE = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_INHERIT_SCALE
+                emitter.PARTICLE_INSTANT_VELOCITY_LIN = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_INSTANT_VELOCITY_LIN
+                emitter.PARTICLE_0XKILL = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_0XKILL
+                emitter.PARTICLE_Z_VELOCITY_ONLY = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_Z_VELOCITY_ONLY
+                emitter.PARTICLE_TUMBLER = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_TUMBLER
+                emitter.PARTICLE_TAIL_GROWS = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_TAIL_GROWS
+                emitter.PARTICLE_EXTRUDE = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_EXTRUDE
+                emitter.PARTICLE_XYQUADS = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_XYQUADS
+                emitter.PARTICLE_PROJECT = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_PROJECT
+                emitter.PARTICLE_FOLLOW = GriffonStudios_Helpers.IsUndefinedBoolean pe.Flags.PARTICLE_FOLLOW
+
+            )
+            emitter.speed = pe.speed  
+            emitter.variation = pe.variation 
+            emitter.coneAngle = pe.coneAngle / 2.0 
+            emitter.gravity = pe.gravity 
+            emitter.lifespan = pe.lifespan 
+            emitter.emissionRate = pe.emissionrate 
+            emitter.length = pe.length 
+            emitter.width = pe.width  
+            emitter.emitterType = pe.emitterType 
+            emitter.rowCount = pe.rowCount 
+            emitter.colCount = pe.colCount 
+            emitter.particleType = pe.particleType + 1
+            emitter.tailLength = pe.tailLength 
+            emitter.midTime = pe.midTime 
+            emitter.startColor  = pe.startColor 
+            emitter.midColor  = pe.midColor 
+            emitter.endColor  = pe.endColor 
+            emitter.startAlpha  = pe.startAlpha 
+            emitter.midAlpha  = pe.midAlpha 
+            emitter.endAlpha  = pe.endAlpha 
+            emitter.startSize  = pe.startSize 
+            emitter.midSize  = pe.midSize 
+            emitter.endSize  = pe.endSize 
+            emitter.startLifespanUVAnim  = pe.startLifespanUVAnim 
+            emitter.midLifespanUVAnim  = pe.midLifespanUVAnim 
+            emitter.endLifespanUVAnim  = pe.endLifespanUVAnim 
+            emitter.startDecayUVAnim  = pe.startDecayUVAnim 
+            emitter.midDecayUVAnim  = pe.midDecayUVAnim 
+            emitter.endDecayUVAnim  = pe.endDecayUVAnim 
+            emitter.startTailUVAnim  = pe.startTailUVAnim 
+            emitter.midTailUVAnim  = pe.midTailUVAnim 
+            emitter.endTailUVAnim  = pe.endTailUVAnim 
+            emitter.startTailDecayUVAnim = pe.startTailDecayUVAnim 
+            emitter.midTailDecayUVAnim  = pe.midTailDecayUVAnim 
+            emitter.endTailDecayUVAnim  = pe.endTailDecayUVAnim 
+            emitter.blendMode  = pe.blendMode 
+            emitter.priorityPlane  = pe.priorityPlane 
+            emitter.replacableTextureId  = pe.replacableTextureId  + 1
+            emitter.texture = textures[pe.TextureId + 1].path  + textures[pe.TextureId + 1].fileNameOnly + ".dds"
+
+
+            if( pe.KP2E != undefined) then
+                for anim in pe.KP2E do
+                    with animate on at time ( anim.Time + 10 ) 
+                        emitter.emissionRate = anim.Point
+
+            if( pe.KGRT != undefined) then 
+                for anim in pe.KGRT.KG do
+                    with animate on at time ( anim.Time + 10 )  in coordsys parent 
+                        emitter.rotation = anim.Point
+
+            local prevPos = [0,0,0]
+            if(emitter.parent != undefined ) then prevPos = emitter.parent.pos
+            if( pe.KGTR != undefined) then 
+                for anim in c.KGTR.KG do
+                    with animate on at time ( anim.Time + 10 ) 
+                        emitter.pos = prevPos + anim.Point
+            
+           
+            if( pe.KGSC != undefined) then 
+                for anim in pe.KGSC.KG do
+                    with animate on at time ( anim.Time + 10 ) 
+                        emitter.scale = anim.Point
+            
+            if( pe.KP2V != undefined) then
+            (
+                local isVisibilityTrackRequired = false -- by default evertythng is 1
+                
+                for anim in pe.KP2V.KG do
+                    if ( anim.point == 0) then isVisibilityTrackRequired = true
+
+                if ( isVisibilityTrackRequired == true ) then
+                (
+                    emitter.Visibility = undefined 
+                    emitter.Visibility = on
+                    emitter.Visibility.controller = on_off()
+
+                    for anim in pe.KP2V.KG do 
+                        with animate on at time ( anim.Time + 10 )
+                            if (anim.point == 1) then 
+                                emitter.Visibility = on
+                            else
+                                emitter.Visibility = off
+                ) 
+            )
+
+
+
+        )
+        
+    ),
+    function BuildCORN corn boneList=
+    (
+        format "Building PopCorn \n"
+        if( corn == undefined ) then return undefined
+        
+        local layer = GriffonStudios_Helpers.CreateLayer "Popcorn"
+        
+        for c in corn do
+        (
+            local cObj = WC3RefPopCorn()
+            cObj.Name = c.Name
+            
+            local path = getFilenamePath c.FileName
+            local fileNameOnly = getfilenamefile c.fileName
+            
+            cObj.FileName = path + fileNameOnly + ".pkb"
+            
+            for prop in c.Properties do
+            (
+                local parts = filterString prop "="
+                
+                if (parts[1] == "Always" and parts[2] == "On" )  then cObj.Always = true
+                if (parts[1] == "Death" and parts[2] == "On" )  then cObj.Death = true
+                if (parts[1] == "Dissipate" and parts[2] == "On" )  then cObj.Dissipate = true
+                if (parts[1] == "Portrait" and parts[2] == "On" )  then cObj.Portrait = true
+            )
+    
+            if ( c.ParentId > 0 ) then
+                if ( boneList != undefined) then
+                    if ( boneList[c.ParentId].boneRef != undefined ) then cObj.Parent = boneList[c.ParentId].boneRef
+
+            if( c.KGRT != undefined) then 
+                for anim in c.KGRT.KG do
+                    with animate on at time ( anim.Time + 10 ) 
+                        cObj.rotation = anim.Point
+
+            if( c.KGTR != undefined) then 
+                for anim in c.KGTR.KG do
+                    with animate on at time ( anim.Time + 10 ) 
+                        cObj.pos = anim.Point
+            
+            if( c.KGSC != undefined) then 
+                for anim in c.KGSC.KG do
+                    with animate on at time ( anim.Time + 10 ) 
+                        cObj.scale = anim.Point
+            
+            if( c.KPPV != undefined) then
+            (
+                local isVisibilityTrackRequired = false -- by default evertythng is 1
+                
+                for anim in c.KPPV.KG do
+                    if ( anim.point == 0) then isVisibilityTrackRequired = true
+
+                if ( isVisibilityTrackRequired == true ) then
+                (
+                    cObj.Visibility = undefined 
+                    cObj.Visibility = on
+                    cObj.Visibility.controller = on_off()
+
+                    for anim in c.KPPV.KG do 
+                        with animate on at time ( anim.Time + 10 )
+                            if (anim.point == 1) then 
+                                cObj.Visibility = on
+                            else
+                                cObj.Visibility = off
+                ) 
+            )
+                    
+                
+        )
+        
+        
+    ),
     /*
         MAIN IMPORT
     */
@@ -2379,6 +2806,7 @@ struct Warcraft3_Reforged
         local gbls -- global sequences, although it is just a number ...
         local txan -- texture animation
         local ribb -- ribbons
+        local pre2 -- emitters
         
         -- VERS // version
         for tag in tags do 
@@ -2390,7 +2818,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
---         print tags
+        print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2433,8 +2861,8 @@ struct Warcraft3_Reforged
             if( tag.Name == "TXAN" ) then txan = Warcraft3_Reforged.ReadTXAN stream tag
             -- RIBB // ribbon emitters
             if( tag.Name == "RIBB" ) then ribb = Warcraft3_Reforged.ReadRIBB stream tag
-            
             -- PRE2 // particle emitter
+            if( tag.Name == "PRE2" ) then pre2 = Warcraft3_Reforged.ReadPRE2 stream tag
             
             -- PREM // particle emitters    
             
@@ -2455,9 +2883,11 @@ struct Warcraft3_Reforged
     Warcraft3_Reforged.BuildLITE lite pivt
     Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn ribb     
     Warcraft3_Reforged.BuildRIBB ribb bonelist mtls
+    Warcraft3_Reforged.BuildPRE2 pre2 bonelist texs
+    Warcraft3_Reforged.BuildCORN corn bonelist
+        
         
 /* TODO:         
-    Build CORN
     Build TXAN
     Build GLBS
         
@@ -2477,7 +2907,9 @@ struct Warcraft3_Reforged
 -- print boneList
 -- print atch
 -- print ribb
--- print corn
+--  print corn -- contains a reference to a shader file
+--  print pre2
+-- print fafx
 -- print evts
 -- print clid
 -- print pivt
@@ -2494,14 +2926,6 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\peasant\peasant.mdx"
-file = getOpenFileName \
-			caption:"Heroes of the Storm" \
-			types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
-			historyCategory:"ReforgedPreset"
 
-
-
-Warcraft3_Reforged.Import file
 
 
