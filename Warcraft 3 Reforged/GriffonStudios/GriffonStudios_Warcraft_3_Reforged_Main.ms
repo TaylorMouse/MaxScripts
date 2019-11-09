@@ -2699,6 +2699,7 @@ struct Warcraft3_Reforged
         for c in corn do
         (
             local cObj = WC3RefPopCorn()
+            layer.addnode cObj
             cObj.Name = c.Name
             
             local path = getFilenamePath c.FileName
