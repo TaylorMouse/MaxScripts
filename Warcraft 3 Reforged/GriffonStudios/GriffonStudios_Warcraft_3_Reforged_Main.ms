@@ -2810,7 +2810,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-        print tags
+       -- print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2880,6 +2880,7 @@ struct Warcraft3_Reforged
 
         fclose stream
         gc()
+        print "DONE"
         local endedAt = timestamp()
         setArrowCursor() 
         txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
