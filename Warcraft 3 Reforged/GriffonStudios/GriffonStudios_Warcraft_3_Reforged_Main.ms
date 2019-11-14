@@ -1738,22 +1738,33 @@ struct Warcraft3_Reforged
             uniqueId +=1
         )
     ),
-    function BuildMTLS mtls texs modlName=
+    function BuildMTLS mtls texs modlName geos=
     (
         if ( mtls == undefined ) then return undefined
         format "Building Materials\n"
-        /*
-            TODO: map this to SC2 or Warcraft 3 Materials.
-        */
+
         for mtl in mtls do
         (
-
+            local possibleName = modlName 
+            for geo in geos do
+            (
+                if geo.MATS.LOD == 0 then
+                (
+                    
+                    if geo.MATS.Id == mtl.Id then 
+                    (
+                        local parts = filterString geo.MATS.name ":"
+                        
+                        possibleName = parts[parts.count]
+                        
+                    )
+                    
+                )
+            )
             local mat = WC3RefMaterial()
-            mat.Name = modlName + "_MAT_" + (mtl.id as string )
+            mat.Name = possibleName + "_MAT_" + (mtl.id as string )
             
             if (mtl.lays.count > 0) then mat.filtermode = mtl.lays[1].filterMode
-            
-            print mtl.lays
             
             for layer in mtl.lays do
             (
@@ -2940,7 +2951,7 @@ struct Warcraft3_Reforged
         )
         Warcraft3_Reforged.BuildMODL modl
         Warcraft3_Reforged.BuildBONE boneList bpos pivt
-        Warcraft3_Reforged.BuildMTLS mtls texs modl.name
+        Warcraft3_Reforged.BuildMTLS mtls texs modl.name geos
         Warcraft3_Reforged.BuildGEOS geos modl mtls
         Warcraft3_Reforged.BuildATCH atch bpos boneList
         Warcraft3_Reforged.BuildSKIN geos boneList
@@ -2968,7 +2979,7 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
+--  file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
 
--- Warcraft3_Reforged.Import file
+--  Warcraft3_Reforged.Import file
 
