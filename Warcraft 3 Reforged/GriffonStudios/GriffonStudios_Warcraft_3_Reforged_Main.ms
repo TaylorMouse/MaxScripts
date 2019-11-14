@@ -2,7 +2,7 @@ struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
 
 struct Warcraft3_Reforged_MODL
-    ( Name, PointA, PointB, Unk1 )
+    ( Name, bbBox, Always150 )
 
 struct Warcraft3_Reforged_GEO
     ( VRTX, NRMS, PTYP, PCNT, PVTX, GNDX, MTGC, MATS, TANG, SKIN, UVS, meshRef ) 
@@ -223,6 +223,74 @@ struct StarTools_Helpers
 
 struct GriffonStudios_Helpers
 (
+    function BuildSpline spline points=
+    (
+        if spline == undefined then spline = SplineShape pos:[0,0,0]
+        spline.WireColor = gray
+        spline.renderable = off
+        
+        local index = addNewSpline spline
+        
+        for p in points do addKnot spline index #corner #curve p
+        
+        close spline index
+
+        updateShape spline
+        
+        return spline
+    ),
+    function BuildBoundingBox bbBox=
+    (
+        local p1 = bbBox[1]
+        local p2 = bbBox[2]
+
+        local xMin = 0
+        local xMax = 0
+        local yMin = 0
+        local yMax = 0
+        local zMin = 0
+        local zMax = 0
+        
+        if p1.x < p2.x then 
+            ( 
+                xMin = p1.x
+                xMax = p2.X
+            )
+        else
+            ( 
+                xMin = p2.x
+                xMax = p1.x
+            )
+        if p1.y < p2.y then 
+            ( 
+                yMin = p1.y
+                yMax = p2.y
+            )
+        else
+            ( 
+                yMin = p2.y
+                yMax = p1.y
+            )
+        if p1.z < p2.z then 
+            ( 
+                zMin = p1.z
+                zMax = p2.z
+            )
+        else
+            ( 
+                zMin = p2.z
+                zMax = p1.z
+            )
+        
+        local help = GriffonStudios_Helpers()
+        local s = help.BuildSpline s #([xMin, yMin, zMin], [xMax, yMin, zMin], [xMax,yMin, zMax], [xMin,yMin, zMax], [xMin, yMin, zMin] )
+        s = help.BuildSpline s #([xMin, yMax, zMin], [xMax, yMax, zMin], [xMax,yMax, zMax], [xMin,yMax, zMax], [xMin, yMax, zMin] )
+        s = help.BuildSpline s #([xMin, yMax, zMin], [xMin, yMin, zMin])
+        s = help.BuildSpline s #([xMin, yMax, zMax], [xMin, yMin, zMax])    
+        s = help.BuildSpline s #([xMax, yMax, zMin], [xMax, yMin, zMin])
+        s = help.BuildSpline s #([xMax, yMax, zMax], [xMax, yMin, zMax])
+    ),
+    
     function IsUndefinedBoolean val=
     (
         if (val == undefined ) then false else true
@@ -529,10 +597,11 @@ struct Warcraft3_Reforged
         modl.name = GriffonStudios_Helpers.ReadFixedString stream 80
         GriffonStudios_Helpers.SkipBytes stream (tag.size - 80 - 28)
         
-
-        modl.PointA = [readFloat stream, readFloat stream, readFloat stream]
-        modl.PointB = [readFloat stream, readFloat stream, readFloat stream]
-        modl.Unk1 = readLong stream
+        modl.bbBox = #()
+        
+        append modl.bbBox [readFloat stream, readFloat stream, readFloat stream]
+        append modl.bbBox [readFloat stream, readFloat stream, readFloat stream]
+        modl.Always150 = readLong stream
         
         return modl
         
@@ -1249,7 +1318,7 @@ struct Warcraft3_Reforged
         while (totalSize > 0 ) do
         (
             local cor = Warcraft3_Reforged_CORN()
-            print (ftell stream)
+            
             local chunkSize = readLong stream
             totalSize -= chunkSize
             
@@ -1606,6 +1675,14 @@ struct Warcraft3_Reforged
     /* BUILD
     
     */
+    function BuildMODL modl=
+    (
+        --print modl
+        local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
+        obj.name = modl.name
+        obj.scale = [0.5,0.5,0.5]
+        freeze obj
+    ),
     function BuildGEOS geos modl mtls=
     (
         if (geos == undefined ) then return undefined
@@ -2861,7 +2938,7 @@ struct Warcraft3_Reforged
             -- PREM // particle emitters    
             
         )
-
+        Warcraft3_Reforged.BuildMODL modl
         Warcraft3_Reforged.BuildBONE boneList bpos pivt
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
         Warcraft3_Reforged.BuildGEOS geos modl mtls
@@ -2891,7 +2968,7 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
---file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
 
---Warcraft3_Reforged.Import file
+-- Warcraft3_Reforged.Import file
 
