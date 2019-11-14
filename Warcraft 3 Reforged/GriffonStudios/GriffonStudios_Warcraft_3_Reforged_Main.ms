@@ -56,7 +56,7 @@ struct Warcraft3_Reforged_CAMS
     ( Id, Name, Pos,  FOV, FarClip, NearClip, TargetPos, KCTR, KTTR, KCRL, objRef )
 
 struct Warcraft3_Reforged_CORN
-    ( Id, Name, FileName, Properties, ParentId, Flags, KPPA, KPPV, KGSC, KGTR, KGRT )
+    ( Id, Name, FileName, Properties, ParentId, Flags, KPPA, KPPV,KPPE, KGSC, KGTR, KGRT )
 
 struct Warcraft3_Reforged_LITE
     ( Id, ParentId, Name, Flags, Type, FarAttenStart, FarAttenEnd, rgbColor, rgbIntensity, ambColor, ambIntensity, KGSC, KGTR, KGRT )
@@ -901,7 +901,7 @@ struct Warcraft3_Reforged
             
             append mtls mtl
         )
-        print mtls
+        --print mtls
         return mtls
         
     ),
@@ -1249,6 +1249,7 @@ struct Warcraft3_Reforged
         while (totalSize > 0 ) do
         (
             local cor = Warcraft3_Reforged_CORN()
+            print (ftell stream)
             local chunkSize = readLong stream
             totalSize -= chunkSize
             
@@ -1277,16 +1278,18 @@ struct Warcraft3_Reforged
             
             cor.properties = filterString props ", "
             
-            for i=1 to 2 do
+            for i=1 to 3 do
             (
                 local anim = GriffonStudios_Helpers.ReadFixedString stream 4
-                
+                if (anim == "KPPE") then cor.kppe = Warcraft3_Reforged.ReadFloatAnim stream
                 if (anim == "KPPA") then cor.kppa = Warcraft3_Reforged.ReadFloatAnim stream -- alpha
                 if (anim == "KPPV") then cor.kppv = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
             )
+            if( cor.kppe == undefined ) then fseek stream -4 #seek_cur
             if( cor.kppa == undefined ) then fseek stream -4 #seek_cur
             if( cor.kppv == undefined ) then fseek stream -4 #seek_cur
-            
+
+--             print cor
             append corn cor
         )
 
@@ -2809,7 +2812,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
---        print tags
+--         print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2888,6 +2891,7 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
 
-
+Warcraft3_Reforged.Import file
 
