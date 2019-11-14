@@ -1,6 +1,3 @@
-
-
-
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
 
@@ -20,7 +17,7 @@ struct Warcraft3_Reforged_ATCH
     ( Id, Name, ParentBoneId, Flags, Offset, Size, KGTR, KGRT, KGSC, KATV)
 
 struct Warcraft3_Reforged_SEQS
-    ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity )
+    ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity,Priority,Default, BBox )
 	
 struct Warcraft3_Reforged_KG
 	( Time, Point, inTan, outTan, LineType )
@@ -199,19 +196,6 @@ struct Warcraft3_Reforged_PRE2
 
 
 */
-/*
-flags --> use this to export !!
-    Bone:256
-    Light:512
-    Attachment:2048
-    ParticleEmitter:4096
-    ParticleEmitter2:4096
-    RibbonEmitter:16384
-    Event:1024
-    CollisionShape:8192
-*/
-
-
 
 struct StarTools_Helpers
 (
@@ -545,7 +529,7 @@ struct Warcraft3_Reforged
         modl.name = GriffonStudios_Helpers.ReadFixedString stream 80
         GriffonStudios_Helpers.SkipBytes stream (tag.size - 80 - 28)
         
-        
+
         modl.PointA = [readFloat stream, readFloat stream, readFloat stream]
         modl.PointB = [readFloat stream, readFloat stream, readFloat stream]
         modl.Unk1 = readLong stream
@@ -849,7 +833,7 @@ struct Warcraft3_Reforged
         (
             local mtl = Warcraft3_Reforged_MTLS()
             mtl.Id = mtlsId
-            local size = readLong stream -- size is usually 620 bytes
+            local size = readLong stream
             totalSize -= size
             
             mtl.priorityPlane = readLong stream
@@ -864,8 +848,8 @@ struct Warcraft3_Reforged
             (
                 local lay = Warcraft3_Reforged_LAYS()
                 lay.Id = l
-                local bytes     = readLong stream
-                lay.filterMode  = readLong stream
+                local bytes     = readLong stream -- 32
+                lay.filterMode  = readLong stream + 1
                 /* filterMode
                  0x0: none
                  0x1: transparent
@@ -917,7 +901,7 @@ struct Warcraft3_Reforged
             
             append mtls mtl
         )
-        
+        print mtls
         return mtls
         
     ),
@@ -999,13 +983,13 @@ struct Warcraft3_Reforged
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
-            GriffonStudios_Helpers.SkipBytes stream (8*4)
+            seq.Default = readlong stream
+            seq.Priority = readFloat stream
+            
+            seq.BBox = #([readfloat stream,readfloat stream,readfloat stream], [readfloat stream,readfloat stream,readfloat stream] )
 
             append seqs seq
         )
-        
-        
-        
         
         return seqs
         
@@ -1621,6 +1605,8 @@ struct Warcraft3_Reforged
     */
     function BuildGEOS geos modl mtls=
     (
+        if (geos == undefined ) then return undefined
+        
         local wireColor = color 128 128 128
         local uniqueId = 1
         for geo in geos do
@@ -1687,14 +1673,16 @@ struct Warcraft3_Reforged
             
             if (mtl.lays.count > 0) then mat.filtermode = mtl.lays[1].filterMode
             
+            print mtl.lays
+            
             for layer in mtl.lays do
             (
                 local textureId = layer.TextureId
                 local parts = filterString texs[textureId].path @"\"
                 local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
-                if ( texs[textureId].fileNameOnly == "" or texs[textureId].fileNameOnly == undefined ) then continue
-                
+                --if ( texs[textureId].fileNameOnly == "" or texs[textureId].fileNameOnly == undefined ) then continue
+                print layer.id
                 case of 
                 (
                     (layer.id == 1): ( 
@@ -1712,9 +1700,10 @@ struct Warcraft3_Reforged
                         mat.emissive_map = Bitmaptexture fileName:textureFile
                         mat.emissive_alpha = layer.alpha * 100.0
                     )
-                    (layer.id == 5): ( -- ?? this is usually TeamColor00.dds probably the texture used on the CORN particle effects
-                      
-                        format "Unknown texture usage '%'\n" textureFile
+                    (layer.id == 5): 
+                    (
+                        format "Replacabel texture % \n" textureFile
+                        mat.replacable_map = Bitmaptexture fileName:textureFile
 
                     )
                     (layer.id == 6): ( -- refelection
@@ -1874,6 +1863,7 @@ struct Warcraft3_Reforged
     ),
     function BuildBONE boneList bpos pivts=
     (
+        if ( boneList == undefined ) then return undefined
         format "Building Bones\n"
         local layer = GriffonStudios_Helpers.CreateLayer "Bones"
         
@@ -1908,13 +1898,21 @@ struct Warcraft3_Reforged
         for obj in boneList do
         (
             local b = obj.boneRef
+            b.assumeSkinPose()
+            --in coordsys parent b.rotation = bpos[obj.id].matrix.rotationpart
             b.pos = bpos[obj.id].matrix.row4
+            
+            
         )
 
+
+        
         -- apply bone animation
+        local applyBoneAnim = true
+        if applyBoneAnim == true then 
         for obj in boneList do
         (
-                        local b = obj.boneRef
+            local b = obj.boneRef
             
             if ( obj.KGRT != undefined ) then 
             (
@@ -2769,8 +2767,8 @@ struct Warcraft3_Reforged
     function Import file=
     (
         local startedAt = timestamp()
-        
-        if ( file == undefined ) then ( throw ( "Provide a correct value for the parameter 'file'"); return undefined )
+        print file
+        if ( file == undefined ) then  return undefined 
         if ( doesFileExist file == false ) then ( throw("File does not exist!"); return undefined )
         
         SetWaitCursor()
@@ -2811,7 +2809,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
-       -- print tags
+--        print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2861,7 +2859,6 @@ struct Warcraft3_Reforged
             
         )
 
-      
         Warcraft3_Reforged.BuildBONE boneList bpos pivt
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name
         Warcraft3_Reforged.BuildGEOS geos modl mtls

@@ -38,6 +38,7 @@ plugin Material WC3RefMaterial
         emissive_alpha  type:#float      animatable:true  ui:spn_emissive
         alphamask_map   type:#texturemap animatable:false ui:mb_alphamask
         reflection_map  type:#texturemap animatable:false ui:mb_reflection
+        replacable_map  type:#texturemap animatable:false ui:mb_replacable
        
        /* filterMode
          0x0: Opaque
@@ -114,7 +115,11 @@ plugin Material WC3RefMaterial
         label lbl7 "Reflection . . ."   align:#left offset:[0,10]
             mapbutton mb_reflection "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
     
-        groupbox grpMaps "Texture Maps" height:280 pos:[5,160] width:315 
+        label lbl8 "Replacable . . ."   align:#left offset:[0,10]
+            mapbutton mb_replacable "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
+    
+    
+        groupbox grpMaps "Texture Maps" height:300 pos:[5,160] width:315 
     
         
     )
