@@ -1685,7 +1685,7 @@ struct Warcraft3_Reforged
                 local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
                 --if ( texs[textureId].fileNameOnly == "" or texs[textureId].fileNameOnly == undefined ) then continue
-                print layer.id
+
                 case of 
                 (
                     (layer.id == 1): ( 
@@ -1715,7 +1715,7 @@ struct Warcraft3_Reforged
                 )
                 
                 
-                showTextureMap mat mat.diffuse_Map true
+                showTextureMap mat true
                 
                 /* animated texture */
                 if ( layer.KMTA != undefined ) then
@@ -2891,7 +2891,7 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
 
-Warcraft3_Reforged.Import file
+--Warcraft3_Reforged.Import file
 
