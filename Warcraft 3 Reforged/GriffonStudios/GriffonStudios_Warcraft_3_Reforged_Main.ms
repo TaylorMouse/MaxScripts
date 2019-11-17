@@ -646,6 +646,8 @@ struct Warcraft3_Reforged
         local currentRelativePosition = 0
         local geos = #()
         
+        print 
+        
         while ( tag.Size > currentRelativePosition ) do
         (
             local size = readLong stream
@@ -699,16 +701,16 @@ struct Warcraft3_Reforged
             )
             geo.PTYP = types
 
-            /* Corners */
-            local corners = #()
+            /* Primitives */
+            local primitives = #()
             local pcnt = GriffonStudios_Helpers.ReadFixedString stream 4
             local nPcnt = readLong stream
             for p=1 to nPcnt do 
             (
                 local cn = readLong stream
-                append corners cn
+                append primitives cn
             )
-            geo.PCNT = corners
+            geo.PCNT = primitives
             
             /* Indices */  
             local indices = #()
@@ -785,8 +787,6 @@ struct Warcraft3_Reforged
                 local w2 = ((readByte stream #unsigned) / 255.0)
                 local w3 = ((readByte stream #unsigned) / 255.0)
                 local w4 = ((readByte stream #unsigned) / 255.0)
-
-
 
                     append w.BoneIds b1
                     
@@ -1158,32 +1158,31 @@ struct Warcraft3_Reforged
     (
         fseek stream tag.offset #seek_set
         
+        local totalSize = tag.Size
+        
         local geoa = #()
         
-        local len = readLong stream
-        GriffonStudios_Helpers.SkipBytes stream (len - 4)
-        local len = readLong stream
-        GriffonStudios_Helpers.SkipBytes stream (len - 4)
-        local baseLen= 0
-        while ( (ftell stream) < tag.offset + tag.size ) do
+        while ( totalSize > 0 ) do
         (
             local ga = Warcraft3_Reforged_GEOA()
             
-            local len = readLong stream -- total chunk size
+            local miniSize = readLong stream
+            totalSize -= miniSize
             
-            GriffonStudios_Helpers.SkipBytes stream 20
+            for i=1 to 5 do readFloat stream
+            
             ga.GeoId = readLong stream + 1
-            local backup = ftell stream
+            
             local kgao = GriffonStudios_Helpers.ReadFixedString stream 4
             
             if ( kgao == "KGAO" ) then
                 ga.KGAO = Warcraft3_Reforged.ReadFloatAnim stream
             else
-                fseek stream backup #seek_set
+                fseek stream -4 #seek_cur
             
-            if ( ga.KGAO != undefined ) then append geoa ga
+            append geoa ga
         )
-
+    
         return geoa
     ),
     function ReadEVTS stream tag=
@@ -1680,7 +1679,7 @@ struct Warcraft3_Reforged
         --print modl
         local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
         obj.name = modl.name
-        obj.scale = [0.5,0.5,0.5]
+        
         freeze obj
     ),
     function BuildGEOS geos modl mtls=
@@ -1741,6 +1740,11 @@ struct Warcraft3_Reforged
     function BuildMTLS mtls texs modlName geos=
     (
         if ( mtls == undefined ) then return undefined
+        if ( Warcraft3_AssetFolder == undefined ) then 
+        (   
+            format "[WARNING] Assets folder is not defined !"
+            Warcraft3_AssetFolder = ""
+        )
         format "Building Materials\n"
 
         for mtl in mtls do
@@ -1769,6 +1773,9 @@ struct Warcraft3_Reforged
             for layer in mtl.lays do
             (
                 local textureId = layer.TextureId
+                
+                print texs[textureId].path
+                
                 local parts = filterString texs[textureId].path @"\"
                 local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
@@ -2279,6 +2286,8 @@ struct Warcraft3_Reforged
                 theMesh.Visibility = on
                 theMesh.Visibility.controller = on_off()
 
+
+                
                 for anim in a.KGAO.KG do 
                     with animate on at time ( anim.Time + 10 )
                         if (anim.point == 1) then 
@@ -2900,7 +2909,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (version as string) + ", should be 900")
                 )
             )
---         print tags
+         print tags
             
         -- read tag by tag
         for tag in tags do
@@ -2949,6 +2958,8 @@ struct Warcraft3_Reforged
             -- PREM // particle emitters    
             
         )
+
+
         Warcraft3_Reforged.BuildMODL modl
         Warcraft3_Reforged.BuildBONE boneList bpos pivt
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name geos
@@ -2979,7 +2990,11 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
---  file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\herobloodelf\herobloodelf.mdx"
 
---  Warcraft3_Reforged.Import file
+Warcraft3_ImportAllLOD = true
+
+--file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\abilities\weapons\axe\axemissile.mdx"
+file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
+
+Warcraft3_Reforged.Import file
 

@@ -19,7 +19,7 @@
     CollisionShape:8192
 */
 struct MDX_EXPORT
-(  seqs, mtls, texs )
+(  seqs, mtls, texs, bone )
     
 global mdxExport = MDX_EXPORT()
 
@@ -92,8 +92,241 @@ struct Writer_Helpers
         local t = WC3RefTexs ReplacableId:replacableId fileName:fileName flag:3 originalFileName:file
         
         return t
+    ),
+    function AppendIfUniqueFileName texs t=
+    (
+        local tFound = false
+            for tex in texs do
+                if tex.fileName == t.fileName then tFound = true
+                    
+        if tFound == false then append texs t
+    ),
+    function ConvertToWC3Time t=
+    (
+        local str = t as string
+        local i  = ( ( substring str 1 (str.count-1)) as integer )
+        
+        local newTime = i * 1000 / 30
+        return newTime
+        
+    ),
+    function GetPosAnim obj=
+    (
+        struct anim ( frame, point )
+        
+        local posController = obj.pos.controller
+        local nKeys = numKeys posController
+        local anims = #()
+        
+        for i=1 to nKeys do
+        (
+            local t = getKeyTime posController i
+            
+            local pos = 0
+            at time t pos = obj.pos
+            local wc3frame = Writer_Helpers.ConvertToWC3Time t
+            append anims ( anim frame:wc3frame point:pos )
+        )
+        return anims
+    ),
+    function GetRotAnim obj=
+    (
+        struct anim ( frame, point )
+        
+        local rotController = obj.rotation.controller
+        local nKeys = numKeys rotController
+        local anims = #()
+        
+        for i=1 to nKeys do
+        (
+            local t = getKeyTime rotController i
+            local rot = 0
+            at time t rot = obj.rotation
+            local wc3frame = Writer_Helpers.ConvertToWC3Time t
+            append anims ( anim frame:wc3frame point:rot )
+        )
+        return anims
+    ),
+    function GetSclAnim obj=
+    (
+        struct anim ( frame, point )
+        
+        local sclController = obj.scale.controller
+        local nKeys = numKeys sclController
+        local anims = #()
+        
+        for i=1 to nKeys do
+        (
+            local t = getKeyTime sclController i
+            local scale = 0
+            at time t scale = obj.scale
+            local wc3frame = Writer_Helpers.ConvertToWC3Time t
+            append anims ( anim frame:wc3frame point:scale )
+        )
+        return anims
+    ),
+    function CalculateTangents theMesh=
+    (
+        local tan1 = #()
+        local tan2 = #()
+        local tangent = #()
+        for i=1 to theMesh.numFaces do
+        (
+
+            local f = getFace theMesh i
+
+            local v1 = getVert theMesh f[1]
+            local v2 = getVert theMesh f[2]
+            local v3 = getVert theMesh f[3]
+
+            local w1 = getTVert theMesh f[1]
+            local w2 = getTVert theMesh f[2]
+            local w3 = getTVert theMesh f[3]
+
+
+            local x1 = v2.x - v1.x
+            local x2 = v3.x - v1.x
+            local y1 = v2.y - v1.y
+            local y2 = v3.y - v1.y
+            local z1 = v2.z - v1.z
+            local z2 = v3.z - v1.z
+
+            local s1 = w2.x - w1.x
+            local s2 = w3.x - w1.x
+            local t1 = w2.y - w1.y
+            local t2 = w3.y - w1.y
+
+            local r = 1.0 / ( s1 * t2 - s2 * t1)
+
+            local sdir = [ ( t2 * x1 - t1 * x2) * r , ( t2 * y1 - t1 * y2 ) * r, ( t2 * z1 - t1 * z2 ) * r ]
+            local tdir = [ ( s1 * x2 - s2 * x1) * r , ( s1 * y2 - s2 * y1 ) * r, ( s1 * z2 - s2 * z1 ) * r ]
+
+            tan1[f[1]] = sdir
+            tan1[f[2]] = sdir
+            tan1[f[3]] = sdir
+
+            tan2[f[1]] = tdir
+            tan2[f[2]] = tdir
+            tan2[f[3]] = tdir
+
+        )
+
+        for i=1 to theMesh.numVerts do
+        (
+            local n = getnormal theMesh i
+            local t = tan1[i]
+            
+            local v = normalize ( ( t - n ) * ( dot n t ) )
+            local w = dot ( cross n t ) tan2[i]
+            
+            if ( w < 0.0 ) then w = -1.0 else w = 1.0
+            tangent[i] = [v.x, v.y, v.z, w]
+        )
+        return tangent
+    ),
+    function GetWeights theMesh boneList=
+    (
+        max modify mode
+        select theMesh
+        local sk = modPanel.getCurrentObject()
+
+        struct vertexWeights ( vertexId, boneIndices, weights )
+        local vertices = #()
+        
+        if (classof sk == Skin ) then
+        (
+            for v=1 to skinOps.getnumbervertices sk do
+            (
+                count = skinops.getvertexweightcount sk v
+                
+                local boneIndices = #(0,0,0,0)
+                local weights = #(0,0,0,0)
+                
+                for k=1 to count do
+                (
+                    weight = skinOps.getvertexweight sk v k
+                    boneId = skinOps.getvertexweightboneid sk v k
+                    boneName = skinOps.getBonename sk boneId 0
+                    
+                    for b in mdxExport.bone do
+                    (
+                        if ( b.boneRef.name == boneName ) then 
+                        (
+                            boneId = b.Id - 1
+                            exit
+                        )
+                    )
+                    
+                    boneIndices[k] = boneId
+                    weights[k] = ( weight * 255 ) as integer
+                )
+                local vertex = vertexWeights vertexId:v boneIndices:boneIndices weights:weights
+                
+                append vertices vertex
+            )
+            
+        )
+        deselect theMesh
+        return vertices
+    ),
+    function GetNumUVMaps m=
+    (
+        local n = meshop.getnummaps m
+        
+        local availableUVMaps = 0
+        
+        for i=1 to n do
+        (
+            if( ( meshop.getMapSupport m i ) == true ) then availableUVMaps +=1 
+        )
+        
+        return availableUVMaps
+        
+    ),
+    function GetUVCoordinates theMesh mapChannel=
+    (
+        local uvs = #()
+        
+        for v=1 to theMesh.NumVerts do
+        (
+            local uv = meshop.getMapVert theMesh mapChannel v
+            
+            append uvs [ uv.x, ( 1.0 - uv.y ) ]
+        )
+        return uvs
+    ),
+    function GetLastControllerFrame ctrl=
+    (
+        local lastTimeFrame = 0
+        if(ctrl != undefined ) then 
+        (
+            if(ctrl.keys.count > 0 ) then 
+            (
+                local maxTimeFrame = ctrl.keys[ctrl.keys.count].time
+        
+                if (lastTimeFrame < maxTimeFrame) then lastTimeFrame = maxTimeFrame
+            )
+        )
+
+        return lastTimeFrame
+    ),
+    function GetLastAnimFrame=
+    (
+        local lastFrame = 0
+        
+        for obj in objects do
+        (
+            local lastPosFrame = Writer_Helpers.GetLastControllerFrame obj.pos.controller
+            local lastRotFrame = Writer_Helpers.GetLastControllerFrame obj.rotation.controller
+            local lastScaleFrame = Writer_Helpers.GetLastControllerFrame obj.scale.controller
+
+            if ( lastFrame < lastPosFrame ) then lastFrame = lastPosFrame
+            if ( lastFrame < lastRotFrame ) then lastFrame = lastRotFrame
+            if ( lastFrame < lastScaleFrame ) then lastFrame = lastScaleFrame
+        )
+        return lastFrame
     )
-    
+   
 )
 
 struct Warcraft3_Reforged_Export
@@ -108,7 +341,7 @@ struct Warcraft3_Reforged_Export
             (
                 if ( texs[t].originalFileName == textureFileName ) then 
                 ( 
-                    writelong stream t
+                    writelong stream ( t - 1 )
                     exit 
                 )
             )
@@ -137,7 +370,7 @@ struct Warcraft3_Reforged_Export
         Writer_Helpers.WriteBytes stream 0 264
 
         local bbBox = Writer_Helpers.GetBoundingBox()
-        
+
         Writer_Helpers.WriteVector3 stream bbBox[1]
         Writer_Helpers.WriteVector3 stream bbBox[2]
         writeLong stream 150
@@ -268,16 +501,17 @@ struct Warcraft3_Reforged_Export
             local t3 = Writer_Helpers.ParseTexs  m.orm_map.filename 0
             local t4 = Writer_Helpers.ParseTexs  m.emissive_map.filename 0
             local t5 = Writer_Helpers.ParseTexs  m.replacable_map.filename 1
-            local t6 = Writer_Helpers.ParseTexs  m.reflection_map.filename 0
+            local t6 = Writer_Helpers.ParseTexs  m.reflection_map.filename 1
 
-            appendifunique texs t1
-            appendifunique texs t2
-            appendifunique texs t3
-            appendifunique texs t4
-            appendifunique texs t5
-            appendifunique texs t6
+            Writer_Helpers.AppendIfUniqueFileName texs t1
+            Writer_Helpers.AppendIfUniqueFileName texs t2
+            Writer_Helpers.AppendIfUniqueFileName texs t3
+            Writer_Helpers.AppendIfUniqueFileName texs t4
+            Writer_Helpers.AppendIfUniqueFileName texs t5
+            Writer_Helpers.AppendIfUniqueFileName texs t6
+
         )
-        
+
         for obj in objects do
         (
             if ( classof obj == WC3RefEmitter ) then 
@@ -334,22 +568,416 @@ struct Warcraft3_Reforged_Export
         )
         mdxExport.texs = texs
     ),
+    function ReadBONE=
+    (
+        struct wc3bone ( Id, ParentId, BoneRef, KGTR, KGRT, KGSC )
+        local wc3bones = #()
+        -- Get the Bones in the scene
+        for obj in objects do
+        (
+            local index = 1
+            if ( classof obj == BoneGeometry ) then
+            (
+                local b = wc3bone Id:index BoneRef:obj ParentId:0
+                append wc3bones b
+                index +=1
+            )
+        )
+        -- build the hierarchy
+        for b in wc3Bones do
+        (
+            if ( b.BoneRef.Parent != undefined ) then
+            (
+                for i=1 to wc3Bones.Count do
+                (
+                    if ( b.BoneRef.Parent == wc3Bones[i].BoneRef ) then
+                    (
+                        b.BoneRef.ParentId = i
+                    )
+                )
+            )
+        )  
+        
+        for wc3bone in wc3bones do
+        (
+            wc3bone.KGTR = Writer_Helpers.GetPosAnim wc3bone.boneRef
+            wc3bone.KGRT = Writer_Helpers.GetRotAnim wc3bone.boneRef
+            wc3bone.KGSC = Writer_Helpers.GetSclAnim wc3bone.boneRef
+        )
+        mdxExport.bone = wc3bones
+        
+        
+    ),
+    function WriteGEOS stream=
+    (
+        local meshes = #()
+        for obj in objects do
+            if (classof obj == Editable_mesh ) then append meshes obj
+
+        struct wc3lod (size, vrtx, nrms, ptyp, pcnt, pvtx, gndx, mtgc, mats, tang, skin, uvas, uvbs )
+        struct wc3mats ( id, lodid, name )
+        
+        -- todo: defeine how to make a difference bewteen LOD's
+        
+        local lods = #()
+        for m in meshes do
+        (
+            local l = wc3lod()
+            
+            l.vrtx = #()
+            for v=1 to m.numverts do
+                append l.vrtx ( getvert m v )
+            
+            l.nrms = #()
+            for v=1 to m.numverts do
+                append l.nrms ( getnormal m v )
+            
+            l.ptyp = 4
+            
+            l.pcnt = m.numFaces * 3
+            
+            l.pvtx = #()
+            for f=1 to m.numFaces do
+            (
+                local face = getface m f
+                append l.pvtx [face.x - 1, face.y - 1, face.z - 1]
+            )
+            
+            l.gndx = 0
+            
+            l.mtgc = 1
+            
+            l.mats = wc3mats()
+            
+            for x=1 to mdxExport.mtls.count do
+                if ( mdxExport.mtls[x] == m.material ) then ( l.mats.id = x; exit )
+
+            l.mats.lodid = 0 --> for now
+            l.mats.name = m.name
+            
+            l.tang = Writer_Helpers.CalculateTangents m
+            
+            l.skin = Writer_Helpers.GetWeights m mdxExport.bone
+            
+            l.uvas = Writer_Helpers.GetNumUVMaps m
+
+            l.uvbs = #()
+            for u=1 to l.uvas do
+                  append l.uvbs ( Writer_Helpers.GetUVCoordinates m u )
+
+            append lods l
+        )        
+        local geosSize = 0    
+        for l in lods do
+        (
+            local lodSize = 0
+            lodSize += 4 --> count the position of the "size" to
+            lodSize += l.vrtx.count * 3 * 4 + 8
+            lodSize += l.nrms.count * 3 * 4 + 8
+            lodSize += 12 -- ptyp
+            lodSize += 12 -- pcnt
+            lodSize += l.pvtx.count * 3 * 2 + 8
+            lodSize += 8 -- gndx
+            lodSize += 12 -- mtgc
+            lodSize += 28 + 112 -- mats
+            lodSize += l.tang.count * 4 * 4  + 8
+            lodSize += l.skin.count * 8 + 8 -- weights
+            lodSize += 8 -- uvas
+            
+            for u in l.uvbs do
+                lodSize += u.count * 8 + 8
+            
+            l.size = lodSize
+            geosSize += lodSize
+        )
+
+        
+        Writer_Helpers.WriteFixedString stream "GEOS" 4
+        writelong stream geossize
+        
+        for l in lods do
+        (
+            writelong stream l.size
+            
+            Writer_Helpers.WriteFixedString stream "VRTX" 4
+            writelong stream l.vrtx.count
+            for v in l.vrtx do
+            (
+                writefloat stream v.x
+                writefloat stream v.y
+                writefloat stream v.z
+            )
+            
+            Writer_Helpers.WriteFixedString stream "NRMS" 4
+            writelong stream l.vrtx.count
+            for v in l.nrms do
+            (
+                writefloat stream v.x
+                writefloat stream v.y
+                writefloat stream v.z
+            )
+            
+            Writer_Helpers.WriteFixedString stream "PTYP" 4
+            writelong stream 1
+            writelong stream l.ptyp
+            
+            Writer_Helpers.WriteFixedString stream "PCNT" 4
+            writelong stream 1
+            writelong stream l.pcnt
+            
+            Writer_Helpers.WriteFixedString stream "PVTX" 4
+            writelong stream ( l.pvtx.count * 3 )
+            for i in l.pvtx do
+            (
+                writeshort stream i.x
+                writeshort stream i.y
+                writeshort stream i.z
+                
+            )
+            
+            Writer_Helpers.WriteFixedString stream "GNDX" 4
+            writelong stream l.gndx
+            
+            
+            Writer_Helpers.WriteFixedString stream "MTGC" 4
+            writelong stream 1
+            writelong stream 1
+            
+            Writer_Helpers.WriteFixedString stream "MATS" 4
+            writelong stream 1
+            writelong stream 0
+            writelong stream l.mats.id
+            writelong stream 0
+            writelong stream 0
+            writelong stream l.mats.lodid
+            Writer_Helpers.WriteFixedString stream l.mats.name 112
+            
+            Writer_Helpers.WriteFixedString stream "TANG" 4
+            writelong stream l.vrtx.count
+            for t in l.tang do
+            (
+                writefloat stream t[1]
+                writefloat stream t[2]
+                writefloat stream t[3]
+                writefloat stream t[4]
+            )
+            
+            Writer_Helpers.WriteFixedString stream "SKIN" 4
+            writeLong stream ( l.skin.count * 8 )
+            for s in l.skin do
+            (
+                writebyte stream s.boneIndices[1]
+                writebyte stream s.boneIndices[2]
+                writebyte stream s.boneIndices[3]
+                writebyte stream s.boneIndices[4]
+                writebyte stream s.weights[1]
+                writebyte stream s.weights[2]
+                writebyte stream s.weights[3]
+                writebyte stream s.weights[4]
+            )
+
+            Writer_Helpers.WriteFixedString stream "UVAS" 4
+            writelong stream l.uvas
+            
+            for uvb in l.uvbs do
+            (
+                Writer_Helpers.WriteFixedString stream "UVBS" 4
+                writelong stream l.vrtx.count
+                
+                for uv in uvb do
+                (
+                    writefloat stream uv[1]
+                    writefloat stream uv[2]
+                )
+                
+            )
+
+        )
+        
+        
+        /*
+        GEOS 
+            COMPLETE SIZE --> all the LOD's
+            SIZE LOD --> complete size of 1 LOD
+                VRTX
+                    Nbr of vertices
+                    floats ( 3 per vertex)
+                NRMS
+                    Nbr of vertices
+                    floats ( 3 per vertex)
+                PTYP
+                    Nbr of different types ( = 1 )
+                    Long ( = 4 )
+                PCNT
+                    Nbr of primitives ( = 1 )
+                    Nbr of indeces ( nbr faces * 3 )
+                PVTX 
+                    Nbr of indeces ( nbr faces * 3 )
+                    shorts 
+                GNDX
+                    Nbr of Groups ( = 0 )
+                MTGC
+                    Nbr of matrix groups ( = 1)
+                    Long ( = 1)
+                MATS
+                    Nbr of materials ( = 1 )
+                    Long ( = 0 )
+                    Id in the mtls list
+                    2 x long ( 2x 0 )
+                    LOD id
+                    name of the object ( 112 characters )
+                TANG
+                    Nbr of tangents ( = nbr of vertices )
+                    floats ( 4 per tang )
+                    use CalculateTangents
+                SKIN
+                    nbr vertices * 8 ( 8 bytes per definition, 4 weights, 4 bones )
+                    bytes ( 8 per vertex )
+                    use GetWeights
+                UVAS
+                    Nbr of UV coordinates
+                    use GetNumUVMaps
+                
+                    UVBS ( appears UVAS times )
+                        Nbr of vertices
+                        U as a float
+                        V as a float
+                        use GetUVCoordinates
+        */
+        
+    ),
+    function ReadGEOA=
+    (
+        struct wc3geoa ( meshId, keys, size )
+        struct wc3geoakey ( frame, visible )
+        
+        local meshes = #()
+        local geoas = #()
+        local meshId = 1
+        
+        for obj in objects do 
+            if (classof obj == Editable_mesh ) then append meshes obj
+
+        for m in meshes do
+        (
+
+            if ( m.visibility != undefined ) then 
+            (
+                local geoa = wc3geoa meshid:meshId size:0
+                geoa.keys = #()
+                -- add ZERO frame
+                local g = wc3geoakey frame:0
+                with animate on at time 0 g.visible = m.visibility
+                append geoa.keys g
+                
+                for i= 1 to ( numKeys m.visibility.controller ) do
+                (
+                    local t = getkeytime m.visibility.controller i
+                    local t_before = t - 1
+                    
+                    -- add previous frame state
+                    local g = wc3geoakey frame:t_before
+                    with animate on at time t_before
+                        g.visible = m.visibility
+                    append geoa.keys g
+                    
+                    local g = wc3geoakey frame:t
+                    with animate on at time t
+                        g.visible = m.visibility
+                    append geoa.keys g
+                )
+                
+                -- add last frame
+                local lastFrame = Writer_Helpers.GetLastAnimFrame()
+                local g = wc3geoakey frame:lastFrame
+                local t = getkeytime m.visibility.controller ( numKeys m.visibility.controller )
+                with animate on at time t g.visible = m.visibility
+                append geoa.keys g
+
+            )
+           -- print geoa
+            append geoas geoa
+            meshId += 1 
+        )
+
+        return geoas
+    ),
+    function WriteGEOA stream=
+    (
+        local geoas = Warcraft3_Reforged_Export.ReadGEOA()
+        
+        local totalSize = 0
+        
+        for g in geoas do
+        (
+            totalSize +=28
+            totalSize +=16 -- KGAO nbrofKGAO linetype=0 -1
+            totalSize += g.keys.count * 8 
+            
+            g.Size = 28 + 16 + g.keys.count * 8 
+            
+        )
+
+        Writer_Helpers.WriteFixedString stream "GEOA" 4
+        writelong stream totalSize
+        
+        for g in geoas do
+        (    
+            
+            writelong stream g.size
+            writefloat stream 1
+            writeLong stream 0
+            writefloat stream 1
+            writefloat stream 1
+            writefloat stream 1
+            writeLong stream ( g.meshId - 1 )
+            Writer_Helpers.WriteFixedString stream "KGAO" 4
+            writeLong stream g.keys.count
+            writeLong stream 0
+            writeLong stream -1 #signed
+            
+            for i=1 to g.keys.count do
+            (
+                local key = g.keys[i]
+                local frameStr = ( key.frame as string )
+                local frameInt = (substring frameStr 1 (frameStr.count - 1 )) as integer
+                local frame = frameInt * 1000 / 30
+                
+                writeLong stream frame
+                
+                if ( key.visible == true ) then writefloat stream 1 else writefloat stream 0
+                    
+            )
+            
+            
+        )
+    ),
     function Write file=
     (
         local export = Warcraft3_Reforged_Export()
-        local materials
+        Warcraft3_AssetFolder = getinisetting "griffonstudios.config" "Warcraft3Reforged" "AssetFolder"
+        
+        if Warcraft3_AssetFolder == undefined then 
+        (   
+            Warcraft3_AssetFolder = ""
+            format "[WARNING] Warcraft3_AssetFolder is not set !"
+        )
         
         stream = fopen file "wb"
 
         export.WriteMDLX stream
         export.WriteMODL stream file
         export.WriteSEQS stream
-        export.WriteMTLS_TEXS stream
+        export.WriteMTLS_TEXS stream --> TODO write Alpha animation !!
+        export.ReadBONE()
+        export.WriteGEOS stream
+        export.WriteGEOA stream
         
-        print mdxExport
         
         fflush stream
         fclose stream
+        
+        mdxExport = undefined
         gc()
         
     )
@@ -363,5 +991,8 @@ clearlistener()
 file = @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
 Warcraft3_Reforged_Export.Write file
+
+
+
 
 
