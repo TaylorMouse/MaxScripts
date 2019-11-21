@@ -2175,13 +2175,13 @@ struct Warcraft3_Reforged
         local prevEndFrame = 0                       
         for seq in seqs do
         (
-            if ( prevEndFrame > seq.StartFrame ) then 
-            (
-                format "[ERROR] Unable to add '%', Start and End frame are not correct (%-%)\n" seq.name seq.startFrame seq.endFrame
-                continue
-            )
-            else
-                prevEndFrame = seq.endFrame
+--             if ( prevEndFrame > seq.StartFrame ) then 
+--             (
+--                 format "[ERROR] Unable to add '%', Start and End frame are not correct (%-%)\n" seq.name seq.startFrame seq.endFrame
+--                 continue
+--             )
+--             else
+--                 prevEndFrame = seq.endFrame
             
             
             local startNote = AddNewNoteKey starAnimTrack seq.startFrame
