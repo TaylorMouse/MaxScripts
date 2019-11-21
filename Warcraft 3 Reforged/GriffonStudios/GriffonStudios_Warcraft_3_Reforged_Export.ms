@@ -19,7 +19,7 @@
     CollisionShape:8192
 */
 struct MDX_EXPORT
-(  seqs, mtls, texs, bone )
+(  seqs, mtls, texs, bone, bpos, geos, geoa )
     
 global mdxExport = MDX_EXPORT()
 
@@ -57,6 +57,8 @@ struct Writer_Helpers
         (
             if ( classof obj == Editable_mesh ) then
             (
+                --> TODO loop over every frame 
+                
                 if ( obj.Max.X > bbMax.X) then bbMax.X = obj.Max.X
                 if ( obj.Max.Y > bbMax.Y) then bbMax.Y = obj.Max.Y
                 if ( obj.Max.Z > bbMax.Z) then bbMax.Z = obj.Max.Z
@@ -110,7 +112,7 @@ struct Writer_Helpers
         return newTime
         
     ),
-    function GetPosAnim obj=
+    function GetPosAnim obj transformMatrix=
     (
         struct anim ( frame, point )
         
@@ -122,14 +124,13 @@ struct Writer_Helpers
         (
             local t = getKeyTime posController i
             
-            local pos = 0
-            at time t pos = obj.pos
+            at time t in coordsys transformMatrix pos = obj.pos
             local wc3frame = Writer_Helpers.ConvertToWC3Time t
             append anims ( anim frame:wc3frame point:pos )
         )
         return anims
     ),
-    function GetRotAnim obj=
+    function GetRotAnim obj transformMatrix=
     (
         struct anim ( frame, point )
         
@@ -141,13 +142,13 @@ struct Writer_Helpers
         (
             local t = getKeyTime rotController i
             local rot = 0
-            at time t rot = obj.rotation
+            at time t in coordsys transformMatrix rot = obj.rotation
             local wc3frame = Writer_Helpers.ConvertToWC3Time t
             append anims ( anim frame:wc3frame point:rot )
         )
         return anims
     ),
-    function GetSclAnim obj=
+    function GetSclAnim obj transformMatrix=
     (
         struct anim ( frame, point )
         
@@ -158,8 +159,8 @@ struct Writer_Helpers
         for i=1 to nKeys do
         (
             local t = getKeyTime sclController i
-            local scale = 0
-            at time t scale = obj.scale
+            local scale = [1,1,1]
+            at time t in coordsys transformMatrix scale = obj.scale
             local wc3frame = Writer_Helpers.ConvertToWC3Time t
             append anims ( anim frame:wc3frame point:scale )
         )
@@ -325,8 +326,33 @@ struct Writer_Helpers
             if ( lastFrame < lastScaleFrame ) then lastFrame = lastScaleFrame
         )
         return lastFrame
+    ),
+    function WriteFloatAnim stream animations name=
+    (
+        if ( animations.Count > 0 ) then 
+        (
+            Writer_Helpers.WriteFixedString stream name 4
+            writeLong stream animations.Count
+            writeLong stream 1
+            writeLong stream -1 #signed
+            
+            for anim in animations do
+            (
+                writeLong stream anim.frame
+                local i = 3
+                if ( classof anim.point == Point4 ) then i = 4
+                if ( classof anim.point == Quat   ) then i = 4
+                
+                writeFloat stream anim.Point.x
+                writeFloat stream anim.Point.y
+                writeFloat stream anim.Point.z
+                
+                if i==4 then writeFloat stream anim.Point.w
+                
+            )
+        )
     )
-   
+    
 )
 
 struct Warcraft3_Reforged_Export
@@ -570,15 +596,16 @@ struct Warcraft3_Reforged_Export
     ),
     function ReadBONE=
     (
-        struct wc3bone ( Id, ParentId, BoneRef, KGTR, KGRT, KGSC )
+        struct wc3bone ( Id, ParentId, BoneRef, KGTR, KGRT, KGSC, Size )
         local wc3bones = #()
+        
         -- Get the Bones in the scene
         for obj in objects do
         (
             local index = 1
             if ( classof obj == BoneGeometry ) then
             (
-                local b = wc3bone Id:index BoneRef:obj ParentId:0
+                local b = wc3bone Id:index BoneRef:obj ParentId:0 Size:0
                 append wc3bones b
                 index +=1
             )
@@ -597,15 +624,19 @@ struct Warcraft3_Reforged_Export
                 )
             )
         )  
-        
-        for wc3bone in wc3bones do
-        (
-            wc3bone.KGTR = Writer_Helpers.GetPosAnim wc3bone.boneRef
-            wc3bone.KGRT = Writer_Helpers.GetRotAnim wc3bone.boneRef
-            wc3bone.KGSC = Writer_Helpers.GetSclAnim wc3bone.boneRef
-        )
         mdxExport.bone = wc3bones
         
+    ),
+    function ReadBoneAnim=
+    (
+        for wc3bone in mdxExport.bone do
+        (
+            local transformMatrix = mdxExport.bpos[wc3bone.Id].mtrx
+            
+            wc3bone.KGTR = Writer_Helpers.GetPosAnim wc3bone.boneRef transformMatrix
+            wc3bone.KGRT = Writer_Helpers.GetRotAnim wc3bone.boneRef transformMatrix
+            wc3bone.KGSC = Writer_Helpers.GetSclAnim wc3bone.boneRef transformMatrix
+        )
         
     ),
     function WriteGEOS stream=
@@ -650,7 +681,7 @@ struct Warcraft3_Reforged_Export
             l.mats = wc3mats()
             
             for x=1 to mdxExport.mtls.count do
-                if ( mdxExport.mtls[x] == m.material ) then ( l.mats.id = x; exit )
+                if ( mdxExport.mtls[x] == m.material ) then ( l.mats.id = x - 1; exit )
 
             l.mats.lodid = 0 --> for now
             l.mats.name = m.name
@@ -858,10 +889,11 @@ struct Warcraft3_Reforged_Export
         for obj in objects do 
             if (classof obj == Editable_mesh ) then append meshes obj
 
+        
         for m in meshes do
         (
 
-            if ( m.visibility != undefined ) then 
+            if ( m.visibility != undefined and  classof m.visibility.controller == on_off) then 
             (
                 local geoa = wc3geoa meshid:meshId size:0
                 geoa.keys = #()
@@ -899,16 +931,18 @@ struct Warcraft3_Reforged_Export
             append geoas geoa
             meshId += 1 
         )
-
-        return geoas
+        mdxExport.geoa = geoas
+        
     ),
     function WriteGEOA stream=
     (
-        local geoas = Warcraft3_Reforged_Export.ReadGEOA()
+        Warcraft3_Reforged_Export.ReadGEOA()
+        
+        if ( mdxExport.geoa == undefined ) then return undefined
         
         local totalSize = 0
         
-        for g in geoas do
+        for g in mdxExport.geoa do
         (
             totalSize +=28
             totalSize +=16 -- KGAO nbrofKGAO linetype=0 -1
@@ -921,7 +955,7 @@ struct Warcraft3_Reforged_Export
         Writer_Helpers.WriteFixedString stream "GEOA" 4
         writelong stream totalSize
         
-        for g in geoas do
+        for g in mdxExport.geoa do
         (    
             
             writelong stream g.size
@@ -952,6 +986,106 @@ struct Warcraft3_Reforged_Export
             
         )
     ),
+    function WriteBONE stream=
+    (
+        -- Calculate the sizes first
+        local totalSize = 0 --> BONE + size
+        for b in mdxExport.Bone do
+        (
+            totalSize += 4  -- size
+            totalSize += 80 -- name
+            totalSize += 4  -- Id
+            totalSize += 4  -- ParentBoneId
+            totalSize += 4  -- Flags = 256
+            
+            b.Size = 96
+            
+            if ( b.KGTR.Count > 0 ) then 
+            (
+                totalSize += 16 -- > KGTR + nbr + linetype + parentid
+                totalSize += b.KGTR.Count * 16
+                b.Size += 16 + b.KGTR.Count * 16
+            )
+            if ( b.KGRT.Count > 0 ) then 
+            (
+                totalSize += 16 -- > KGRT + nbr + linetype + parentid
+                totalSize += b.KGRT.Count * 20
+                b.Size += 16 + b.KGRT.Count * 20
+            )
+            if ( b.KGSC.Count > 0 ) then 
+            (
+                totalSize += 16 -- > KGSC + nbr + linetype + parentid
+                totalSize += b.KGSC.Count * 16
+                b.Size += 16 + b.KGSC.Count * 16
+            )
+        )
+        -- Write out
+        Writer_Helpers.WriteFixedString stream "BONE" 4
+        WriteLong stream totalSize
+        
+        for b in mdxExport.Bone do
+        (
+            writelong stream b.Size
+            Writer_Helpers.WriteFixedString stream b.BoneRef.Name 80
+            writeLong stream ( b.Id - 1 )
+            writeLong stream ( b.ParentId - 1 )
+            writeLong stream 256
+
+            Writer_Helpers.WriteFloatAnim stream b.KGTR "KGTR"
+            Writer_Helpers.WriteFloatAnim stream b.KGRT "KGRT"
+            Writer_Helpers.WriteFloatAnim stream b.KGSC "KGSC"
+        )
+        
+        
+        
+    ),
+    function ReadBPOS=
+    (
+        struct wc3bpos ( id, mtrx )
+        
+        local bpos = #()
+        for b in mdxExport.bone do
+        (
+            local bp = wc3bpos id:b.id mtrx:b.BoneRef.transform
+            append bpos bp
+        )
+        mdxExport.bpos = bpos
+    ),
+    function WriteBPOS stream=
+    (
+        Writer_Helpers.WriteFixedString stream "BPOS" 4
+        writelong stream ( mdxExport.bpos.count * 48 + 4 )
+        writelong stream mdxExport.bpos.count
+        
+        for bpos in mdxExport.bpos do
+        (
+            for i=1 to 4 do
+            (
+                writefloat stream bpos.mtrx[i].x
+                writefloat stream bpos.mtrx[i].y
+                writefloat stream bpos.mtrx[i].z
+            )
+        )
+    ),
+    function WritePIVT stream=
+    (
+        local totalSize = 0
+        
+        totalSize += mdxExport.Bone.Count * 12
+        
+        Writer_Helpers.WriteFixedString stream "PIVT" 4
+        writelong stream totalSize
+        
+        for b in mdxExport.Bone do
+        (
+            local pos
+            at time 0 pos =  b.BoneRef.Pos
+            writeFloat stream pos.x
+            writeFloat stream pos.y
+            writeFloat stream pos.z
+        )
+        
+    ),
     function Write file=
     (
         local export = Warcraft3_Reforged_Export()
@@ -965,14 +1099,23 @@ struct Warcraft3_Reforged_Export
         
         stream = fopen file "wb"
 
+        export.ReadBONE()
+        export.ReadBPOS()
+        export.ReadBoneAnim()
+        
         export.WriteMDLX stream
         export.WriteMODL stream file
         export.WriteSEQS stream
         export.WriteMTLS_TEXS stream --> TODO write Alpha animation !!
-        export.ReadBONE()
         export.WriteGEOS stream
         export.WriteGEOA stream
+        export.WriteBONE stream
+        export.WritePIVT stream
         
+        -- CORN
+        -- EVNTS
+		
+        export.WriteBPOS stream
         
         fflush stream
         fclose stream
@@ -982,15 +1125,15 @@ struct Warcraft3_Reforged_Export
         
     )
     
-    
-    
 )
 clearlistener()
 
--- F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\terrain\citycliffs\CityCliffsAAAB0.mdx
+
 file = @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
 Warcraft3_Reforged_Export.Write file
+
+
 
 
 
