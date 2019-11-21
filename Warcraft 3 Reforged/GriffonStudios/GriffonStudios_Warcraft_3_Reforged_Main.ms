@@ -1,3 +1,12 @@
+/*
+    (c) 2020 Griffon Studios
+    
+    by Taylor Mouse
+    
+    Warcraft III Reforged Import model
+    
+*/
+
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
 
@@ -196,7 +205,7 @@ struct Warcraft3_Reforged_PRE2
 
 
 */
-
+global mdxFileVersion = 0
 struct StarTools_Helpers
 (
     function RenameSEQS seqs=
@@ -646,8 +655,6 @@ struct Warcraft3_Reforged
         local currentRelativePosition = 0
         local geos = #()
         
-        print 
-        
         while ( tag.Size > currentRelativePosition ) do
         (
             local size = readLong stream
@@ -837,6 +844,7 @@ struct Warcraft3_Reforged
             append geos geo
         )
         
+        return geos
     ),
     function ReadBONE stream tag=
     (
@@ -943,14 +951,17 @@ struct Warcraft3_Reforged
                  0x100: Fallback
                 */
                 
-                
-                                
+               
                 lay.textureId   = readLong stream + 1
                 lay.parentId    = readLong stream + 1
                 
                 local textureAnimationId = readLong stream
                 local coordId = readFloat stream
                 lay.alpha = readFloat stream
+                
+                if ( mdxFileVersion == 1000 ) then
+                    for i=1 to 5 do readFloat stream --> always [1.0, 1.0, 1.0, 0.0, 0.0]
+                
                 
                 for i=1 to 2 do
                 (
@@ -965,12 +976,12 @@ struct Warcraft3_Reforged
                 append laysList lay
             )
             mtl.LAYS = laysList
-            
+            print mtl.LAYS
             mtlsId +=1
             
             append mtls mtl
         )
-        --print mtls
+        print mtls
         return mtls
         
     ),
@@ -1704,8 +1715,11 @@ struct Warcraft3_Reforged
             if (geo.MATS.LOD == 2) then wireColor = color 64 164 164
             if (geo.MATS.LOD == 3) then wireColor = color 0 128 255
             
+            local mat = undefined
+            try (
+                mat = mtls[geo.MATS.ID].MaterialRef
+            )  catch ()
             
-            local mat = mtls[geo.MATS.ID].MaterialRef
             
             try (
                 
@@ -1719,7 +1733,7 @@ struct Warcraft3_Reforged
 
                 theMesh.WireColor = wireColor
 
-                theMesh.Material = mat
+                if mat != undefined then theMesh.Material = mat
                 
                 buildTVFaces theMesh false
                 for i = 1 to f.count do
@@ -1740,9 +1754,9 @@ struct Warcraft3_Reforged
     function BuildMTLS mtls texs modlName geos=
     (
         if ( mtls == undefined ) then return undefined
-        if ( Warcraft3_AssetFolder == undefined ) then 
+        if ( Warcraft3_AssetFolder == undefined or Warcraft3_AssetFolder == "" ) then 
         (   
-            format "[WARNING] Assets folder is not defined !"
+            format "[WARNING] Assets folder is not defined !\n"
             Warcraft3_AssetFolder = ""
         )
         format "Building Materials\n"
@@ -1773,9 +1787,6 @@ struct Warcraft3_Reforged
             for layer in mtl.lays do
             (
                 local textureId = layer.TextureId
-                
-                print texs[textureId].path
-                
                 local parts = filterString texs[textureId].path @"\"
                 local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
@@ -1996,15 +2007,14 @@ struct Warcraft3_Reforged
         for obj in boneList do
         (
             local b = obj.boneRef
-            b.assumeSkinPose()
+            --b.assumeSkinPose()
             --in coordsys parent b.rotation = bpos[obj.id].matrix.rotationpart
             b.pos = bpos[obj.id].matrix.row4
+            --b.transform = bpos[obj.id].matrix
             
             
         )
 
-
-        
         -- apply bone animation
         local applyBoneAnim = true
         if applyBoneAnim == true then 
@@ -2131,9 +2141,7 @@ struct Warcraft3_Reforged
                     local boneIds = geo.SKIN[v].BoneIds
                     local weights = geo.SKIN[v].Weights
                     skinOps.ReplaceVertexWeights mshSkin v boneIds weights
-
                 )
-
                 update obj
             )
         )
@@ -2259,10 +2267,7 @@ struct Warcraft3_Reforged
                 )
                     
             )
-          
-            
-            
-            
+
         )          
     ),
     function BuildGEOA geoa geos=
@@ -2286,8 +2291,6 @@ struct Warcraft3_Reforged
                 theMesh.Visibility = on
                 theMesh.Visibility.controller = on_off()
 
-
-                
                 for anim in a.KGAO.KG do 
                     with animate on at time ( anim.Time + 10 )
                         if (anim.point == 1) then 
@@ -2559,8 +2562,10 @@ struct Warcraft3_Reforged
             ribbon.name = r.name
             if ( boneList != undefined ) then 
             (
-                ribbon.transform = boneList[r.parentBoneId].boneRef.transform
-                ribbon.parent = boneList[r.parentBoneId].boneref
+                if ( r.ParentBoneId > 0 ) then (
+                    ribbon.transform = boneList[r.parentBoneId].boneRef.transform
+                    ribbon.parent = boneList[r.parentBoneId].boneref
+                )
             )
             ribbon.staticHeightAbove = r.staticHeightAbove
             ribbon.staticHeightBelow = r.staticHeightBelow
@@ -2903,10 +2908,11 @@ struct Warcraft3_Reforged
         for tag in tags do 
             if( tag.Name == "VERS" ) then 
             (
-                local version = Warcraft3_Reforged.ReadVERS stream tag
-                if ( version != 900 ) then 
+                mdxFileVersion = Warcraft3_Reforged.ReadVERS stream tag
+                format "File version :%\n" mdxFileVersion
+                if ( mdxFileVersion < 900 ) then 
                 (
-                    throw( "Incorrect version, found " + (version as string) + ", should be 900")
+                    throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
          print tags
@@ -2980,7 +2986,6 @@ struct Warcraft3_Reforged
 
         fclose stream
         gc()
-        print "DONE"
         local endedAt = timestamp()
         setArrowCursor() 
         txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
@@ -2990,11 +2995,12 @@ struct Warcraft3_Reforged
 
 ClearListener()
 
+-- Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
+-- Warcraft3_ImportAllLOD = false
 
-Warcraft3_ImportAllLOD = true
 
---file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\abilities\weapons\axe\axemissile.mdx"
-file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\abilities\weapons\axe\axemissile.mdx"
+-- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
-Warcraft3_Reforged.Import file
+-- Warcraft3_Reforged.Import file
 
