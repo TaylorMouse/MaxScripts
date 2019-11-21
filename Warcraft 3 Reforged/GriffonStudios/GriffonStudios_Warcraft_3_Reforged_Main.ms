@@ -976,12 +976,12 @@ struct Warcraft3_Reforged
                 append laysList lay
             )
             mtl.LAYS = laysList
-            print mtl.LAYS
+
             mtlsId +=1
             
             append mtls mtl
         )
-        print mtls
+
         return mtls
         
     ),
@@ -1811,9 +1811,7 @@ struct Warcraft3_Reforged
                     )
                     (layer.id == 5): 
                     (
-                        format "Replacabel texture % \n" textureFile
                         mat.replacable_map = Bitmaptexture fileName:textureFile
-
                     )
                     (layer.id == 6): ( -- refelection
                         mat.reflection_map = Bitmaptexture fileName:textureFile
@@ -2915,7 +2913,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
-         print tags
+       --  print tags
             
         -- read tag by tag
         for tag in tags do
