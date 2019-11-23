@@ -2266,13 +2266,15 @@ struct Warcraft3_Reforged
     function BuildGEOA geoa geos=
     (
         if( geoa == undefined ) then return undefined 
-        format "Applying Mesh Animations \n"
+        format "Applying Mesh Alpha Animations \n"
         for a in geoa do
         (
             local theMesh = geos[a.GeoId].meshRef
             if ( theMesh == undefined ) then continue
             local isVisibilityTrackRequired = false -- by default evertythng is 1
-                
+            
+            if a.KGAO == undefined then continue
+            
             for anim in a.KGAO.KG do
             (
                 if ( anim.point == 0) then isVisibilityTrackRequired = true
@@ -2907,6 +2909,7 @@ struct Warcraft3_Reforged
     */
     function Import file=
     (
+        ClearListener()
         local startedAt = timestamp()
         print file
         if ( file == undefined ) then  return undefined 
@@ -3035,7 +3038,7 @@ struct Warcraft3_Reforged
     )
 )
 
-ClearListener()
+
 
 -- Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
 -- Warcraft3_ImportAllLOD = false
