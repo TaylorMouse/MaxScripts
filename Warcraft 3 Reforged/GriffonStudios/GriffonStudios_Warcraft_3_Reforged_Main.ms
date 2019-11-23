@@ -14,7 +14,7 @@ struct Warcraft3_Reforged_MODL
     ( Name, bbBox, Always150 )
 
 struct Warcraft3_Reforged_GEO
-    ( VRTX, NRMS, PTYP, PCNT, PVTX, GNDX, MTGC, MATS, TANG, SKIN, UVS, meshRef ) 
+    ( uniqueName, VRTX, NRMS, PTYP, PCNT, PVTX, GNDX, MTGC, MATS, TANG, SKIN, UVS, meshRef ) 
 
 struct Warcraft3_Reforged_MATS
     ( ID, LOD, Name, Matrices )
@@ -1693,7 +1693,7 @@ struct Warcraft3_Reforged
         
         freeze obj
     ),
-    function BuildGEOS geos modl mtls=
+    function BuildGEOS geos modl=
     (
         if (geos == undefined ) then return undefined
         
@@ -1715,12 +1715,6 @@ struct Warcraft3_Reforged
             if (geo.MATS.LOD == 2) then wireColor = color 64 164 164
             if (geo.MATS.LOD == 3) then wireColor = color 0 128 255
             
-            local mat = undefined
-            try (
-                mat = mtls[geo.MATS.ID].MaterialRef
-            )  catch ()
-            
-            
             try (
                 
                 local v = geo.VRTX
@@ -1728,12 +1722,10 @@ struct Warcraft3_Reforged
                 local f = geo.PVTX
                 local uv = geo.UVS[1]
                 local meshName = ( uniqueId as string ) + "_" + geo.MATS.Name
-                
+                geo.uniqueName = meshName
                 local theMesh = mesh vertices:v vnorms:n name:meshName faces:f tverts:uv 
 
                 theMesh.WireColor = wireColor
-
-                if mat != undefined then theMesh.Material = mat
                 
                 buildTVFaces theMesh false
                 for i = 1 to f.count do
@@ -1968,7 +1960,240 @@ struct Warcraft3_Reforged
         
         
     ),
-    function BuildBONE boneList bpos pivts=
+    function BuildBONE3 boneList bpos =
+    (
+        if ( boneList == undefined ) then return undefined
+        format "Building Bones\n"
+        local layer = GriffonStudios_Helpers.CreateLayer "Bones"
+        
+        -- create the bones
+        local uniqueId = 1
+        for b in boneList do
+        (
+            
+            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
+            
+            aBone.Name = b.name
+            aBone.showLinks = true
+			aBone.Width = 0.05
+			aBone.Height = 0.05
+            b.boneRef = aBone
+            layer.AddNode aBone
+
+            uniqueId += 1
+        )
+        
+
+        
+        -- apply bind pos
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+            local mtrx = bpos[obj.id].matrix
+            
+            --in coordsys local b.transform = mtrx
+            b.pos = mtrx.translationpart
+
+        )
+
+        -- apply bone animation
+        local applyBoneAnim = true
+        if applyBoneAnim == true then 
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+            
+            b.assumeSkinPose()
+            
+            
+            
+            if ( obj.KGRT != undefined ) then 
+            (
+               -- b.assumeSkinPose()
+                
+                local dr = dummy name:"DummyRotationController"
+                dr.rotation.controller = b.rotation.controller
+                local q0 = dr.transform
+                local prevTime = 0
+                
+                for anim in obj.KGRT.KG do
+                (
+                    local t = anim.Time + 10
+                    local q = anim.Point
+                    
+                    if ( prevTime == t ) then continue else prevTime = t
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys q0 dr.rotation = q
+                        )
+                )
+                with animate on b.rotation.controller = copy dr.rotation.controller
+                
+                delete dr
+                
+
+                
+            )
+            
+            if ( obj.KGTR != undefined ) then
+            (
+               
+               
+                    --b.assumeSkinPose()
+                    
+                    local dp = dummy name:"DummyPositionController" 
+                    dp.position.controller = b.position.controller
+                    local p0 = dp.transform
+                    local prevTime = 0
+
+                    for anim in obj.KGTR.KG do
+                    (
+                        local t = anim.Time + 10
+                        local p = anim.Point
+                        
+                      
+                        
+                        if ( prevTime == t ) then continue else prevTime = t
+                        
+                        with animate on 
+                            at time t
+                            (
+                                in coordsys p0 dp.position = p 
+                            )
+                    )
+                    with animate on b.position.controller = copy dp.position.controller
+                    
+                    delete dp
+                
+            )
+            
+            if ( obj.KGSC != undefined ) then
+            (
+               -- b.assumeSkinPose()
+                
+                local ds = dummy name:"DummyScaleController" 
+                ds.scale.controller = b.scale.controller
+                local p0 = ds.transform
+                local prevTime = 0
+                
+                for anim in obj.KGSC.KG do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                        
+                    if ( prevTime == t ) then continue else prevTime = t
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 ds.scale = p 
+                        )
+                )
+                with animate on b.scale.controller = copy ds.scale.controller
+                
+                delete ds
+            )
+            
+        )
+                -- build bone hierarchy
+        for b in boneList do
+        (
+            if ( b.ParentBoneId > 0 ) then 
+            (
+                local parentBone = boneList[b.ParentBoneId].boneRef
+                b.boneRef.parent = parentBone
+            )
+        )
+    ),
+    function BuildBONE2 boneList bpos =
+    (
+        if ( boneList == undefined ) then return undefined
+        format "Building Bones\n"
+        local layer = GriffonStudios_Helpers.CreateLayer "Bones"
+        
+        -- create the bones
+        local uniqueId = 1
+        for b in boneList do
+        (
+            
+            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
+            
+            aBone.Name = b.name
+            aBone.showLinks = true
+			aBone.Width = 0.05
+			aBone.Height = 0.05
+            b.boneRef = aBone
+            layer.AddNode aBone
+
+            uniqueId += 1
+        )
+
+        -- apply bind pos
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+            in coordsys local b.transform = bpos[obj.id].matrix
+        )
+
+        
+        -- apply bone animation
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+            local mtrx = bpos[obj.id].matrix
+            
+            if ( obj.KGRT != undefined ) then 
+            (
+                for anim in obj.KGRT.KG do
+                (
+                    local t = anim.Time + 10
+                    local q = anim.Point
+                    
+                    with animate on at time t in coordsys mtrx b.rotation = q
+
+                )
+            )
+            
+            if ( obj.KGTR != undefined ) then
+            (
+                for anim in obj.KGTR.KG do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                    
+                    with animate on at time t in coordsys mtrx b.position = p
+
+                )
+            )
+            
+            if ( obj.KGSC != undefined ) then
+            (
+                for anim in obj.KGSC.KG do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+
+                    with animate on at time t in coordsys mtrx b.scale = p
+
+                        
+                )
+            )
+            
+        )
+        
+        -- build bone hierarchy
+        for b in boneList do
+        (
+            if ( b.ParentBoneId > 0 ) then 
+            (
+                local parentBone = boneList[b.ParentBoneId].boneRef
+                b.boneRef.parent = parentBone
+            )
+        )
+        
+    ),
+    function BuildBONE boneList bpos =
     (
         if ( boneList == undefined ) then return undefined
         format "Building Bones\n"
@@ -2173,14 +2398,6 @@ struct Warcraft3_Reforged
         local prevEndFrame = 0                       
         for seq in seqs do
         (
---             if ( prevEndFrame > seq.StartFrame ) then 
---             (
---                 format "[ERROR] Unable to add '%', Start and End frame are not correct (%-%)\n" seq.name seq.startFrame seq.endFrame
---                 continue
---             )
---             else
---                 prevEndFrame = seq.endFrame
-            
             
             local startNote = AddNewNoteKey starAnimTrack seq.startFrame
             local endNote = AddNewNoteKey starAnimTrack seq.endFrame
@@ -2864,6 +3081,49 @@ struct Warcraft3_Reforged
         
         
     ),
+    function FixAnimation geos boneList=
+    (
+        /* Very dirty fix for the animation, please check !! */
+        
+        local completeFilePath = (getDir #scene) + "\\temp.fbx"
+        exportFile completeFilePath #noPrompt using:FBXEXP
+        resetMaxFile #noPrompt
+        importFile completeFilePath #noPrompt using:FBXIMP
+        
+        for item in boneList do
+        (
+            local b = getNodeByName item.Name
+            
+            if b != undefined then 
+                item.boneRef = b
+            else
+                format "% not found\n" item
+            
+        )
+        
+        for item in geos do
+        (
+            if (  item.uniqueName != undefined ) then 
+            (
+                local m = getNodeByName item.uniqueName
+                if m != undefined then 
+                   item.meshRef = m
+                else
+                    format "% not found\n" item
+            )
+        )
+        
+    ),
+    function AssignMTLS geos mtls=
+    (
+        for item in geos do
+        (
+            local m = item.meshRef
+            if m !=undefined then 
+                if mtls != undefined then 
+                    m.material = mtls[item.MATS.ID].MaterialRef
+        )  
+    ),
     /*
         MAIN IMPORT
     */
@@ -2964,12 +3224,18 @@ struct Warcraft3_Reforged
         )
 
 
+         
+         Warcraft3_Reforged.BuildBONE3 boneList bpos
+         Warcraft3_Reforged.BuildGEOS geos modl
+         Warcraft3_Reforged.BuildSKIN geos boneList
+         
+        Warcraft3_Reforged.FixAnimation geos boneList
+        
         Warcraft3_Reforged.BuildMODL modl
-        Warcraft3_Reforged.BuildBONE boneList bpos pivt
         Warcraft3_Reforged.BuildMTLS mtls texs modl.name geos
-        Warcraft3_Reforged.BuildGEOS geos modl mtls
+        Warcraft3_Reforged.AssignMTLS geos mtls
+        
         Warcraft3_Reforged.BuildATCH atch bpos boneList
-        Warcraft3_Reforged.BuildSKIN geos boneList
         Warcraft3_Reforged.BuildCLID clid boneList bpos
         Warcraft3_Reforged.BuildGEOA geoa geos
         Warcraft3_Reforged.BuildSEQS seqs
