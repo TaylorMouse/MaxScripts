@@ -124,88 +124,11 @@ struct Warcraft3_Reforged_PRE2
         priorityPlane, 
         replacableTextureId  
     )
+
+GLOBAL mdxFileVersion = 0
+GLOBAL mdx = undefined   
     
-/* TAGS
-    VERS // version
-    MODL // model
-    SEQS // animation sequences
-    TEXS // texture names
-    PIVT // pivots
-    PRE2 // particle emitter
-    EVTS // events
-    BPOS // binding position
-    CORN // conrners ??
-    MTLS // materials
-    GEOS // geosets
-    GEOA // geoset animation
-    BONE // bones
-    ATCH // attachments
-    CLID // colission 
-    RIBB // ribbon emitters
-    GLBS // global sequences
-    TXAN // texture animations
-    CAMS // camera
-    LITE // lites
-    FAFX // facial effects
-    PREM // particle emitters
-*/
-/* Animation Tags
-    // Node
-    KGTR: float[3] translation
-    KGRT: float[4] rotation
-    KGSC: float[3] scaling
-    // Layer
-    KMTF: uint32 textureId
-    KMTA: float alpha
-    // Texture animation
-    KTAT: float[3] translation
-    KTAR: float[4] rotation
-    KTAS: float[3] scaling
-    //Geoset animation
-    KGAO: float alpha
-    KGAC: float[3] color
-    // Light
-    KLAS: uint32 attenuationStart
-    KLAE: uint32 attenuationStartEnd
-    KLAC: float[3] color
-    KLAI: float intensity
-    KLBI: float ambientIntensity
-    KLBC: float[3] ambientColor
-    KLAV: float visibility
-    // Attachment
-    KATV: float visibility
-    // Particle emitter
-    KPEE: float emissionRate
-    KPEG: float gravity
-    KPLN: float longitude
-    KPLT: float latitude
-    KPEL: float lifespan
-    KPES: float speed
-    KPEV: float visibility
-    // Particle emitter 2
-    KP2E: float emissionRate
-    KP2G: float gravity
-    KP2L: float latitude
-    KP2S: float speed
-    KP2V: float visibility
-    KP2R: float variation
-    KP2N: float length
-    KP2W: float width
-    // Ribbon emitter
-    KRVS: float visibility
-    KRHA: float heightAbove
-    KRHB: float heightBelow
-    KRAL: float alpha
-    KRCO: float[3] color
-    KRTX: uint32 textureSlot
-    // Camera
-    KCTR: float[3] translation
-    KCRL: uint32 rotation
-    KTTR: float[3] targetTranslation
-
-
-*/
-global mdxFileVersion = 0
+    
 struct StarTools_Helpers
 (
     function RenameSEQS seqs=
@@ -657,193 +580,218 @@ struct Warcraft3_Reforged
         
         while ( tag.Size > currentRelativePosition ) do
         (
-            local size = readLong stream
-            currentRelativePosition = currentRelativePosition + size 
+            local geosize = readLong stream
+            currentRelativePosition = currentRelativePosition + geosize 
             if(currentRelativePosition > tag.Size ) then exit
             
             local geo = Warcraft3_Reforged_GEO()   
             
-            /* Vertices */
             local verts = #()
-            local vrtx = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nVerts = readLong stream
-            for v=1 to nVerts do 
-            (
-                local vert = [readFloat stream, readFloat stream, readFloat stream]
-                append verts vert
-            )
-            geo.VRTX = verts
-            
-            /* Normals */
             local norms = #()
-            local nrms = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nNorms = readLong stream
-            for n=1 to nNorms do 
-            (
-                local nrm = [readFloat stream, readFloat stream, readFloat stream]
-                append norms nrm
-            )
-            geo.NRMS = norms
-            
-            /* Types */
             local types = #()
-            local ptyp = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nPtyp = readLong stream
-            for p=1 to nPtyp do 
-            (
-                /*
-                0: points
-                1: lines
-                2: line loop
-                3: line strip
-                4: triangles
-                5: triangle strip
-                6: triangle fan
-                7: quads
-                8: quad strip
-                9: polygons
-               */ 
-                local pt = readLong stream
-                append types pt
-            )
-            geo.PTYP = types
-
-            /* Primitives */
             local primitives = #()
-            local pcnt = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nPcnt = readLong stream
-            for p=1 to nPcnt do 
-            (
-                local cn = readLong stream
-                append primitives cn
-            )
-            geo.PCNT = primitives
-            
-            /* Indices */  
             local indices = #()
-            local pvtx = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nPvtx = readLong stream
-            for i=1 to nPvtx/3 do
-            (
-                local idx = [readShort stream +1, readShort stream +1, readShort stream +1]
-                append indices idx
-            )
-            geo.PVTX = indices
-            
-            /* Groups */
-            local gndx = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nGndx = readLong stream
             local groups = #()
-            for g=1 to nGndx do append groups ( readByte stream + 1 )
-            geo.GNDX = groups
-            
-            /* Matrix Groups or bone groups */
             local matrixGroups = #()
-            local mtgc = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nMtgc = readLong stream
-            for m=1 to nMtgc do append matrixGroups (readLong stream)
-            geo.MTGC = matrixGroups
-
-            /* Matrices */
-            local gMats = Warcraft3_Reforged_MATS()
             local matrices = #()
-            local mats = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nMats = readLong stream
-            for m=1 to nMats do
-            (
-                append matrices (readLong stream )
-            )
-            gMats.Matrices = matrices
-            gMats.ID = readLong stream + 1 --> reference to the MAT ID in MTLS
-            
-            GriffonStudios_Helpers.SkipBytes stream 8
-            gMats.LOD = readLong stream
-            gMats.Name = GriffonStudios_Helpers.ReadFixedString stream 112
-            geo.MATS = gMats
-            
-            -- print gMats
-            
-            /* Tangents */
             local tangents = #()
-            local tang = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nTang = readLong stream
-            
-            for t=1 to nTang do
-            (
-                append tangents [readFloat stream, readFloat stream, readFloat stream, readFloat stream]
-            )
-            geo.TANG = tangents
-            
-            /* SKIN */
             local skins = #()
-            local skn = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nSkn = readLong stream
             
-            for s=1 to nSkn / 8 do
+            geoSize -= 4 
+            
+            for c=1 to 11 do
             (
-                local w = Warcraft3_Reforged_Weights()
-                w.VertexId = s
-                w.BoneIds = #()
-                w.Weights = #()
-                local b1 = (readByte stream #unsigned + 1)
-                local b2 = (readByte stream #unsigned + 1)
-                local b3 = (readByte stream #unsigned + 1)
-                local b4 = (readByte stream #unsigned + 1)
-
-                local w1 = ((readByte stream #unsigned) / 255.0)
-                local w2 = ((readByte stream #unsigned) / 255.0)
-                local w3 = ((readByte stream #unsigned) / 255.0)
-                local w4 = ((readByte stream #unsigned) / 255.0)
-
-                    append w.BoneIds b1
-                    
-                    append w.Weights w1
-                    
-                    
-                    if (w2 > 0.0 ) then 
-                    (
-                        append w.BoneIds b2
-                        append w.Weights w2
-                    )
-                    if (w3 > 0.0 ) then 
-                    (
-                        append w.BoneIds b3
-                        append w.Weights w3
-                    )
-                    
-                    if (w4 > 0.0 ) then
-                    (
-                        append w.BoneIds b4
-                        append w.Weights w4
-                    )
-
-                append skins w
-            )
-            geo.SKIN = skins
-            
-            
-            /* Nbr of UV Maps */
-            local uvas = GriffonStudios_Helpers.ReadFixedString stream 4
-            local nUvas = readLong stream --> nbr of uv coordinates
-
-            /* UV Coordinates */
-            geo.UVS = #()
-            for i=1 to nUvas do
-            (
-                local uvs = #()
-                local uvbs = GriffonStudios_Helpers.ReadFixedString stream 4
-                local nUvbs = readLong stream
-
-                for u=1 to nUvbs do
+                local currentPos = ftell stream
+                local chnk = GriffonStudios_Helpers.ReadFixedString stream 4
+               
+                /* Vertices */
+                if ( chnk == "VRTX" ) then 
                 (
-                    append uvs ( [readFloat stream, 1.0 - readFloat stream, 0.0] )
+                    local nVerts = readLong stream
+                    for v=1 to nVerts do 
+                    (
+                        local vert = [readFloat stream, readFloat stream, readFloat stream]
+                        append verts vert
+                    )
+                    geo.VRTX = verts
                 )
-                append geo.UVS uvs
+                /* Normals */
+                if ( chnk == "NRMS" ) then 
+                (
+                    local nNorms = readLong stream
+                    for n=1 to nNorms do 
+                    (
+                        local nrm = [readFloat stream, readFloat stream, readFloat stream]
+                        append norms nrm
+                    )
+                    geo.NRMS = norms
+                )
+                /* Types */
+                if ( chnk == "PTYP" ) then 
+                (
+                    local nPtyp = readLong stream
+                    for p=1 to nPtyp do 
+                    (
+                        /*
+                        0: points
+                        1: lines
+                        2: line loop
+                        3: line strip
+                        4: triangles
+                        5: triangle strip
+                        6: triangle fan
+                        7: quads
+                        8: quad strip
+                        9: polygons
+                       */ 
+                        local pt = readLong stream
+                        append types pt
+                    )
+                    geo.PTYP = types
+                )
+                /* Primitives */
+                if ( chnk == "PCNT" ) then 
+                (
+                    local nPcnt = readLong stream
+                    for p=1 to nPcnt do 
+                    (
+                        local cn = readLong stream
+                        append primitives cn
+                    )
+                    geo.PCNT = primitives
+                )
+                /* Indices */  
+                if ( chnk == "PVTX" ) then 
+                (
+                    local nPvtx = readLong stream
+                    for i=1 to nPvtx/3 do
+                    (
+                        local idx = [readShort stream +1, readShort stream +1, readShort stream +1]
+                        append indices idx
+                    )
+                    geo.PVTX = indices
+                )
+                /* Groups */
+                if ( chnk == "GNDX" ) then 
+                (
+                    local nGndx = readLong stream
+                    
+                    for g=1 to nGndx do append groups ( readByte stream + 1 )
+                    geo.GNDX = groups
+                )
+                /* Matrix Groups or bone groups */
+                if ( chnk == "MTGC" ) then 
+                (
+                    local nMtgc = readLong stream
+                    for m=1 to nMtgc do append matrixGroups (readLong stream)
+                    geo.MTGC = matrixGroups
+                )
+                /* Matrices */
+                if ( chnk == "MATS" ) then 
+                (
+                    local gMats = Warcraft3_Reforged_MATS()
+                    local nMats = readLong stream
+                    for m=1 to nMats do
+                    (
+                        append matrices (readLong stream )
+                    )
+                    gMats.Matrices = matrices
+                    gMats.ID = readLong stream + 1 --> reference to the MAT ID in MTLS
+                    
+                    GriffonStudios_Helpers.SkipBytes stream 8
+                    gMats.LOD = readLong stream
+                    gMats.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+                    if gMats.Name == "" then gMats.Name = mdx.modl.name
+                    
+                    for i=1 to 7 do readfloat stream
+                        
+                    local unk = readLong stream
+                    
+                    for i=1 to unk do GriffonStudios_Helpers.SkipBytes stream 28
+                    
+                    geo.MATS = gMats
+
+                )
+                /* Tangents */
+                if ( chnk == "TANG" ) then 
+                (
+                    local nTang = readLong stream
+                    for t=1 to nTang do
+                        append tangents [readFloat stream, readFloat stream, readFloat stream, readFloat stream]
+                    geo.TANG = tangents
+                )
+                /* SKIN */
+                if ( chnk == "SKIN" ) then 
+                (
+                    local nSkn = readLong stream
+                    
+                    for s=1 to nSkn / 8 do
+                    (
+                        local w = Warcraft3_Reforged_Weights()
+                        w.VertexId = s
+                        w.BoneIds = #()
+                        w.Weights = #()
+                        local b1 = (readByte stream #unsigned + 1)
+                        local b2 = (readByte stream #unsigned + 1)
+                        local b3 = (readByte stream #unsigned + 1)
+                        local b4 = (readByte stream #unsigned + 1)
+
+                        local w1 = ((readByte stream #unsigned) / 255.0)
+                        local w2 = ((readByte stream #unsigned) / 255.0)
+                        local w3 = ((readByte stream #unsigned) / 255.0)
+                        local w4 = ((readByte stream #unsigned) / 255.0)
+
+                            append w.BoneIds b1
+                            
+                            append w.Weights w1
+                            
+                            
+                            if (w2 > 0.0 ) then 
+                            (
+                                append w.BoneIds b2
+                                append w.Weights w2
+                            )
+                            if (w3 > 0.0 ) then 
+                            (
+                                append w.BoneIds b3
+                                append w.Weights w3
+                            )
+                            
+                            if (w4 > 0.0 ) then
+                            (
+                                append w.BoneIds b4
+                                append w.Weights w4
+                            )
+
+                        append skins w
+                    )
+                    geo.SKIN = skins
+                )
+                /* Nbr of UV Maps */
+                if ( chnk == "UVAS" ) then 
+                (
+                    local nUvas = readLong stream --> nbr of uv coordinates
+                    /* UV Coordinates */
+                    geo.UVS = #()
+                    for i=1 to nUvas do
+                    (
+                        local uvs = #()
+                        local uvbs = GriffonStudios_Helpers.ReadFixedString stream 4
+                        local nUvbs = readLong stream
+
+                        for u=1 to nUvbs do
+                        (
+                            append uvs ( [readFloat stream, 1.0 - readFloat stream, 0.0] )
+                        )
+                        append geo.UVS uvs
+                    )
+                )
+
+                geoSize -= (ftell stream) - currentPos
+                if geoSize <= 0 then exit
             )
-            
             append geos geo
         )
-        
         return geos
     ),
     function ReadBONE stream tag=
@@ -1537,147 +1485,162 @@ struct Warcraft3_Reforged
         local pre2s = #()
         local totalSize = tag.Size
         
-        while (totalSize > 0 ) do
+        try (
+                   
+            while (totalSize > 0 ) do
+            (
+                local size = readLong stream
+                local testPos = ftell stream
+                
+                totalSize -= size
+                
+                size -=4
+                
+                local pe = Warcraft3_Reforged_PRE2()
+                local unk    = readLong stream -- always 96
+                pe.name      = GriffonStudios_Helpers.ReadFixedString stream 80
+                pe.id        = readLong stream + 1
+                pe.parentId  = readLong stream + 1
+                local flags     = readLong stream
+                
+                local flagSettings = Warcraft3_Reforged_PRE2_FLAGS()
+                if (flags > 0) then 
+                (
+                    if ( (bit.and flags 0x00000001) > 0 ) then flagSettings.DONT_INHERIT_TRANSLATION = true
+                    if ( (bit.and flags 0x00000002) > 0 ) then flagSettings.DONT_INHERIT_SCALING = true
+                    if ( (bit.and flags 0x00000004) > 0 ) then flagSettings.DONT_INHERIT_ROTATION = true
+                    if ( (bit.and flags 0x00000008) > 0 ) then flagSettings.BILLBOARDED = true
+                    if ( (bit.and flags 0x00000010) > 0 ) then flagSettings.BILLBOARD_LOCK_X = true
+                    if ( (bit.and flags 0x00000020) > 0 ) then flagSettings.BILLBOARD_LOCK_Y = true
+                    if ( (bit.and flags 0x00000040) > 0 ) then flagSettings.BILLBOARD_LOCK_Z = true
+                    if ( (bit.and flags 0x00000080) > 0 ) then flagSettings.GENOBJECT_MDLBONESECTION = true
+                    if ( (bit.and flags 0x00000100) > 0 ) then flagSettings.GENOBJECT_MDLLIGHTSECTION = true
+                    if ( (bit.and flags 0x00000200) > 0 ) then flagSettings.GENOBJECT_MDLEVENTSECTION = true
+                    if ( (bit.and flags 0x00000400) > 0 ) then flagSettings.GENOBJECT_MDLATTACHMENTSECTION = true
+                    if ( (bit.and flags 0x00000800) > 0 ) then flagSettings.GENOBJECT_MDLPARTICLEEMITTER2 = true
+                    if ( (bit.and flags 0x00001000) > 0 ) then flagSettings.GENOBJECT_MDLHITTESTSHAPE = true
+                    if ( (bit.and flags 0x00002000) > 0 ) then flagSettings.GENOBJECT_MDLRIBBONEMITTER = true
+                    if ( (bit.and flags 0x00004000) > 0 ) then flagSettings.PROJECT = true
+                    if ( (bit.and flags 0x00008000) > 0 ) then flagSettings.UNSHADED = true
+                    if ( (bit.and flags 0x00010000) > 0 ) then flagSettings.SORT_PRIMITIVES_FAR_Z = true
+                    if ( (bit.and flags 0x00020000) > 0 ) then flagSettings.LINE_EMITTER = true
+                    if ( (bit.and flags 0x00040000) > 0 ) then flagSettings.PARTICLE_UNFOGGED = true
+                    if ( (bit.and flags 0x00080000) > 0 ) then flagSettings.PARTICLE_USE_MODEL_SPACE = true
+                    if ( (bit.and flags 0x00100000) > 0 ) then flagSettings.PARTICLE_INHERIT_SCALE = true
+                    if ( (bit.and flags 0x00200000) > 0 ) then flagSettings.PARTICLE_INSTANT_VELOCITY_LIN = true
+                    if ( (bit.and flags 0x00400000) > 0 ) then flagSettings.PARTICLE_0XKILL = true
+                    if ( (bit.and flags 0x00800000) > 0 ) then flagSettings.PARTICLE_Z_VELOCITY_ONLY = true
+                    if ( (bit.and flags 0x01000000) > 0 ) then flagSettings.PARTICLE_TUMBLER = true
+                    if ( (bit.and flags 0x02000000) > 0 ) then flagSettings.PARTICLE_TAIL_GROWS = true
+                    if ( (bit.and flags 0x04000000) > 0 ) then flagSettings.PARTICLE_EXTRUDE = true
+                    if ( (bit.and flags 0x08000000) > 0 ) then flagSettings.PARTICLE_XYQUADS = true
+                    if ( (bit.and flags 0x10000000) > 0 ) then flagSettings.PARTICLE_PROJECT = true
+                    if ( (bit.and flags 0x20000000) > 0 ) then flagSettings.PARTICLE_FOLLOW = true
+                )
+                pe.flags = flagSettings
+                
+                for i=1 to 3 do
+                (
+                    local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                    if( kg == "KGTR" ) then pe.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                    if( kg == "KGRT" ) then pe.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+                    if( kg == "KGSC" ) then pe.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+                )
+                
+                if( pe.KGSC == undefined ) then fseek stream -4 #seek_cur
+                if( pe.KGTR == undefined ) then fseek stream -4 #seek_cur
+                if( pe.KGRT == undefined ) then fseek stream -4 #seek_cur
+
+                pe.speed         = readFloat stream
+                pe.variation     = readFloat stream
+                pe.coneAngle      = readFloat stream
+                pe.gravity       = readFloat stream
+
+                pe.lifespan      = readFloat stream
+                pe.emissionrate  = readFloat stream
+               
+                pe.length        = readFloat stream
+                pe.width         = readFloat stream
+                
+                pe.emitterType   = readLong stream
+                pe.rowCount      = readLong stream
+                pe.colCount      = readLong stream
+                pe.particleType  = readLong stream
+                
+                pe.tailLength    = readFloat stream
+                pe.midTime       = readFloat stream
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.startColor    = color r g b
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.midColor      = color r g b
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.endColor      = color r g b
+                
+                pe.startAlpha    = readByte stream
+                pe.midAlpha      = readByte stream
+                pe.endAlpha      = readByte stream 
+
+                pe.startSize    = readFloat stream
+                pe.midSize      = readFloat stream
+                pe.endSize      = readFloat stream
+
+                pe.startLifespanUVAnim   = readLong stream
+                pe.midLifespanUVAnim     = readLong stream
+                pe.endLifespanUVAnim     = readLong stream
+                pe.startDecayUVAnim      = readLong stream
+                pe.midDecayUVAnim        = readLong stream
+                pe.endDecayUVAnim        = readLong stream
+                pe.startTailUVAnim       = readLong stream
+                pe.midTailUVAnim         = readLong stream
+                pe.endTailUVAnim         = readLong stream
+                pe.startTailDecayUVAnim  = readLong stream
+                pe.midTailDecayUVAnim    = readLong stream
+                pe.endTailDecayUVAnim    = readLong stream
+                pe.blendMode             = readLong stream
+                pe.textureId             = readLong stream
+                pe.replacableTextureId   = readLong stream 
+                pe.priorityPlane         = readLong stream
+                  
+                /*
+                    BASE = 0x0,
+                    PLANE = 0x1,
+                    SPHERE = 0x2,
+                    SPLINE = 0x3,
+                */
+
+                for i=1 to 2 do
+                (
+                    local anim = GriffonStudios_Helpers.ReadFixedString stream 4
+                    
+                    if (anim == "KP2V" ) then pe.kp2v = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
+                    if (anim == "KP2E" ) then pe.kp2e = Warcraft3_Reforged.ReadFloatAnim stream -- emission
+                    
+                )
+                if( pe.kp2v == undefined ) then fseek stream -4 #seek_cur
+                if( pe.kp2e == undefined ) then fseek stream -4 #seek_cur
+                
+                local skip = size - ( (ftell stream )- testPos )
+                
+                Warcraft3_Reforged.SkipBytes stream skip
+                
+                append pre2s pe
+            )
+        )
+        catch
         (
-            local size = readLong stream
-            totalSize -= size
-            
-            local pe = Warcraft3_Reforged_PRE2()
-            local unk    = readLong stream -- always 96
-            pe.name      = GriffonStudios_Helpers.ReadFixedString stream 80
-            pe.id        = readLong stream + 1
-            pe.parentId  = readLong stream + 1
-            local flags     = readLong stream
-            
-            local flagSettings = Warcraft3_Reforged_PRE2_FLAGS()
-            if (flags > 0) then 
-            (
-                if ( (bit.and flags 0x00000001) > 0 ) then flagSettings.DONT_INHERIT_TRANSLATION = true
-                if ( (bit.and flags 0x00000002) > 0 ) then flagSettings.DONT_INHERIT_SCALING = true
-                if ( (bit.and flags 0x00000004) > 0 ) then flagSettings.DONT_INHERIT_ROTATION = true
-                if ( (bit.and flags 0x00000008) > 0 ) then flagSettings.BILLBOARDED = true
-                if ( (bit.and flags 0x00000010) > 0 ) then flagSettings.BILLBOARD_LOCK_X = true
-                if ( (bit.and flags 0x00000020) > 0 ) then flagSettings.BILLBOARD_LOCK_Y = true
-                if ( (bit.and flags 0x00000040) > 0 ) then flagSettings.BILLBOARD_LOCK_Z = true
-                if ( (bit.and flags 0x00000080) > 0 ) then flagSettings.GENOBJECT_MDLBONESECTION = true
-                if ( (bit.and flags 0x00000100) > 0 ) then flagSettings.GENOBJECT_MDLLIGHTSECTION = true
-                if ( (bit.and flags 0x00000200) > 0 ) then flagSettings.GENOBJECT_MDLEVENTSECTION = true
-                if ( (bit.and flags 0x00000400) > 0 ) then flagSettings.GENOBJECT_MDLATTACHMENTSECTION = true
-                if ( (bit.and flags 0x00000800) > 0 ) then flagSettings.GENOBJECT_MDLPARTICLEEMITTER2 = true
-                if ( (bit.and flags 0x00001000) > 0 ) then flagSettings.GENOBJECT_MDLHITTESTSHAPE = true
-                if ( (bit.and flags 0x00002000) > 0 ) then flagSettings.GENOBJECT_MDLRIBBONEMITTER = true
-                if ( (bit.and flags 0x00004000) > 0 ) then flagSettings.PROJECT = true
-                if ( (bit.and flags 0x00008000) > 0 ) then flagSettings.UNSHADED = true
-                if ( (bit.and flags 0x00010000) > 0 ) then flagSettings.SORT_PRIMITIVES_FAR_Z = true
-                if ( (bit.and flags 0x00020000) > 0 ) then flagSettings.LINE_EMITTER = true
-                if ( (bit.and flags 0x00040000) > 0 ) then flagSettings.PARTICLE_UNFOGGED = true
-                if ( (bit.and flags 0x00080000) > 0 ) then flagSettings.PARTICLE_USE_MODEL_SPACE = true
-                if ( (bit.and flags 0x00100000) > 0 ) then flagSettings.PARTICLE_INHERIT_SCALE = true
-                if ( (bit.and flags 0x00200000) > 0 ) then flagSettings.PARTICLE_INSTANT_VELOCITY_LIN = true
-                if ( (bit.and flags 0x00400000) > 0 ) then flagSettings.PARTICLE_0XKILL = true
-                if ( (bit.and flags 0x00800000) > 0 ) then flagSettings.PARTICLE_Z_VELOCITY_ONLY = true
-                if ( (bit.and flags 0x01000000) > 0 ) then flagSettings.PARTICLE_TUMBLER = true
-                if ( (bit.and flags 0x02000000) > 0 ) then flagSettings.PARTICLE_TAIL_GROWS = true
-                if ( (bit.and flags 0x04000000) > 0 ) then flagSettings.PARTICLE_EXTRUDE = true
-                if ( (bit.and flags 0x08000000) > 0 ) then flagSettings.PARTICLE_XYQUADS = true
-                if ( (bit.and flags 0x10000000) > 0 ) then flagSettings.PARTICLE_PROJECT = true
-                if ( (bit.and flags 0x20000000) > 0 ) then flagSettings.PARTICLE_FOLLOW = true
-            )
-            pe.flags = flagSettings
-            
-            for i=1 to 3 do
-            (
-                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
-                if( kg == "KGTR" ) then pe.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
-                if( kg == "KGRT" ) then pe.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
-                if( kg == "KGSC" ) then pe.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
-            )
-            
-            if( pe.KGSC == undefined ) then fseek stream -4 #seek_cur
-            if( pe.KGTR == undefined ) then fseek stream -4 #seek_cur
-            if( pe.KGRT == undefined ) then fseek stream -4 #seek_cur
-
-            pe.speed         = readFloat stream
-            pe.variation     = readFloat stream
-            pe.coneAngle      = readFloat stream
-            pe.gravity       = readFloat stream
-
-            pe.lifespan      = readFloat stream
-            pe.emissionrate  = readFloat stream
-           
-            pe.length        = readFloat stream
-            pe.width         = readFloat stream
-            
-            pe.emitterType   = readLong stream
-            pe.rowCount      = readLong stream
-            pe.colCount      = readLong stream
-            pe.particleType  = readLong stream
-            
-            pe.tailLength    = readFloat stream
-            pe.midTime       = readFloat stream
-            
-            local r = ( readFloat stream * 255 ) as integer
-            local g = ( readFloat stream * 255 ) as integer
-            local b = ( readFloat stream * 255 ) as integer
-            
-            pe.startColor    = color r g b
-            
-            local r = ( readFloat stream * 255 ) as integer
-            local g = ( readFloat stream * 255 ) as integer
-            local b = ( readFloat stream * 255 ) as integer
-            
-            pe.midColor      = color r g b
-            
-            local r = ( readFloat stream * 255 ) as integer
-            local g = ( readFloat stream * 255 ) as integer
-            local b = ( readFloat stream * 255 ) as integer
-            
-            pe.endColor      = color r g b
-            
-            pe.startAlpha    = readByte stream
-            pe.midAlpha      = readByte stream
-            pe.endAlpha      = readByte stream 
-
-            pe.startSize    = readFloat stream
-            pe.midSize      = readFloat stream
-            pe.endSize      = readFloat stream
-
-            pe.startLifespanUVAnim   = readLong stream
-            pe.midLifespanUVAnim     = readLong stream
-            pe.endLifespanUVAnim     = readLong stream
-            pe.startDecayUVAnim      = readLong stream
-            pe.midDecayUVAnim        = readLong stream
-            pe.endDecayUVAnim        = readLong stream
-            pe.startTailUVAnim       = readLong stream
-            pe.midTailUVAnim         = readLong stream
-            pe.endTailUVAnim         = readLong stream
-            pe.startTailDecayUVAnim  = readLong stream
-            pe.midTailDecayUVAnim    = readLong stream
-            pe.endTailDecayUVAnim    = readLong stream
-            pe.blendMode             = readLong stream
-            pe.textureId             = readLong stream
-            pe.replacableTextureId   = readLong stream 
-            pe.priorityPlane         = readLong stream
-              
-            /*
-                BASE = 0x0,
-                PLANE = 0x1,
-                SPHERE = 0x2,
-                SPLINE = 0x3,
-            */
-
-            for i=1 to 2 do
-            (
-                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
-                
-                if (anim == "KP2V" ) then pe.kp2v = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
-                if (anim == "KP2E" ) then pe.kp2e = Warcraft3_Reforged.ReadFloatAnim stream -- emission
-                
-            )
-            if( pe.kp2v == undefined ) then fseek stream -4 #seek_cur
-            if( pe.kp2e == undefined ) then fseek stream -4 #seek_cur
-            
-            append pre2s pe
+            /* old models fail on this... I don't care */
         )
         return pre2s
     ),
@@ -1685,16 +1648,19 @@ struct Warcraft3_Reforged
     /* BUILD
     
     */
-    function BuildMODL modl=
+    function BuildMODL=
     (
+        local modl = mdx.modl
         --print modl
         local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
         obj.name = modl.name
         
         freeze obj
     ),
-    function BuildGEOS geos modl=
+    function BuildGEOS=
     (
+        local geos = mdx.geos
+        local modl = mdx.modl
         if (geos == undefined ) then return undefined
         
         local wireColor = color 128 128 128
@@ -1743,8 +1709,13 @@ struct Warcraft3_Reforged
             uniqueId +=1
         )
     ),
-    function BuildMTLS mtls texs modlName geos=
+    function BuildMTLS=
     (
+        local mtls = mdx.mtls
+        local texs = mdx.texs
+        local modlName = mdx.modl.name
+        local geos = mdx.geos
+        
         if ( mtls == undefined ) then return undefined
         if ( Warcraft3_AssetFolder == undefined or Warcraft3_AssetFolder == "" ) then 
         (   
@@ -1835,8 +1806,11 @@ struct Warcraft3_Reforged
         )
         --return mtls
     ),
-    function BuildATCH atch bpos boneList=
+    function BuildATCH=
     (
+        local atch  = mdx.atch
+        local bpos  = mdx.bpos
+        local boneList = mdx.bone
         
         if ( atch == undefined ) then return undefined
         format "Building Attachments\n"
@@ -1960,8 +1934,10 @@ struct Warcraft3_Reforged
         
         
     ),
-    function BuildBONE boneList bpos =
+    function BuildBONE=
     (
+        local boneList = mdx.bone
+        local bpos = mdx.bpos
         if ( boneList == undefined ) then return undefined
         format "Building Bones\n"
         local layer = GriffonStudios_Helpers.CreateLayer "Bones"
@@ -1983,16 +1959,17 @@ struct Warcraft3_Reforged
             uniqueId += 1
         )
         
-
-        
         -- apply bind pos
         for obj in boneList do
         (
             local b = obj.boneRef
-            local mtrx = bpos[obj.id].matrix
             
-            --in coordsys local b.transform = mtrx
-            b.pos = mtrx.translationpart
+            if bpod != undefined then 
+            (
+                local mtrx = bpos[obj.id].matrix
+                
+                b.pos = mtrx.translationpart
+            )
 
         )
 
@@ -2004,9 +1981,7 @@ struct Warcraft3_Reforged
             local b = obj.boneRef
             
             b.assumeSkinPose()
-            
-            
-            
+
             if ( obj.KGRT != undefined ) then 
             (
                -- b.assumeSkinPose()
@@ -2031,17 +2006,10 @@ struct Warcraft3_Reforged
                 with animate on b.rotation.controller = copy dr.rotation.controller
                 
                 delete dr
-                
 
-                
             )
-            
             if ( obj.KGTR != undefined ) then
             (
-               
-               
-                    --b.assumeSkinPose()
-                    
                     local dp = dummy name:"DummyPositionController" 
                     dp.position.controller = b.position.controller
                     local p0 = dp.transform
@@ -2051,9 +2019,7 @@ struct Warcraft3_Reforged
                     (
                         local t = anim.Time + 10
                         local p = anim.Point
-                        
-                      
-                        
+
                         if ( prevTime == t ) then continue else prevTime = t
                         
                         with animate on 
@@ -2065,7 +2031,6 @@ struct Warcraft3_Reforged
                     with animate on b.position.controller = copy dp.position.controller
                     
                     delete dp
-                
             )
             
             if ( obj.KGSC != undefined ) then
@@ -2099,15 +2064,17 @@ struct Warcraft3_Reforged
                 -- build bone hierarchy
         for b in boneList do
         (
-            if ( b.ParentBoneId > 0 ) then 
+            if ( b.ParentBoneId > 0 and b.ParentBoneId <= boneList.count ) then 
             (
                 local parentBone = boneList[b.ParentBoneId].boneRef
                 b.boneRef.parent = parentBone
             )
         )
     ),
-    function BuildSKIN geos boneList=
+    function BuildSKIN =
     (
+        local geos = mdx.geos
+        local boneList = mdx.bone
         if ( geos == undefined or boneList == undefined ) then return undefined
         
         try(
@@ -2150,8 +2117,9 @@ struct Warcraft3_Reforged
         redrawViews()
 
     ),
-    function BuildSEQS seqs=
+    function BuildSEQS=
     (
+        local seqs = mdx.seqs
         
         if ( seqs == undefined ) then return undefined
         format "Setting Animation Sequences\n"
@@ -2192,8 +2160,12 @@ struct Warcraft3_Reforged
 			
         )
     ),
-    function BuildCLID clid boneList bpos=
+    function BuildCLID=
     (
+        local clid = mdx.clid
+        local boneList = mdx.bone
+        local bpos = mdx.bpos
+        
         if (clid == undefined ) then return undefined
         format "Buidling Collision Objects\n"
         
@@ -2263,8 +2235,11 @@ struct Warcraft3_Reforged
 
         )          
     ),
-    function BuildGEOA geoa geos=
+    function BuildGEOA=
     (
+        local geoa = mdx.geoa
+        local geos = mdx.geos
+        
         if( geoa == undefined ) then return undefined 
         format "Applying Mesh Alpha Animations \n"
         for a in geoa do
@@ -2297,8 +2272,10 @@ struct Warcraft3_Reforged
         )
         
     ),
-    function BuildEVTS evts=
+    function BuildEVTS=
     (
+        local evts = mdx.evts
+        
         format "Building Events\n"
         if (evts == undefined ) then return undefined
         local layer = GriffonStudios_Helpers.CreateLayer "Events"
@@ -2317,8 +2294,17 @@ struct Warcraft3_Reforged
         )
         
     ),
-    function BuildPIVT pivts boneList atch evts clid lite corn ribb=
+    function BuildPIVT=
     (
+        local pivts = mdx.pivt
+        local boneList = mdx.bone
+        local atch = mdx.atch
+        local evts = mdx.evts
+        local clid = mdx.clid
+        local lite = mdx.lite
+        local corn = mdx.corn
+        local ribb = mdx.ribb
+        
         format "Building Pivots \n"
         if ( pivts == undefined ) then return undefined
         
@@ -2407,8 +2393,9 @@ struct Warcraft3_Reforged
         layerRibb.IsHidden = true
         layerCorn.IsHidden = true
     ),
-    function BuildFAFX fafx=
+    function BuildFAFX=
     (
+        local fafx = mdx.fafx
         format "Building Facial Effects\n"
         if ( fafx == undefined ) then return undefined
         local layer = GriffonStudios_Helpers.CreateLayer "Facial Effects"
@@ -2425,8 +2412,9 @@ struct Warcraft3_Reforged
         
         
     ),
-    function BuildCAMS cams=
+    function BuildCAMS=
     (
+        local cams = mdx.cams
         format "Building Cameras \n"
         if (cams == undefined ) then return undefined
         
@@ -2470,8 +2458,10 @@ struct Warcraft3_Reforged
         
         
     ),
-    function BuildLITE lites pivots=
+    function BuildLITE=
     (
+        local lites = mdx.lite
+        local pivots = mdx.pivt
         format "Building Lights \n"
         if ( lites == undefined ) then return undefined
         
@@ -2538,8 +2528,12 @@ struct Warcraft3_Reforged
             )
         )
     ),
-    function BuildRIBB ribb boneList mtls=
+    function BuildRIBB=
     (
+        local ribb = mdx.ribb
+        local boneList = mdx.bone
+        local mtls = mdx.mtls
+        
         if (ribb == undefined ) then return undefined
         
         format "Building ribbons\n"
@@ -2642,8 +2636,11 @@ struct Warcraft3_Reforged
     
         
     ),
-    function BuildPRE2 particleEmitters boneList textures=
+    function BuildPRE2=
     (
+        local particleEmitters = mdx.pre2
+        local boneList = mdx.bone
+        local textures = mdx.texs
         format "Building Particle Emitters \n"
         if( particleEmitters == undefined ) then return undefined
         
@@ -2787,8 +2784,11 @@ struct Warcraft3_Reforged
         )
         
     ),
-    function BuildCORN corn boneList=
+    function BuildCORN=
     (
+        local corn = mdx.corn
+        local boneList = mdx.bone
+        
         format "Building PopCorn \n"
         if( corn == undefined ) then return undefined
         
@@ -2861,8 +2861,10 @@ struct Warcraft3_Reforged
         
         
     ),
-    function FixAnimation geos boneList=
+    function FixAnimation=
     (
+        local geos = mdx.geos
+        local boneList = mdx.bone
         /* Very dirty fix for the animation, please check !! */
         
         local completeFilePath = (getDir #scene) + "\\temp.fbx"
@@ -2894,8 +2896,10 @@ struct Warcraft3_Reforged
         )
         
     ),
-    function AssignMTLS geos mtls=
+    function AssignMTLS=
     (
+        local geos = mdx.geos
+        local mtls = mdx.mtls
         for item in geos do
         (
             local m = item.meshRef
@@ -2909,9 +2913,15 @@ struct Warcraft3_Reforged
     */
     function Import file=
     (
+        struct wc3_reforged_mdx ( TAGS, VERS, MODL, SEQS, MTLS, TEXS, GEOS, BONE, ATCH, CLID, BPOS, GEOA, EVTS, PIVT, FAFX, CAMS, CORN, LITE, GLBS, TXAN, RIBB, PRE2)
+
+        mdx = wc3_reforged_mdx()
+        
         ClearListener()
-        local startedAt = timestamp()
         print file
+        
+        local startedAt = timestamp()
+        
         if ( file == undefined ) then  return undefined 
         if ( doesFileExist file == false ) then ( throw("File does not exist!"); return undefined )
         
@@ -2919,32 +2929,10 @@ struct Warcraft3_Reforged
         
         local stream = fOpen file "rb"
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
-        local tags = Warcraft3_Reforged.ReadTags stream streamLen
-        
-        local vers -- version
-        local modl -- model specs
-        local seqs -- animation sequences
-        local texs -- texture files
-        local mtls -- materials
-        local geos -- geometry
-        local geoa -- geometry animation
-        local boneList -- bones
-        local atch -- attachments
-        local clid -- collision spheres
-        local bpos -- binding position
-        local evts -- events
-        local pivt -- pivots
-        local cams -- cameras
-        local corn -- particle emitter based on external .pkfx files
-        local fafx -- facial effects based on on external .facefx_ingame files
-        local lite -- lights
-        local gbls -- global sequences, although it is just a number ...
-        local txan -- texture animation
-        local ribb -- ribbons
-        local pre2 -- emitters
+        mdx.tags = Warcraft3_Reforged.ReadTags stream streamLen
         
         -- VERS // version
-        for tag in tags do 
+        for tag in mdx.tags do 
             if( tag.Name == "VERS" ) then 
             (
                 mdxFileVersion = Warcraft3_Reforged.ReadVERS stream tag
@@ -2954,82 +2942,82 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
-       --  print tags
-            
+--       print mdx.tags
+        
         -- read tag by tag
-        for tag in tags do
+        for tag in mdx.tags do
         (
             -- MODL // model
-            if( tag.Name == "MODL" ) then modl = Warcraft3_Reforged.ReadMODL stream tag
+            if( tag.Name == "MODL" ) then mdx.modl = Warcraft3_Reforged.ReadMODL stream tag
             -- SEQS // animation sequences
-            if( tag.Name == "SEQS" ) then seqs = Warcraft3_Reforged.ReadSEQS stream tag
+            if( tag.Name == "SEQS" ) then mdx.seqs = Warcraft3_Reforged.ReadSEQS stream tag
             -- MTLS // materials
-            if( tag.Name == "MTLS" ) then mtls = Warcraft3_Reforged.ReadMTLS stream tag
+            if( tag.Name == "MTLS" ) then mdx.mtls = Warcraft3_Reforged.ReadMTLS stream tag
             -- TEXS // texture names
-            if( tag.Name == "TEXS" ) then texs = Warcraft3_Reforged.ReadTEXS stream tag
+            if( tag.Name == "TEXS" ) then mdx.texs = Warcraft3_Reforged.ReadTEXS stream tag
             -- GEOS // geosets
-            if( tag.Name == "GEOS" ) then geos = Warcraft3_Reforged.ReadGEOS stream tag
+            if( tag.Name == "GEOS" ) then mdx.geos = Warcraft3_Reforged.ReadGEOS stream tag
             -- BONE // bones
-            if( tag.Name == "BONE" ) then boneList = Warcraft3_Reforged.ReadBONE stream tag
+            if( tag.Name == "BONE" ) then mdx.bone = Warcraft3_Reforged.ReadBONE stream tag
             -- ATCH // attachments
-            if( tag.Name == "ATCH" ) then atch = Warcraft3_Reforged.ReadATCH stream tag 
+            if( tag.Name == "ATCH" ) then mdx.atch = Warcraft3_Reforged.ReadATCH stream tag 
             -- CLID // colission 
-            if( tag.Name == "CLID" ) then clid = Warcraft3_Reforged.ReadCLID stream tag
+            if( tag.Name == "CLID" ) then mdx.clid = Warcraft3_Reforged.ReadCLID stream tag
             -- BPOS // binding position
-            if( tag.Name == "BPOS" ) then bpos = Warcraft3_Reforged.ReadBPOS stream tag
+            if( tag.Name == "BPOS" ) then mdx.bpos = Warcraft3_Reforged.ReadBPOS stream tag
             -- GEOA // geoset animation
-            if( tag.Name == "GEOA" ) then geoa = Warcraft3_Reforged.ReadGEOA stream tag
+            if( tag.Name == "GEOA" ) then mdx.geoa = Warcraft3_Reforged.ReadGEOA stream tag
             -- EVTS // events
-            if( tag.Name == "EVTS" ) then evts = Warcraft3_Reforged.ReadEVTS stream tag
+            if( tag.Name == "EVTS" ) then mdx.evts = Warcraft3_Reforged.ReadEVTS stream tag
             -- PIVT // pivots
-            if( tag.Name == "PIVT" ) then pivt = Warcraft3_Reforged.ReadPIVT stream tag
+            if( tag.Name == "PIVT" ) then mdx.pivt = Warcraft3_Reforged.ReadPIVT stream tag
             -- FAFX // facial effects
-            if( tag.Name == "FAFX" ) then fafx = Warcraft3_Reforged.ReadFAFX stream tag
+            if( tag.Name == "FAFX" ) then mdx.fafx = Warcraft3_Reforged.ReadFAFX stream tag
             -- CAMS // camera
-            if( tag.Name == "CAMS" ) then cams = Warcraft3_Reforged.ReadCAMS stream tag
+            if( tag.Name == "CAMS" ) then mdx.cams = Warcraft3_Reforged.ReadCAMS stream tag
             -- CORN // external particle effects
-           if( tag.Name == "CORN" ) then corn = Warcraft3_Reforged.ReadCORN stream tag
+           if( tag.Name == "CORN" ) then mdx.corn = Warcraft3_Reforged.ReadCORN stream tag
             -- LITE // lights
-            if( tag.Name == "LITE" ) then lite = Warcraft3_Reforged.ReadLITE stream tag
+            if( tag.Name == "LITE" ) then mdx.lite = Warcraft3_Reforged.ReadLITE stream tag
             -- GLBS // globals
-            if( tag.Name == "GLBS" ) then gbls = Warcraft3_Reforged.ReadGLBS stream tag
+            if( tag.Name == "GLBS" ) then mdx.gbls = Warcraft3_Reforged.ReadGLBS stream tag
             -- TXAN // texture animations
-            if( tag.Name == "TXAN" ) then txan = Warcraft3_Reforged.ReadTXAN stream tag
+            if( tag.Name == "TXAN" ) then mdx.txan = Warcraft3_Reforged.ReadTXAN stream tag
             -- RIBB // ribbon emitters
-            if( tag.Name == "RIBB" ) then ribb = Warcraft3_Reforged.ReadRIBB stream tag
+            if( tag.Name == "RIBB" ) then mdx.ribb = Warcraft3_Reforged.ReadRIBB stream tag
             -- PRE2 // particle emitter
-            if( tag.Name == "PRE2" ) then pre2 = Warcraft3_Reforged.ReadPRE2 stream tag
+            if( tag.Name == "PRE2" ) then mdx.pre2 = Warcraft3_Reforged.ReadPRE2 stream tag
             
-            -- PREM // particle emitters    
+            -- TODO PREM // particle emitters    
             
         )
 
-
          
-         Warcraft3_Reforged.BuildBONE boneList bpos
-         Warcraft3_Reforged.BuildGEOS geos modl
-         Warcraft3_Reforged.BuildSKIN geos boneList
+          Warcraft3_Reforged.BuildBONE()
+          Warcraft3_Reforged.BuildGEOS()
+          Warcraft3_Reforged.BuildSKIN()
+--          
+--         Warcraft3_Reforged.FixAnimation()
+--         
+         Warcraft3_Reforged.BuildMODL()
+         Warcraft3_Reforged.BuildMTLS()
+         Warcraft3_Reforged.AssignMTLS()
          
-        Warcraft3_Reforged.FixAnimation geos boneList
-        
-        Warcraft3_Reforged.BuildMODL modl
-        Warcraft3_Reforged.BuildMTLS mtls texs modl.name geos
-        Warcraft3_Reforged.AssignMTLS geos mtls
-        
-        Warcraft3_Reforged.BuildATCH atch bpos boneList
-        Warcraft3_Reforged.BuildCLID clid boneList bpos
-        Warcraft3_Reforged.BuildGEOA geoa geos
-        Warcraft3_Reforged.BuildSEQS seqs
-        Warcraft3_Reforged.BuildEVTS evts
-        Warcraft3_Reforged.BuildFAFX fafx
-        Warcraft3_Reforged.BuildCAMS cams
-        Warcraft3_Reforged.BuildLITE lite pivt
-        Warcraft3_Reforged.BuildPIVT pivt boneList atch evts clid lite corn ribb     
-        Warcraft3_Reforged.BuildRIBB ribb bonelist mtls
-        Warcraft3_Reforged.BuildPRE2 pre2 bonelist texs
-        Warcraft3_Reforged.BuildCORN corn bonelist
+        Warcraft3_Reforged.BuildATCH()
+        Warcraft3_Reforged.BuildCLID()
+        Warcraft3_Reforged.BuildGEOA()
+        Warcraft3_Reforged.BuildSEQS()
+        Warcraft3_Reforged.BuildEVTS()
+        Warcraft3_Reforged.BuildFAFX()
+        Warcraft3_Reforged.BuildCAMS()
+        Warcraft3_Reforged.BuildLITE()
+        Warcraft3_Reforged.BuildPIVT()
+        Warcraft3_Reforged.BuildRIBB()
+        Warcraft3_Reforged.BuildPRE2()
+        Warcraft3_Reforged.BuildCORN()
 
         fclose stream
+        mdx = undefined
         gc()
         local endedAt = timestamp()
         setArrowCursor() 
@@ -3038,7 +3026,7 @@ struct Warcraft3_Reforged
     )
 )
 
-
+ClearListener()
 
 -- Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
 -- Warcraft3_ImportAllLOD = false
