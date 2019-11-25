@@ -1958,14 +1958,14 @@ struct Warcraft3_Reforged
 
             uniqueId += 1
         )
-        
         -- apply bind pos
         for obj in boneList do
         (
             local b = obj.boneRef
-            
-            if bpod != undefined then 
+
+            if bpos != undefined then 
             (
+            
                 local mtrx = bpos[obj.id].matrix
                 
                 b.pos = mtrx.translationpart
@@ -2942,7 +2942,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
---       print mdx.tags
+       print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do
@@ -2993,16 +2993,16 @@ struct Warcraft3_Reforged
         )
 
          
-          Warcraft3_Reforged.BuildBONE()
-          Warcraft3_Reforged.BuildGEOS()
-          Warcraft3_Reforged.BuildSKIN()
-         
+        Warcraft3_Reforged.BuildBONE()
+        Warcraft3_Reforged.BuildGEOS()
+        Warcraft3_Reforged.BuildSKIN()
+
         Warcraft3_Reforged.FixAnimation()
-        
-         Warcraft3_Reforged.BuildMODL()
-         Warcraft3_Reforged.BuildMTLS()
-         Warcraft3_Reforged.AssignMTLS()
-         
+
+        Warcraft3_Reforged.BuildMODL()
+        Warcraft3_Reforged.BuildMTLS()
+        Warcraft3_Reforged.AssignMTLS()
+
         Warcraft3_Reforged.BuildATCH()
         Warcraft3_Reforged.BuildCLID()
         Warcraft3_Reforged.BuildGEOA()
