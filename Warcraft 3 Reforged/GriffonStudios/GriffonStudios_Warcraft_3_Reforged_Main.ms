@@ -3061,7 +3061,7 @@ struct Warcraft3_Reforged
         Warcraft3_Reforged.BuildATCH()
         Warcraft3_Reforged.BuildCLID()
         Warcraft3_Reforged.BuildGEOA()
-         Warcraft3_Reforged.BuildSEQS()
+        Warcraft3_Reforged.BuildSEQS()
         Warcraft3_Reforged.BuildEVTS()
         Warcraft3_Reforged.BuildFAFX()
         Warcraft3_Reforged.BuildCAMS()
@@ -3088,7 +3088,7 @@ ClearListener()
 
 
 --  file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\arthas\arthas.mdx"
-file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
+-- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
 -- Warcraft3_Reforged.Import file
 
