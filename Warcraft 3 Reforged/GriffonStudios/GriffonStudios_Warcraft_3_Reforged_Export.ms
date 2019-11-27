@@ -1129,6 +1129,6 @@ struct Warcraft3_Reforged_Export
 clearlistener()
 
 
-file = @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
+-- file = @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
-Warcraft3_Reforged_Export.Write file
+-- Warcraft3_Reforged_Export.Write file
