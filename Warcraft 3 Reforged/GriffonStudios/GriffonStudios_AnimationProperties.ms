@@ -315,12 +315,3 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
     
 
 )
-
-
-macroscript GriffonStudios_AnimationPropertySelector
-    category:"Griffon Studios" 
-    tooltip:"Show Animation Properties Selector"
-(
-    if(GriffonStudios_AnimationProperties != undefined) then destroydialog GriffonStudios_AnimationProperties
-        CreateDialog GriffonStudios_AnimationProperties lockwidth: true 
-)

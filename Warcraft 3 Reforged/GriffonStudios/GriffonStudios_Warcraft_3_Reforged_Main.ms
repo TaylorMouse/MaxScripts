@@ -1006,8 +1006,14 @@ struct Warcraft3_Reforged
         (
             local seq = Warcraft3_Reforged_SEQS()
             seq.Name = GriffonStudios_Helpers.ReadFixedString stream 80
-            seq.StartFrame = ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
-            seq.EndFrame = ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
+            
+            local originalStartFrame = readLong stream
+            local originalEndFrame = readLong stream
+            
+            --format "Original sequence: % (%-%)\n" seq.Name originalStartFrame originalEndFrame
+            
+            seq.StartFrame = ( GriffonStudios_Helpers.RoundToFrame ( originalStartFrame ) ) + 10
+            seq.EndFrame = ( GriffonStudios_Helpers.RoundToFrame ( originalEndFrame ) ) + 10
             seq.MovementSpeed = readFloat stream
             seq.NoLoop = readLong stream
             seq.Rarity = readFloat stream
@@ -2119,12 +2125,13 @@ struct Warcraft3_Reforged
     ),
     function BuildSEQS=
     (
+        struct animTrackObj ( track, animFound )
         local seqs = mdx.seqs
         
         if ( seqs == undefined ) then return undefined
         format "Setting Animation Sequences\n"
         
-        local starAnimTrack = undefined
+        local animTracks = #()
         local nNoteTracks = numNoteTracks rootNode
         
         if ( Warcraft3_ConvertToSC2 == true ) then StarTools_Helpers.RenameSEQS seqs
@@ -2132,31 +2139,80 @@ struct Warcraft3_Reforged
 
         if(  nNoteTracks > 0 ) then
         (
-            for n=1 to nNoteTracks do deleteNoteTrack rootNode (getNoteTrack rootNode n)
+            for n=1 to nNoteTracks do 
+                deleteNoteTrack rootNode (getNoteTrack rootNode 1)
         )
         
+       
         if( numNoteTracks rootNode == 0 ) then
         (
-            starAnimTrack = notetrack "starAnimTrack"
-            addNoteTrack rootNode starAnimTrack
+            
+            local animTrack1 = notetrack "AnimTrack1"
+            local t = animTrackObj track:animTrack1 animFound:false
+            addNoteTrack rootNode animTrack1
+            append animTracks t
+            
         )
         
         local prevEndFrame = 0                       
-        for seq in seqs do
+        
+        for t=1 to seqs.count do
         (
+            local seq = seqs[t]
+            local theAnimTrack = animTracks[1].track --> always pick first one
             
-            local startNote = AddNewNoteKey starAnimTrack seq.startFrame
-            local endNote = AddNewNoteKey starAnimTrack seq.endFrame
+            
+            --- check if the startframe already existed on a track, if it does, create a new one
+            if t>1 then
+            (
+                for trackObj in animTracks do
+                (
+                    trackObj.animFound = false
+                    local keys = trackObj.track.keys
+                    
+                    for key in keys do
+                    (
+                        if ( key.Time == seq.startFrame ) then 
+                        (
+                            trackObj.animFound = true
+                        )
+                    )
+                )
+            )
+            local newTrackRequired = true
+            for trackObj in animTracks do
+            (
+                if ( trackObj.animFound == false ) then 
+                (
+                    newTrackRequired = false
+                    theAnimTrack = trackObj.track
+                    exit
+                )
+            )
+            if newTrackRequired == true then (
+                local animTrackName = "animTrack" + ( (animTracks.count + 1 ) as string)
+                local newTrack = notetrack animTrackName
+                addNoteTrack rootNode newTrack
+                theAnimTrack = newTrack
+                local t = animTrackObj track:newTrack animFound:false
+                append animTracks t
+            )
+        
+            
+            local startNote = AddNewNoteKey theAnimTrack seq.startFrame
+            local endNote = AddNewNoteKey theAnimTrack seq.endFrame
+            
             local val = seq.name + "\r\n"
                   val += "rarity = " 	 + (seq.Rarity as string)    + "\r\n"
                   val += "moveSpeed = "  + (seq.MovementSpeed as string) + "\r\n"
                   val += "nonLoop = " 	 + (seq.Noloop as string)    + "\r\n"
                   val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = 0"
 
+           
             startNote.Value = val
             endNote.Value = val
 
-            format "- % (%-%)\n" seq.name seq.startFrame seq.endFrame
+            format "Anim track:%   Anim:% (%-%)\n" theAnimTrack.name seq.name seq.startFrame seq.endFrame
 			
         )
     ),
@@ -2942,7 +2998,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
-       print mdx.tags
+--        print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do
@@ -2992,7 +3048,6 @@ struct Warcraft3_Reforged
             
         )
 
-         
         Warcraft3_Reforged.BuildBONE()
         Warcraft3_Reforged.BuildGEOS()
         Warcraft3_Reforged.BuildSKIN()
@@ -3006,7 +3061,7 @@ struct Warcraft3_Reforged
         Warcraft3_Reforged.BuildATCH()
         Warcraft3_Reforged.BuildCLID()
         Warcraft3_Reforged.BuildGEOA()
-        Warcraft3_Reforged.BuildSEQS()
+         Warcraft3_Reforged.BuildSEQS()
         Warcraft3_Reforged.BuildEVTS()
         Warcraft3_Reforged.BuildFAFX()
         Warcraft3_Reforged.BuildCAMS()
@@ -3032,8 +3087,8 @@ ClearListener()
 -- Warcraft3_ImportAllLOD = false
 
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\abilities\weapons\axe\axemissile.mdx"
--- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
+--  file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\arthas\arthas.mdx"
+file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
 -- Warcraft3_Reforged.Import file
 
