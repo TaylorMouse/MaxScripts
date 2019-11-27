@@ -33,15 +33,6 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
             Warcraft3_ImportAllLOD = false
             Warcraft3_ConvertToSC2 = false
             
-            if ( doesfileexist txtSelectedFile.Text == true) then 
-            (
-                Warcraft3_Reforged.Import txtSelectedFile.Text
-                destroydialog ImportWindow
-            )
-            else
-            (
-                MessageBox "Please select a correct or existing file!" 
-            )
         )    
         
         on btnBrowse pressed do
@@ -51,12 +42,17 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
                         types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
                         historyCategory:"ReforgedPreset"
 
-            if (doesfileexist file == true ) then txtSelectedFile.Text = file
+            if (doesfileexist file == true ) then 
+                txtSelectedFile.Text = file
         )
         on btnImport pressed do
         (
             local file = txtSelectedFile.Text
-            if (doesfileexist file == true ) then Warcraft3_Reforged.Import file
+            if (doesfileexist file == true ) then 
+                Warcraft3_Reforged.Import file
+            else
+                MessageBox "Please select a correct or existing file!" 
+            
         )
         
     )
