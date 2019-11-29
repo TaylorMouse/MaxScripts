@@ -2998,7 +2998,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
---        print mdx.tags
+        print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do

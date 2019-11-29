@@ -4,17 +4,19 @@
 */
 
 
-rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 height:780
+rollout GriffonStudios_AnimationProperties "Animation Properties" width:250 height:810
 (
     /*********************************************************************************************************/
     label lblTM "©2020 Taylor Mouse"
-    dotNetControl lv "System.Windows.Forms.ListView" width:180 height:300 align:#center
+    
+    dropdownlist ddlTracks "" height:20
+    dotNetControl lv "System.Windows.Forms.ListView" width:230 height:300 align:#center
     checkbox cbUpdateTimeLine "Update timeline"
     button btn_RefreshList "Refresh" align:#right offset:[0,-20]
     
     
     local bUpdateTimeLine = true
-    
+    local selectedAnimationTrack = undefined 
     local selectedAnimation = undefined
     local selectedAnimationName = ""
     
@@ -24,10 +26,11 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         
         /* clear existing notes */
         local starAnimTrack = undefined
+        if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
             
         if( (hasNoteTracks rootNode) == true ) then
         (
-            starAnimTrack = getNoteTrack rootNode 1
+            starAnimTrack = getNoteTrack rootNode selectedAnimationTrack
         )
         else
         (
@@ -60,6 +63,29 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         
     )
 
+    function ResetTrackList=
+    (
+        local nNoteTracks = numNoteTracks rootNode
+        local items = #()
+        for i=1 to nNoteTracks do
+        (
+            local track = getNoteTrack rootNode i
+            local name = track.name
+            if track.name == undefined or track.name == "" then
+            (
+                name = "Animation track " + ( i as string )
+            )
+            append items name
+        )
+        
+        if items.count > 0 then 
+        (
+            selectedAnimationTrack = 1
+            ddlTracks.items = items
+            ddlTracks.selection = 1
+        )
+    )
+    
     function ResetListView=
     (
         local items = #()
@@ -70,7 +96,8 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
       
         if(nNoteTracks > 0) then
         (
-            local track = getNoteTrack rootNode 1
+            if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
+            local track = getNoteTrack rootNode selectedAnimationTrack
 
             keys = track.Keys
             for i=1 to keys.count by 2 do
@@ -104,6 +131,7 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         lv.Sorting = (dotNetClass "System.Windows.Forms.SortOrder").Ascending
 
         ResetListView()
+        ResetTrackList()
     )
     
     /*********************************************************************************************************/
@@ -138,6 +166,7 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
     /*********************************************************************************************************/
     on btn_refreshList pressed do
     (
+        ResetTrackList()
         ResetListView()
         
     )
@@ -145,10 +174,13 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
     /*********************************************************************************************************/
     on btn_removeNoteTrack pressed do
     (
+        if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
+        
+        
         try(
             if ( numNoteTracks rootnode == 1 ) then
             (
-                local track = getNoteTrack rootNode 1
+                local track = getNoteTrack rootNode selectedAnimationTrack
                 deleteNoteTrack rootnode track
                 ResetListView()
             )
@@ -191,9 +223,10 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
     (
         
         if( selectedAnimation == undefined or txt_newName.text == "" or txt_newName.text == selectedAnimation.Text ) then return undefined
+        if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
         
         local newName = txt_newName.text
-        local track = getNoteTrack rootNode 1
+        local track = getNoteTrack rootNode selectedAnimationTrack
         local keys = track.Keys
 
         for i=1 to keys.count by 2 do
@@ -220,6 +253,7 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         )
         
         ResetListView()
+        ResetTrackList()
         selectedAnimation = undefined
         txt_newName.text = ""
     )
@@ -230,10 +264,11 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         if ( selectedAnimation == undefined) then return undefined
         
         local msg = "Are you sure you want to delete the animation ("+ selectedAnimation.Text + ")?\n\nNOTE:\nThis does not delete the actual keyframes only the entry in the list!"
+        if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
         
         if( querybox msg Title:"Confirm animation delete" ) then
         (
-            track = getNoteTrack rootNode 1
+            track = getNoteTrack rootNode selectedAnimationTrack
             keys = track.Keys
 
             for i=1 to keys.count by 2 do
@@ -264,8 +299,6 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
         if(bUpdateTimeLine) then bUpdateTimeLine = false else bUpdateTimeLine= true
     )
 
-   
-    
     on GriffonStudios_AnimationProperties open do
     (
         InitializeListView()
@@ -275,13 +308,14 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
 
     on lv ItemSelectionChanged arg do
     (
+        if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
         
         
         selectedAnimation = arg.Item
         selectedAnimationName = selectedAnimation.Text
         txt_newName.text = selectedAnimationName
         
-        track = getNoteTrack rootNode 1
+        track = getNoteTrack rootNode selectedAnimationTrack
         keys = track.Keys
 
         for i=1 to keys.count by 2 do
@@ -313,5 +347,10 @@ rollout GriffonStudios_AnimationProperties "Animation Properties" width:200 heig
 
     )
     
-
+    on ddlTracks selected selectedItem do
+    (
+        selectedAnimationTrack = selectedItem
+        ResetListView()
+    
+    )
 )
