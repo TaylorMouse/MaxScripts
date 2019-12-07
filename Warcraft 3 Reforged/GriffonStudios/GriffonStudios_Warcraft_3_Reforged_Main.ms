@@ -873,7 +873,7 @@ struct Warcraft3_Reforged
             (
                 local lay = Warcraft3_Reforged_LAYS()
                 lay.Id = l
-                local bytes     = readLong stream -- 32
+                local bytes     = readLong stream -- 52
                 lay.filterMode  = readLong stream + 1
                 /* filterMode
                  0x0: none
@@ -908,8 +908,14 @@ struct Warcraft3_Reforged
                 lay.alpha = readFloat stream
                 
                 if ( mdxFileVersion == 1000 ) then
+                (
                     for i=1 to 5 do readFloat stream --> always [1.0, 1.0, 1.0, 0.0, 0.0]
-                
+                    if bytes == 52 then 
+                    (
+                        readlong stream 
+                        readlong stream 
+                    )
+                )
                 
                 for i=1 to 2 do
                 (
@@ -2998,7 +3004,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
-        print mdx.tags
+--         print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do
@@ -3036,7 +3042,7 @@ struct Warcraft3_Reforged
             -- LITE // lights
             if( tag.Name == "LITE" ) then mdx.lite = Warcraft3_Reforged.ReadLITE stream tag
             -- GLBS // globals
-            if( tag.Name == "GLBS" ) then mdx.gbls = Warcraft3_Reforged.ReadGLBS stream tag
+            if( tag.Name == "GLBS" ) then mdx.glbs = Warcraft3_Reforged.ReadGLBS stream tag
             -- TXAN // texture animations
             if( tag.Name == "TXAN" ) then mdx.txan = Warcraft3_Reforged.ReadTXAN stream tag
             -- RIBB // ribbon emitters
@@ -3048,6 +3054,9 @@ struct Warcraft3_Reforged
             
         )
 
+        
+--        print mdx.bone
+        
         Warcraft3_Reforged.BuildBONE()
         Warcraft3_Reforged.BuildGEOS()
         Warcraft3_Reforged.BuildSKIN()
@@ -3087,8 +3096,9 @@ ClearListener()
 -- Warcraft3_ImportAllLOD = false
 
 
---  file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\human\arthas\arthas.mdx"
--- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
-
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\silvermoon\prop\tulips\silvermoon_tulips_00.mdx"
+-- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\silvermoon_tulips_test.mdx"
+-- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
 -- Warcraft3_Reforged.Import file
 
