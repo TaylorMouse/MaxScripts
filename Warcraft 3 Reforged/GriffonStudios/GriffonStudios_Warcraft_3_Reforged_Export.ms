@@ -741,7 +741,7 @@ struct Warcraft3_Reforged_Export
             lodSize += 8 -- gndx
             lodSize += 12 -- mtgc
             lodSize += 28 + 112 -- mats
-           -- lodSize += l.tang.count * 4 * 4  + 8
+            lodSize += l.tang.count * 4 * 4  + 8
             lodSize += l.skin.count * 8 + 8 -- weights
             lodSize += 8 -- uvas
             
@@ -813,15 +813,15 @@ struct Warcraft3_Reforged_Export
             writelong stream l.mats.lodid
             Writer_Helpers.WriteFixedString stream l.mats.name 112
             
---             Writer_Helpers.WriteFixedString stream "TANG" 4
---             writelong stream l.vrtx.count
---             for t in l.tang do
---             (
---                 writefloat stream t[1]
---                 writefloat stream t[2]
---                 writefloat stream t[3]
---                 writefloat stream t[4]
---             )
+            Writer_Helpers.WriteFixedString stream "TANG" 4
+            writelong stream l.vrtx.count
+            for t in l.tang do
+            (
+                writefloat stream t[1]
+                writefloat stream t[2]
+                writefloat stream t[3]
+                writefloat stream t[4]
+            )
             
             Writer_Helpers.WriteFixedString stream "SKIN" 4
             writeLong stream ( l.skin.count * 8 )

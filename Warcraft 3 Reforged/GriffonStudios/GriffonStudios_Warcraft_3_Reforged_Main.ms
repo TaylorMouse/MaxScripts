@@ -608,6 +608,7 @@ struct Warcraft3_Reforged
                 if ( chnk == "VRTX" ) then 
                 (
                     local nVerts = readLong stream
+                    format "Number of Vertices: %\n" nVerts
                     for v=1 to nVerts do 
                     (
                         local vert = [readFloat stream, readFloat stream, readFloat stream]
@@ -664,6 +665,7 @@ struct Warcraft3_Reforged
                 if ( chnk == "PVTX" ) then 
                 (
                     local nPvtx = readLong stream
+                    format "Number of Indices: %\n" nPvtx
                     for i=1 to nPvtx/3 do
                     (
                         local idx = [readShort stream +1, readShort stream +1, readShort stream +1]
@@ -716,6 +718,9 @@ struct Warcraft3_Reforged
                 if ( chnk == "TANG" ) then 
                 (
                     local nTang = readLong stream
+                    
+                    format "Number of tangents: %\n" nTang
+                    
                     for t=1 to nTang do
                         append tangents [readFloat stream, readFloat stream, readFloat stream, readFloat stream]
                     geo.TANG = tangents
@@ -3057,28 +3062,28 @@ struct Warcraft3_Reforged
         
 --        print mdx.bone
         
-        Warcraft3_Reforged.BuildBONE()
-        Warcraft3_Reforged.BuildGEOS()
-        Warcraft3_Reforged.BuildSKIN()
+--         Warcraft3_Reforged.BuildBONE()
+--         Warcraft3_Reforged.BuildGEOS()
+--         Warcraft3_Reforged.BuildSKIN()
 
-        Warcraft3_Reforged.FixAnimation()
+--         Warcraft3_Reforged.FixAnimation()
 
-        Warcraft3_Reforged.BuildMODL()
-        Warcraft3_Reforged.BuildMTLS()
-        Warcraft3_Reforged.AssignMTLS()
+--         Warcraft3_Reforged.BuildMODL()
+--         Warcraft3_Reforged.BuildMTLS()
+--         Warcraft3_Reforged.AssignMTLS()
 
-        Warcraft3_Reforged.BuildATCH()
-        Warcraft3_Reforged.BuildCLID()
-        Warcraft3_Reforged.BuildGEOA()
-        Warcraft3_Reforged.BuildSEQS()
-        Warcraft3_Reforged.BuildEVTS()
-        Warcraft3_Reforged.BuildFAFX()
-        Warcraft3_Reforged.BuildCAMS()
-        Warcraft3_Reforged.BuildLITE()
-        Warcraft3_Reforged.BuildPIVT()
-        Warcraft3_Reforged.BuildRIBB()
-        Warcraft3_Reforged.BuildPRE2()
-        Warcraft3_Reforged.BuildCORN()
+--         Warcraft3_Reforged.BuildATCH()
+--         Warcraft3_Reforged.BuildCLID()
+--         Warcraft3_Reforged.BuildGEOA()
+--         Warcraft3_Reforged.BuildSEQS()
+--         Warcraft3_Reforged.BuildEVTS()
+--         Warcraft3_Reforged.BuildFAFX()
+--         Warcraft3_Reforged.BuildCAMS()
+--         Warcraft3_Reforged.BuildLITE()
+--         Warcraft3_Reforged.BuildPIVT()
+--         Warcraft3_Reforged.BuildRIBB()
+--         Warcraft3_Reforged.BuildPRE2()
+--         Warcraft3_Reforged.BuildCORN()
 
         fclose stream
         mdx = undefined
@@ -3096,9 +3101,9 @@ ClearListener()
 -- Warcraft3_ImportAllLOD = false
 
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\silvermoon\prop\tulips\silvermoon_tulips_00.mdx"
+file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\silvermoon\prop\tulips\silvermoon_tulips_00.mdx"
 -- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\silvermoon_tulips_test.mdx"
 -- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
--- Warcraft3_Reforged.Import file
+Warcraft3_Reforged.Import file
 
