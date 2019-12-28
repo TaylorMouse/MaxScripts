@@ -127,7 +127,7 @@ struct Warcraft3_Reforged_PRE2
 
 GLOBAL mdxFileVersion = 0
 GLOBAL mdx = undefined   
-    
+GLOBAL mdxConvertToSC2AnimationNames = true
     
 struct StarTools_Helpers
 (
@@ -150,7 +150,56 @@ struct StarTools_Helpers
             seq.name = trimRight newName
         )
         
-    ) 
+    ),
+    function ConvertAttachmentPoints=
+    (
+        for obj in objects do 
+        (
+            if ( classof obj == WC3RefAttachment ) then
+            (
+                local pt = SC2AttachPt()
+                local parts = filterstring obj.name " "
+                local newName = "Ref_"
+                for p in parts do 
+                (
+                    if ( p != "Ref" ) then newName +=p
+                )
+                
+                pt.Name = newName
+                pt.Pos = obj.pos
+                pt.Rotation = obj.rotation
+                pt.parent = obj.parent
+            )
+        )
+        
+        for obj in objects do
+            if ( classof obj == WC3RefAttachment ) then delete obj
+        
+    ),
+    function ConvertHitTestBoxes=
+    (
+        local index = 1
+        for obj in objects do
+        (
+            
+            if obj.isfrozen then 
+            (    
+                if obj.name == "B_KGS_Root" then 
+                    obj.name = "HitTestTight"
+                else
+                if ( substring obj.name 1 6 ) == "B_KGS_" then
+                (
+                    
+                    obj.name = "HitTestFuzzy" + ( substring ( (1000 + index)  as string ) 2 3  )
+                    
+                    index +=1
+                    
+                )
+            
+            )
+        )
+        
+    )
 )
 
 struct GriffonStudios_Helpers
@@ -608,7 +657,6 @@ struct Warcraft3_Reforged
                 if ( chnk == "VRTX" ) then 
                 (
                     local nVerts = readLong stream
-                    format "Number of Vertices: %\n" nVerts
                     for v=1 to nVerts do 
                     (
                         local vert = [readFloat stream, readFloat stream, readFloat stream]
@@ -665,7 +713,6 @@ struct Warcraft3_Reforged
                 if ( chnk == "PVTX" ) then 
                 (
                     local nPvtx = readLong stream
-                    format "Number of Indices: %\n" nPvtx
                     for i=1 to nPvtx/3 do
                     (
                         local idx = [readShort stream +1, readShort stream +1, readShort stream +1]
@@ -718,9 +765,6 @@ struct Warcraft3_Reforged
                 if ( chnk == "TANG" ) then 
                 (
                     local nTang = readLong stream
-                    
-                    format "Number of tangents: %\n" nTang
-                    
                     for t=1 to nTang do
                         append tangents [readFloat stream, readFloat stream, readFloat stream, readFloat stream]
                     geo.TANG = tangents
@@ -853,18 +897,22 @@ struct Warcraft3_Reforged
     ),
     function ReadMTLS stream tag=
     (
-        fseek stream tag.offset #seek_set
+        
         
         local mtls = #()
         local mtlsId = 1
         local totalSize = tag.Size
+        local startPos = tag.offset
         
         while ( totalSize > 0 ) do
         (
+            fseek stream startPos #seek_set
+            
             local mtl = Warcraft3_Reforged_MTLS()
             mtl.Id = mtlsId
             local size = readLong stream
             totalSize -= size
+            startPos += size
             
             mtl.priorityPlane = readLong stream
             local unk2 = readLong stream
@@ -878,7 +926,7 @@ struct Warcraft3_Reforged
             (
                 local lay = Warcraft3_Reforged_LAYS()
                 lay.Id = l
-                local bytes     = readLong stream -- 52
+                local bytes     = readLong stream 
                 lay.filterMode  = readLong stream + 1
                 /* filterMode
                  0x0: none
@@ -1010,6 +1058,7 @@ struct Warcraft3_Reforged
         fseek stream tag.offset #seek_set
         
         local nbrSeqs = tag.size / 132
+        print nbrSeqs
         
         local seqs = #()
         
@@ -1035,7 +1084,10 @@ struct Warcraft3_Reforged
 
             append seqs seq
         )
-        
+
+        if (mdxConvertToSC2AnimationNames == true ) then 
+            StarTools_Helpers.RenameSEQS seqs
+
         return seqs
         
     ),
@@ -1717,6 +1769,10 @@ struct Warcraft3_Reforged
                 layer.AddNode theMesh
                 
                 update theMesh
+                resetXform theMesh
+                
+                maxOps.CollapseNodeTo theMesh 1 off
+                
                 geo.meshRef = theMesh
             )
             catch (
@@ -2262,6 +2318,7 @@ struct Warcraft3_Reforged
 
             freeze cap
             resetXform cap
+            maxOps.CollapseNodeTo capp 1 off
             
             layer.AddNode cap
             cap.assumeSkinPose()
@@ -3009,7 +3066,7 @@ struct Warcraft3_Reforged
                     throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be at least 900")
                 )
             )
---         print mdx.tags
+         print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do
@@ -3059,31 +3116,32 @@ struct Warcraft3_Reforged
             
         )
 
-        
+--         print mdx.mtls
+--         print mdx.texs
 --        print mdx.bone
-        
---         Warcraft3_Reforged.BuildBONE()
---         Warcraft3_Reforged.BuildGEOS()
---         Warcraft3_Reforged.BuildSKIN()
+--         
+        Warcraft3_Reforged.BuildBONE()
+        Warcraft3_Reforged.BuildGEOS()
+        Warcraft3_Reforged.BuildSKIN()
 
---         Warcraft3_Reforged.FixAnimation()
+         Warcraft3_Reforged.FixAnimation()
 
---         Warcraft3_Reforged.BuildMODL()
---         Warcraft3_Reforged.BuildMTLS()
---         Warcraft3_Reforged.AssignMTLS()
+        Warcraft3_Reforged.BuildMODL()
+        Warcraft3_Reforged.BuildMTLS()
+        Warcraft3_Reforged.AssignMTLS()
 
---         Warcraft3_Reforged.BuildATCH()
---         Warcraft3_Reforged.BuildCLID()
---         Warcraft3_Reforged.BuildGEOA()
---         Warcraft3_Reforged.BuildSEQS()
---         Warcraft3_Reforged.BuildEVTS()
---         Warcraft3_Reforged.BuildFAFX()
---         Warcraft3_Reforged.BuildCAMS()
---         Warcraft3_Reforged.BuildLITE()
---         Warcraft3_Reforged.BuildPIVT()
---         Warcraft3_Reforged.BuildRIBB()
---         Warcraft3_Reforged.BuildPRE2()
---         Warcraft3_Reforged.BuildCORN()
+        Warcraft3_Reforged.BuildATCH()
+        Warcraft3_Reforged.BuildCLID()
+        Warcraft3_Reforged.BuildGEOA()
+        Warcraft3_Reforged.BuildSEQS()
+        Warcraft3_Reforged.BuildEVTS()
+        Warcraft3_Reforged.BuildFAFX()
+        Warcraft3_Reforged.BuildCAMS()
+        Warcraft3_Reforged.BuildLITE()
+        --Warcraft3_Reforged.BuildPIVT()
+        Warcraft3_Reforged.BuildRIBB()
+        Warcraft3_Reforged.BuildPRE2()
+        Warcraft3_Reforged.BuildCORN()
 
         fclose stream
         mdx = undefined
@@ -3101,9 +3159,11 @@ ClearListener()
 -- Warcraft3_ImportAllLOD = false
 
 
-file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\silvermoon\prop\tulips\silvermoon_tulips_00.mdx"
+--file = @"G:\Game Dev\Griffon Studios\My 3D Models\Starcraft II\Requests\Nightmare Doors\WC3Ref Zergling\zergling.mdx"
 -- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\silvermoon_tulips_test.mdx"
 -- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
 -- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
-Warcraft3_Reforged.Import file
+--Warcraft3_Reforged.Import file
 
+-- StarTools_Helpers.ConvertAttachmentPoints()
+-- StarTools_Helpers.ConvertHitTestBoxes()
