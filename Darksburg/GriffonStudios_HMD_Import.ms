@@ -51,6 +51,17 @@ struct Darksburg
         
         return foundIt
     ),
+    function ReadByteLengthString stream=
+    (
+        local len = readByte stream #signed
+        
+        local name = undefined
+        if len > 0 then 
+            name = GriffonStudios_Helpers.ReadFixedString stream len
+        
+        return name
+        
+    ),
     function ImportHMD file=
     (
         struct HMD ( stream, meshes, meshNames, Materials, nbrMeshes, nbrMaterials, nbrMeshNames )
@@ -101,7 +112,7 @@ struct Darksburg
                 if dataName == "normal"   then  m.hasNormal   = true; 
                 if dataName == "tangent"  then  m.hasTangent  = true; 
                 if dataName == "uv"       then  m.hasUv       = true; 
-                if dataName == "uv2"      then  m.hasUv2       = true; 
+                if dataName == "uv2"      then  m.hasUv2      = true; 
                 if dataName == "weights"  then  m.hasWeights  = true; 
                 if dataName == "indexes"  then  m.hasIndexes  = true; 
                 if dataName == "color"    then  m.hasColor    = true; 
@@ -164,27 +175,104 @@ struct Darksburg
                 append hmdModel.materials mat
             )
             
-            hmdModel.nbrMeshNames = readLong stream
-            hmdModel.MeshNames = #()
-            for i=1 to hmdModel.nbrMeshNames do
-            (
-                readByte stream
-                local objNameLen = readByte stream
-                local objName = help.ReadFixedString stream objNameLen
-                
-                readLong stream
-                local ff = readByte stream #signed
-                
-                while ( ( readByte stream #singed ) != -1 ) do 
-                (             
-                )
-                
-                append hmdModel.MeshNames objName
-                
-            )
+            
+            
+            
         )
         catch ( format "****************************************************************\n[ERROR] Something went wrong, no worries, we continue !!\n****************************************************************\n")
         
+        
+        /* read names */
+        
+        hmdModel.nbrMeshNames = readLong stream
+        hmdModel.MeshNames = #()
+        Format "Reading % names \n" hmdModel.nbrMeshNames
+        for i=1 to hmdModel.nbrMeshNames do
+        (
+            if ( i > 1 ) then readLong stream
+            readByte stream
+            local objNameLen = readByte stream
+            local objName = help.ReadFixedString stream objNameLen
+            
+            readLong stream
+            local ff = readByte stream #signed
+             
+--              while ( ( readByte stream #singed ) != -1 ) do 
+--              (                    
+--              )
+            help.SkipBytes stream ( 9 * 4 ) -- 3 x 3 matrix
+            
+            print objName
+            append hmdModel.MeshNames objName
+            
+        )
+        
+        -- 3 x 3 matrix
+        Format "Reading bones \n"
+        print (ftell stream )
+
+        local one = readLong stream
+        local two = readLong stream
+        readByte stream
+        
+        local hasBones = true
+        if ( two == 2 ) then 
+        (
+            local check = readLong stream
+        )
+        
+        local rootBone = Darksburg.ReadByteLengthString stream
+        
+        print rootBone
+       
+        struct hmdBone ( id, parentId, boneName, localPos, localRot, boneRef )
+        local boneList = #()
+
+        
+        
+        if (rootBone != undefined ) then (
+            readByte stream
+            local nbrBones = readShort stream
+            readByte stream
+        
+            local root = hmdBone boneName:rootBone id:1 parentId:0 localPos:[0,0,0] localRot:[0,0,0]
+            append boneList root
+            
+            for i=1 to nbrBones do
+            (
+                
+                local boneName = Darksburg.ReadByteLengthString stream
+                local parentBoneId = readByte stream 
+                
+                local zeros = readByte stream
+                
+                local pos = [readFloat stream, readFloat stream, readFloat stream] * 100.0
+                local rot = [readFloat stream, readFloat stream, readFloat stream]
+                
+                local b = hmdBone boneName:boneName localPos:pos localRot:rot id:i parentId:parentBoneId
+                
+                local unk1 = readByte stream
+                
+                if (unk1 == 0 ) then
+                (
+                    readByte stream
+                )
+                else
+                (
+                    local type = readByte stream
+                    if type == 0 then 
+                        help.SkipBytes stream 24
+                    else 
+                        help.SkipBytes stream 48
+                )
+                
+                readbyte stream
+                
+                --format "% % \n" boneName parentBoneId
+             
+                append boneList b
+            )
+        )
         /* start reading the data */
         
         for m=1 to hmdModel.nbrMeshes do
@@ -243,7 +331,7 @@ struct Darksburg
         fClose stream
 
         /* build the objects */
-        BuildMaterials = true
+        BuildMaterials = false
         
         -- materials
         if BuildMaterials == true then (
@@ -276,7 +364,7 @@ struct Darksburg
             )
         )
         
-        BuildBBox = true
+        BuildBBox = false
         
         -- bounding box
         if( BuildBBox == true ) then 
@@ -291,7 +379,42 @@ struct Darksburg
             )
         )
         
-        BuildMeshes = true
+        BuildBones = true
+        if (BuildBones == true) then
+        (
+            for b in boneList do
+            (
+                b.boneRef = bonesys.createbone [0,0,0] [0,0,0] [0,0,1]
+                b.boneRef.Name = b.BoneName
+                b.boneRef.ShowLinks = false
+            )
+            
+            for i=1 to boneList.count do
+            (
+                local b = boneList[i]
+                local parentId = b.parentId
+                if ( parentId > 0 ) then
+                (
+                    b.boneRef.parent = boneList[parentId].boneRef
+                )
+            )
+
+            for i=1 to boneList.Count do
+            (
+                local b = boneList[i]
+                if ( b.boneRef.parent != undefined ) then
+                (
+                    b.boneRef.pos = b.boneref.parent.pos + b.localpos
+                )
+                else
+                    b.boneRef.pos = b.localpos
+                
+            )
+            
+            
+        )
+        
+        BuildMeshes = false
         -- meshes
         if ( BuildMeshes == true ) then 
         (
@@ -341,6 +464,8 @@ struct Darksburg
                 )
             )
         )
+        
+        
         
         clearSelection()
         max zoomext sel
