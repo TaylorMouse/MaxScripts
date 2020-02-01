@@ -3248,10 +3248,10 @@ Warcraft3_Reforged.BuildBONE()
 Warcraft3_Reforged.BuildGEOS()
 Warcraft3_Reforged.BuildSKIN()
 
--- Warcraft3_Reforged.FixAnimation()
+Warcraft3_Reforged.FixAnimation()
 
 Warcraft3_Reforged.BuildMODL()
- Warcraft3_Reforged.BuildMTLS()
+Warcraft3_Reforged.BuildMTLS()
 Warcraft3_Reforged.AssignMTLS()
 Warcraft3_Reforged.BuildATCH()
 Warcraft3_Reforged.BuildCLID()
