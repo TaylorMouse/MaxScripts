@@ -15,7 +15,7 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
         )
         group "Options"
         (
-            checkbox chkImportAllLOD "Import all Levle of Details (LOD's)"
+            checkbox chkImportAllLOD "Import all Level of Details (LOD's)"
             checkbox chkConvertToSC2 "Convert to SC2 Compatible"
         )
 
