@@ -129,7 +129,7 @@ GLOBAL mdxFileVersion = 0
 GLOBAL mdx = undefined   
 GLOBAL mdxConvertToSC2AnimationNames = true
 GLOBAL mdxFilterMode = #("none","transparent","blend","additive","add alpha","modulate","modulate 2x","fallback" )    
-GLOBAL mdxShadingFlag = # ("unshaded","phere environment map","Wrap Width","Wrap Hieght","two sided","unfogged","no depth test","no depth set","Fallback" )
+GLOBAL mdxShadingFlag = # ("Unshaded","Sphere environment map","Wrap Width","Wrap Hieght","Two sided","Unfogged","No depth test","No depth set","Fallback" )
 
 struct StarTools_Helpers
 (
@@ -2232,7 +2232,7 @@ struct Warcraft3_Reforged
                 if ( obj == undefined ) then continue
                 
                 local mshSkin = skin name:"Skin"
-
+                mshSkin.bone_Limit = 4
                 max modify mode
                 addmodifier obj mshSkin
 
@@ -3123,15 +3123,18 @@ struct Warcraft3_Reforged
     ),
     function AssignMTLS=
     (
-        local geos = mdx.geos
-        local mtls = mdx.mtls
-        for item in geos do
+        try
         (
-            local m = item.meshRef
-            if m !=undefined then 
-                if mtls != undefined then 
-                    m.material = mtls[item.MATS.ID].MaterialRef
-        )  
+            local geos = mdx.geos
+            local mtls = mdx.mtls
+            for item in geos do
+            (
+                local m = item.meshRef
+                if m !=undefined then 
+                    if mtls != undefined then 
+                        m.material = mtls[item.MATS.ID].MaterialRef
+            )  
+        )catch()
     ),
     /*
         MAIN IMPORT
@@ -3269,13 +3272,13 @@ Warcraft3_Reforged.BuildCORN()
 
         fclose stream
 
---         if (mdxConvertToSC2AnimationNames == true ) then
---         (
---             StarTools_Helpers.ConvertAttachmentPoints()
---             StarTools_Helpers.ConvertHitTestBoxes()
---             StarTools_Helpers.ConvertToBoundingSphere collBox "Vol_Shield"
---             
---         )
+        if (mdxConvertToSC2AnimationNames == true ) then
+        (
+            StarTools_Helpers.ConvertAttachmentPoints()
+            StarTools_Helpers.ConvertHitTestBoxes()
+            StarTools_Helpers.ConvertToBoundingSphere collBox "Vol_Shield"
+            
+        )
 
 
 
