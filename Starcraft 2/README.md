@@ -1,6 +1,6 @@
 # Import M3 files into MAX
 
-[__TOC__]
+[[_TOC_]]
 
 ## Introduction
 
