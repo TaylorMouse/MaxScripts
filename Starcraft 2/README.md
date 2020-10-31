@@ -12,7 +12,6 @@
   - [Layer Explorer](#layer-explorer)
   - [Incorrect UV Mapping](#incorrect-uv-mapping)
 
-
 ## Introduction
 
 The script should work in any 3D Studio Max version (2011 and above)
