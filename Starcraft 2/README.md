@@ -1,6 +1,16 @@
 # Import M3 files into MAX
 
-[[_TOC_]]
+[Table of contents](#import-m3-files-into-max)
+
+- [Introduction](#introduction)
+- [Supported file formats](#supported-file-formats)
+- [Prerequisites](#prerequisites)
+- [Using the Script](#using-the-script)
+  - [Importing animations](#importing-animations)
+  - [Missing Textures](#missing-textures)
+- [Additional features](#additional-features)
+  - [Layer Explorer](#layer-explorer)
+
 
 ## Introduction
 
