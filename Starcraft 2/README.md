@@ -10,6 +10,7 @@
   - [Missing Textures](#missing-textures)
 - [Additional features](#additional-features)
   - [Layer Explorer](#layer-explorer)
+  - [Incorrect UV Mapping](#incorrect-uv-mapping)
 
 
 ## Introduction
@@ -192,3 +193,32 @@ Use the "Toggle Layer Explorer" to do this, I assigned the "L" hotkey to open an
 ![utilities](images/img11.png)
 
 ![utilities](images/img12.png)
+
+### Incorrect UV Mapping
+
+Blizzard has the bad habit to make changes in the scale of the UV mapping as they are stored in a compressed way. So it may happen that the texture is shown incorrectly.
+
+To fix this:
+
+- go to frame 0
+
+![utilities](images/img13.png)
+
+- select the mesh with the issue and select the Modify pane (1)
+- select the "Editable Mesh" (2)
+- select the "unwrap UVW" (3) if you don't see this button you can always select it from the list
+
+![utilities](images/img14.png)
+
+**NOTE** this may reposition the mesh to its initial position. Don't worry about it, this is normal.
+
+- press the "Open UV Editor ..." button
+- in the top right corner of this window select the diffuse map (1) and press the "show in viewport" (2)
+- press Control + A to select everything and select the "Freeform mode" (3)
+- adjust the size until it coresponds to the texture.
+
+![utilities](images/img15.png)
+
+Once this is done, close the window and select the Editable Mesh, then the Skin modifier to apply everything and position the mesh back to its original place ( I know, but it is kinda a bug in Max)
+
+![utilities](images/img16.png)
