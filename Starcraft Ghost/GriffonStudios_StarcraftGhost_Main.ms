@@ -5,8 +5,7 @@
     
     Imports Starcraft Ghost (xbox game) models
     
-    Based on the initial script found here:
-    https://github.com/RenolY2/scg-modeldump
+    Based on the initial script found here: https://github.com/RenolY2/scg-modeldump
     
 */
 struct GriffonStudios_Helpers
