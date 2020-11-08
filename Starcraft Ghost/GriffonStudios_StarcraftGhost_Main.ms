@@ -6,8 +6,11 @@
     Imports Starcraft Ghost (xbox game) models
     
     Based on the initial script found here: https://github.com/RenolY2/scg-modeldump
-    
+
+    Imports .nod, .noc
+
 */
+global ghostModel
 struct GriffonStudios_Helpers
 (
     function BuildSpline spline points=
@@ -134,9 +137,9 @@ struct GriffonStudios_Helpers
     (
         return [readFloat stream, readFloat stream, readFloat stream] * correction
     ),
-    function ReadUV2 stream=
+    function ReadUV3 stream=
     (
-        return [readFloat stream, 1.0 - (readFloat stream)]
+        return [readFloat stream, 1.0 - (readFloat stream), 0.0]
     )
 )
 
@@ -232,22 +235,23 @@ struct Starcraft_Ghost_Tools
             local shaderName = tolower nod.shaderNames[i]
             local textureName = "\\" + ( tolower nod.shaderNames[i] ) + ".dds"
             
-            format "Looking for shader '%'\n" shaderName
             mats[i] = undefined
-            
+           
             for ghostShader in materials.shaders do
             (
                 if ( ( tolower ghostShader.name ) == shaderName ) then
                 (
                     --format "Shader found %\n" ghostShader.name
                     mats[i] = ghostShader
+                    format "Shader '%'\n" shaderName 
+                    shaderFound = true
                     exit
                 )
             )
-            
+           
             if ( mats[i] == undefined ) then 
             (
-                format "Looking for texture '%.dds'\n" shaderName
+                
                 
                 for texture in materials.textures do
                 (
@@ -255,9 +259,12 @@ struct Starcraft_Ghost_Tools
                     (
                         --format "Texture found '%'\n" texture
                         mats[i] = texture
+                        format "Texture '%.dds' \n" shaderName
+                        textureFound = true
                         exit
                     )
                 )
+           
             )
         )
         
@@ -265,6 +272,8 @@ struct Starcraft_Ghost_Tools
     ),
     function BuildGhostBones boneList=
     (
+        local boneLayer = GriffonStudios_Helpers.CreateLayer "Bones"
+        
         for b in boneList do
         (
             local bName = "bone_" + (b.id as string)
@@ -274,8 +283,10 @@ struct Starcraft_Ghost_Tools
             aBone.showLinks = true
             aBone.Width = 0.05
             aBone.Height = 0.05
-            aBone.Pos = b.translation
+            
             b.boneRef = aBone
+            
+            boneLayer.AddNode aBone
         )
         
         for b in boneList do
@@ -283,35 +294,219 @@ struct Starcraft_Ghost_Tools
             if (b.parentID > 0) then
             (
                 b.boneRef.Parent = boneList[b.parentID].boneRef
+                
+                b.boneRef.Pos = b.translation + boneList[b.parentID].boneRef.pos
             )
+            else
+                b.boneRef.Pos = b.translation
 
         )        
     ),
+    function BuildMesh nod=
+    (
+        local maxIndex = 0
+        for i=1 to nod.indices.count do
+        (
+            if maxIndex < nod.indices[i] then maxIndex = nod.indices[i]
+            
+        )    
+        format "Max index (vertex) found : % \n" maxIndex
+        
+        for i=1 to nod.vertexGroups.count do
+        (
+            if ( nod.vertexGroups[i].vertices != undefined ) then 
+                format "Vertexgroup % has % vertices \n" i nod.vertexGroups[i].vertices.count
+        )
+        
+        for i=1 to nod.meshGroups.count do
+        (
+            local l=1
+            format "Meshgroup %   nbrVerts: %    VertexGroup: %    VertexStart: %\n" i nod.meshGroups[i].lods[l].vertexCount nod.meshGroups[i].vertexGroupId nod.meshGroups[i].vertexStart
+        )
+        
+        for mg in nod.meshGroups do
+        (
+            for l in mg.lods do
+            (
+                if (l.lod == 0 ) then print l
+            )
+            
+        )
+        
+        local meshId = 0
+        for mg in nod.meshGroups do
+        (
+            for l in mg.lods do
+            (
+                if (l.lod == 0 ) then 
+                (
+                    local nbrIndices = l.stripCount --+ l.listCount
+                    if( nbrIndices == 0 ) then continue
+                    
+                    format "Nbr Indices to process: %\n" ( nbrIndices  )
+                    
+                    local faces = #()
+                    local backfaceCullingIssue = 1
+                    for i=1  to nbrIndices - 3 do
+                    (
+                        local s = l.stripStart + 1
+                        local a = nod.indices[s + i]
+                        local b = nod.indices[s + i+1]
+                        local c = nod.indices[s + i+2]
+                        backfaceCullingIssue = 1 - backfaceCullingIssue
+                        if( a!=b and a!=c and b!=c ) then 
+                        (
+                            if ( backfaceCullingIssue == 1 ) then
+                                append faces [a,b,c]
+                            else
+                                append faces [a,c,b] 
+                        )
+                    )
+                    
+                    backfaceCullingIssue = 1
+                    for i=1  to l.listcount /3 + 6  do
+                    (
+                        local s = l.ListStart +1 
+                        local a = nod.indices[s + i*3]
+                        local b = nod.indices[s + i*3+1]
+                        local c = nod.indices[s + i*3+2]
+                        
+                        backfaceCullingIssue = 1 - backfaceCullingIssue
+                        if( a!=b and a!=c and b!=c ) then 
+                        (
+                            if ( backfaceCullingIssue == 1 ) then
+                                append faces [a,b,c]
+                            else
+                                append faces [a,c,b]    
+                        )
+                    )
+                    
+                    local vg = nod.vertexGroups[mg.vertexGroupId]
+                    local vStart = mg.vertexStart
+                    
+                    local verts = #()
+                    for v=vStart+1 to vStart + l.vertexCount do
+                    (
+                        append verts vg.vertices[v]
+                        
+                    )
+                    name = "Test " + (meshId as string)
+                    theMesh = mesh name:name vertices:verts faces:faces
+                    
+                    
+                    meshId = meshId + 1
+                )
+            )
+            
+        )
+        
+        ghostModel.indices.count
+        
+    ),
+    
     function BuildNodMesh nod=
     (
         format "Building 3D Model\n"
         local help = GriffonStudios_Helpers()
         
         local bboxLayer = help.CreateLayer "Bounding Box"
+        local meshLayer = help.CreateLayer "Unit"
+        
+        /* build bounding box */
+        
         local bbox = help.BuildBoundingBox nod.bbox
-        
         bboxLayer.AddNode bbox
-        
+       
+        for mg in nod.meshGroups do
+        (
+            local meshName = nod.name + "_" + ( mg.id as string )
+            
+            local verts = #()
+            local faces = #()
+            local norms = #()
+            local uvs = #()
+            
+            local l = mg.lods[1] 
+            local vg = nod.VertexGroups[mg.vertexGroupId]
+            
+            if vg == undefined then continue
+                    
+            for v=1 to l.vertexCount do
+            (
+                append verts vg.vertices[v + vg.vertexOffset]
+                append norms vg.normals[v + vg.vertexOffset]
+                append uvs vg.uvs[v + vg.vertexOffset]
+                
+            )
+            
+            if verts.count < vg.vertices.count then vg.vertexOffset = verts.count
+            
+            local backfaceCullingIssue = 0
+            
+            if l.stripCount > 0 then
+            (
+                for i=l.stripStart + 1 to (l.stripStart + 1 + l.stripCount ) do
+                (
+                    local a = nod.indices[i]
+                    local b = nod.indices[i+1]
+                    local c = nod.indices[i+2]
+                    
+                    backfaceCullingIssue = 1 - backfaceCullingIssue
+                    
+                    if a == b or a == c or b == c then continue --> some weird chizzle over here ... 
+                    if ( backfaceCullingIssue == 1 ) then
+                        append faces [a,b,c]
+                    else
+                        append faces [a,c,b]
+                    
+                    
+                )
+            )
+            
+            if l.listCount > 0 then
+            (
+                for i=0 to (l.listCount)/3 do
+                (
+                    local a = nod.indices[l.listStart + 1 + i*3]
+                    local b = nod.indices[l.listStart + 1 + i*3 + 1]
+                    local c = nod.indices[l.listStart + 1 + i*3 + 2]
+                   
+                    if a == b or a == c or b == c then continue
+                    
+                    append faces [a,b,c]
+                )
+            )
+            
+            local theMesh = mesh name:meshName vertices:verts faces:faces vnorms:norms tverts:uvs
+            local wirecolor = color (random 100 200) (random 100 150) (random 1 50)
+            
+            theMesh.WireColor = wireColor
+            try (
+                buildTVFaces theMesh false
+                for i = 1 to faces.count do
+                ( setTVFace theMesh i faces[i] )
+            )
+            catch()
+            
+            meshLayer.AddNode theMesh
+            
+        )
+                
     ),
     function ReadNod file=
     (
         format "Reading 3D model file '%'\n" (filenameFromPath file)
-        struct ghost_nod ( version, nShaders, nBones, nVertGrp, nMeshGrp, flags, bbox, vtxGroups, meshGroups, nIndices, indices, lodStarts, lodCount, shaderNames, boneList, materials )
-        struct ghost_vert_grp ( vertexCount, vertexType, vertices, normals, uvs )
-        struct ghost_mesh_grp ( matId, lods, vertexCount, flags, nBlendShapes, blendGroup, boneList, nBones, vertexGroup  )
-        struct ghost_mesh_lod ( stripStart, stripCount, listStart, listCount, vertexCount )
+        struct ghost_nod ( name, version, nShaders, nBones, nVertGrp, nMeshGrp, flags, bbox, vertexGroups, vertexGroupOffsets, meshGroups, nIndices, indices, lodStarts, lodCount, shaderNames, boneList, materials )
+        struct ghost_mesh_grp ( id, matId, vertexCount, flags, nBlendShapes, blendGroup, boneList, nBones, vertexGroupId, lods, faces, vertexStart )
+        struct ghost_vert_grp ( vertexCount, vertexType, vertices, normals, uvs, vertexOffset )
+        struct ghost_mesh_lod ( lod, stripStart, stripCount, listStart, listCount, vertexCount )
         
         local gshelp = GriffonStudios_Helpers()
         
         stream = fOpen file "rb"
 
         local nod = ghost_nod()
-        
+        nod.name = getfilenamefile file
         nod.version  = readLong stream
         nod.nShaders = readByte stream as integer
         nod.nBones   = readByte stream as integer
@@ -319,17 +514,19 @@ struct Starcraft_Ghost_Tools
         nod.nMeshGrp = readByte stream as integer 
         nod.flags    = readLong stream
         nod.bbox     = gshelp.ReadBoundingBox stream
-
-        nod.vtxGroups = #()
+        
+        nod.vertexGroups = #()
         for i=1 to 4 do
         (
             local vg = ghost_vert_grp()
             vg.vertexType = readLong stream
             vg.vertexCount = readLong stream
-            append nod.vtxGroups vg
+            vg.vertexOffset = 0
+            append nod.vertexGroups vg
         )
-        nod.nIndices = readLong stream
 
+        nod.nIndices = readLong stream
+        
         nod.lodStarts = #()
         for i=1 to 4 do
             append nod.lodStarts (readLong stream)
@@ -337,11 +534,11 @@ struct Starcraft_Ghost_Tools
         nod.lodCount = readLong stream
 
         nod.shaderNames = #()
-        for i=1 to nShaders do
+        for i=1 to nod.nShaders do
             append nod.shaderNames ( gshelp.ReadFixedString stream 0x20 )
 
         nod.boneList = #()
-        for i=1 to nBones do
+        for i=1 to nod.nBones do
         (
             local gb = ReadGhostBone stream
             gb.id = i
@@ -349,8 +546,9 @@ struct Starcraft_Ghost_Tools
 
         )
 
-        for vg in nod.vtxGroups do
+        for i=1 to nod.nVertGrp do
         (
+            local vg = nod.vertexGroups[i]
             vg.vertices = #()
             vg.normals  = #()
             vg.uvs      = #()
@@ -359,7 +557,7 @@ struct Starcraft_Ghost_Tools
             (
                 append vg.vertices ( gshelp.ReadVector3 stream 100.0 )
                 append vg.normals  ( gshelp.ReadVector3 stream 1.0)
-                append vg.uvs      ( gshelp.ReadUV2 stream )
+                append vg.uvs      ( gshelp.ReadUV3 stream )
             
                 if ( vg.vertexType == 1 ) then
                     gshelp.SkipBytes stream 4
@@ -369,32 +567,41 @@ struct Starcraft_Ghost_Tools
         )
         
         nod.indices = #()
-        for i=1 to nod.nIndices by 3 do
+        for i=1 to nod.nIndices do
         (
-           append nod.indices [readShort stream #unsigned +1, readShort stream #unsigned +1, readShort stream #unsigned +1 ]
+           append nod.indices ( readShort stream #unsigned +1 )
         )
-
         nod.meshGroups = #()
+        local indexOffset = 0
+        
         for i=1 to nod.nMeshGrp do
         (
             local mg = ghost_mesh_grp()
-            
+            mg.id = i
+            mg.vertexStart = 0
             mg.matId = readLong stream
             mg.lods  = #()
-            indexOffset = 0
+            
             
             for l=1 to 4 do
             (
+                
                 local d = ghost_mesh_lod()
                 
-                d.stripStart = indexOffset
-                d.stripCount = readShort stream #unsigned
-                d.listStart = indexOffset + d.stripCount
-                d.listCount = readShort stream #unsigned
-                d.vertexCount = readShort stream #unsigned
+                local stripCount  = readShort stream #unsigned
+                local listCount   = readShort stream #unsigned
+                local vertexCount = readShort stream #unsigned
                 
-                indexOffset += d.stripCount + d.listCount
+                d.lod = l-1
+                d.stripStart    = indexOffset
+                d.stripCount    = stripCount
+                d.listStart     = indexOffset + stripCount
+                d.listCount     = listCount
+                d.vertexCount   = vertexCount
+                  
+                --format "lod: %  indexStart: %      indexCount: %        listStart: %        listCount: %        vertexCount: % \n" (l-1) indexOffset indexCount  d.listStart listCount vertexCount
                 
+                indexOffset = indexOffset + stripCount + listCount
                 append mg.lods d
             )
 
@@ -409,11 +616,38 @@ struct Starcraft_Ghost_Tools
             )
 
             mg.nBones = readByte stream as integer
-            mg.vertexGroup = readShort stream
+            mg.vertexGroupId = readShort stream + 1
             
             append nod.meshGroups mg
         )
 
+        -- determine the start of the vertices in the vertex groups
+        for i=1 to nod.meshGroups.count do
+        (
+            local l=1
+            
+            if ( i>1 ) then 
+            (
+                for v=1 to i-1 do
+                (
+                    if ( nod.meshGroups[v].vertexGroupId == nod.meshGroups[i].vertexGroupId ) then 
+                        nod.meshGroups[i].vertexStart = nod.meshGroups[v].vertexStart + nod.meshGroups[v].lods[l].vertexCount
+                )
+            )
+            
+         
+            
+        )
+        
+        nod.vertexGroupOffsets = #()
+        for i=1 to nod.nVertGrp do
+        (
+            if i==1 then 
+                append nod.vertexGroupOffsets 0
+            else
+                append nod.vertexGroupOffsets ( nod.vertexGroups[i-1].vertices.count )
+        )
+        
         fClose stream
 
         local materials = ReadMaterials file
@@ -424,12 +658,16 @@ struct Starcraft_Ghost_Tools
     /* 
         Main functions
     */
-    function ImportNod file=
+    function ImportModel file=
     (
         
         local nod = ReadNod file
-                
-        BuildNodMesh nod
+        
+        ghostModel = nod
+        
+        BuildMesh nod
+       -- BuildNodMesh nod
+       -- BuildGhostBones nod.boneList
         
         return "Import Done"
     )
@@ -438,6 +676,7 @@ struct Starcraft_Ghost_Tools
     Testing only
 */
 clearListener()
-file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\zergling.nod"
+--file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zealot.nod"
+file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zealot.nod"
 
-Starcraft_Ghost_Tools.ImportNod file
+Starcraft_Ghost_Tools.ImportModel file
