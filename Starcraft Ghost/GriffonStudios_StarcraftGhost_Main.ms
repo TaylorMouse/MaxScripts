@@ -304,108 +304,6 @@ struct Starcraft_Ghost_Tools
     ),
     function BuildMesh nod=
     (
-        local maxIndex = 0
-        for i=1 to nod.indices.count do
-        (
-            if maxIndex < nod.indices[i] then maxIndex = nod.indices[i]
-            
-        )    
-        format "Max index (vertex) found : % \n" maxIndex
-        
-        for i=1 to nod.vertexGroups.count do
-        (
-            if ( nod.vertexGroups[i].vertices != undefined ) then 
-                format "Vertexgroup % has % vertices \n" i nod.vertexGroups[i].vertices.count
-        )
-        
-        for i=1 to nod.meshGroups.count do
-        (
-            local l=1
-            format "Meshgroup %   nbrVerts: %    VertexGroup: %    VertexStart: %\n" i nod.meshGroups[i].lods[l].vertexCount nod.meshGroups[i].vertexGroupId nod.meshGroups[i].vertexStart
-        )
-        
-        for mg in nod.meshGroups do
-        (
-            for l in mg.lods do
-            (
-                if (l.lod == 0 ) then print l
-            )
-            
-        )
-        
-        local meshId = 0
-        for mg in nod.meshGroups do
-        (
-            for l in mg.lods do
-            (
-                if (l.lod == 0 ) then 
-                (
-                    local nbrIndices = l.stripCount --+ l.listCount
-                    if( nbrIndices == 0 ) then continue
-                    
-                    format "Nbr Indices to process: %\n" ( nbrIndices  )
-                    
-                    local faces = #()
-                    local backfaceCullingIssue = 1
-                    for i=1  to nbrIndices - 3 do
-                    (
-                        local s = l.stripStart + 1
-                        local a = nod.indices[s + i]
-                        local b = nod.indices[s + i+1]
-                        local c = nod.indices[s + i+2]
-                        backfaceCullingIssue = 1 - backfaceCullingIssue
-                        if( a!=b and a!=c and b!=c ) then 
-                        (
-                            if ( backfaceCullingIssue == 1 ) then
-                                append faces [a,b,c]
-                            else
-                                append faces [a,c,b] 
-                        )
-                    )
-                    
-                    backfaceCullingIssue = 1
-                    for i=1  to l.listcount /3 + 6  do
-                    (
-                        local s = l.ListStart +1 
-                        local a = nod.indices[s + i*3]
-                        local b = nod.indices[s + i*3+1]
-                        local c = nod.indices[s + i*3+2]
-                        
-                        backfaceCullingIssue = 1 - backfaceCullingIssue
-                        if( a!=b and a!=c and b!=c ) then 
-                        (
-                            if ( backfaceCullingIssue == 1 ) then
-                                append faces [a,b,c]
-                            else
-                                append faces [a,c,b]    
-                        )
-                    )
-                    
-                    local vg = nod.vertexGroups[mg.vertexGroupId]
-                    local vStart = mg.vertexStart
-                    
-                    local verts = #()
-                    for v=vStart+1 to vStart + l.vertexCount do
-                    (
-                        append verts vg.vertices[v]
-                        
-                    )
-                    name = "Test " + (meshId as string)
-                    theMesh = mesh name:name vertices:verts faces:faces
-                    
-                    
-                    meshId = meshId + 1
-                )
-            )
-            
-        )
-        
-        ghostModel.indices.count
-        
-    ),
-    
-    function BuildNodMesh nod=
-    (
         format "Building 3D Model\n"
         local help = GriffonStudios_Helpers()
         
@@ -416,83 +314,100 @@ struct Starcraft_Ghost_Tools
         
         local bbox = help.BuildBoundingBox nod.bbox
         bboxLayer.AddNode bbox
-       
+        
+        local meshId = 0
         for mg in nod.meshGroups do
         (
-            local meshName = nod.name + "_" + ( mg.id as string )
-            
-            local verts = #()
-            local faces = #()
-            local norms = #()
-            local uvs = #()
-            
-            local l = mg.lods[1] 
-            local vg = nod.VertexGroups[mg.vertexGroupId]
-            
-            if vg == undefined then continue
-                    
-            for v=1 to l.vertexCount do
+            meshId = meshId + 1
+            for l in mg.lods do
             (
-                append verts vg.vertices[v + vg.vertexOffset]
-                append norms vg.normals[v + vg.vertexOffset]
-                append uvs vg.uvs[v + vg.vertexOffset]
-                
-            )
-            
-            if verts.count < vg.vertices.count then vg.vertexOffset = verts.count
-            
-            local backfaceCullingIssue = 0
-            
-            if l.stripCount > 0 then
-            (
-                for i=l.stripStart + 1 to (l.stripStart + 1 + l.stripCount ) do
+                if (l.lod == 0 ) then 
                 (
-                    local a = nod.indices[i]
-                    local b = nod.indices[i+1]
-                    local c = nod.indices[i+2]
                     
-                    backfaceCullingIssue = 1 - backfaceCullingIssue
+                    local backfaceCullingIssue = 1
+                    local faces = #()
                     
-                    if a == b or a == c or b == c then continue --> some weird chizzle over here ... 
-                    if ( backfaceCullingIssue == 1 ) then
-                        append faces [a,b,c]
-                    else
-                        append faces [a,c,b]
+                    if( l.stripCount > 0 ) then
+                    (
+                        format "Mesh %  Indices to process: %\n" meshId l.stripCount 
                     
+                        for i=0  to l.stripCount - 3 do
+                        (
+                            local s = l.stripStart
+                            local a = nod.indices[s + i+1]
+                            local b = nod.indices[s + i+2]
+                            local c = nod.indices[s + i+3]
+                            backfaceCullingIssue = 1 - backfaceCullingIssue
+                            if( a!=b and a!=c and b!=c ) then 
+                            (
+                                if ( backfaceCullingIssue == 1 ) then
+                                    append faces [a,b,c]
+                                else
+                                    append faces [a,c,b] 
+                            )
+                        )
+                    )
                     
+                    backfaceCullingIssue = 1
+                    
+                    if( l.listCount > 0 ) then 
+                    (
+                        format "Mesh %  Strip to process: %\n" meshId l.listCount 
+                        for i=0  to l.listcount / 3  do
+                        (
+                            local s = l.ListStart +1 
+                            local a = nod.indices[s + i*3]
+                            local b = nod.indices[s + i*3+1]
+                            local c = nod.indices[s + i*3+2]
+                            
+                            backfaceCullingIssue = 1 - backfaceCullingIssue
+                            if( a!=b and a!=c and b!=c ) then 
+                            (
+                                if ( backfaceCullingIssue == 1 ) then
+                                    append faces [a,b,c]
+                                else
+                                    append faces [a,c,b]    
+                            )
+                        )
+                    )
+                    local vg = nod.vertexGroups[mg.vertexGroupId]
+                    local vStart = mg.vertexStart
+                    
+                    local verts = #()
+                    local norms = #()
+                    local uvs = #()
+                    for v=vStart+1 to vStart + l.vertexCount do
+                    (
+                        append verts vg.vertices[v]
+                        append norms vg.normals[v]
+                        append uvs   vg.uvs[v]
+                        
+                    )
+                    name = nod.name + "_" + (meshId as string)
+                    theMesh = mesh name:name vertices:verts faces:faces vnorms:norms tverts:uvs
+                    
+                    local wirecolor = color (random 100 150) (random 100 150) (random 50 250)
+            
+                    theMesh.WireColor = wireColor
+                    
+                    if( uvs.count > 0 ) then 
+                    (
+                        try (
+                            buildTVFaces theMesh false
+                            for i = 1 to faces.count do
+                            ( setTVFace theMesh i faces[i] )
+                        )
+                        catch()
+                    )
+                    meshLayer.AddNode theMesh
                 )
             )
-            
-            if l.listCount > 0 then
-            (
-                for i=0 to (l.listCount)/3 do
-                (
-                    local a = nod.indices[l.listStart + 1 + i*3]
-                    local b = nod.indices[l.listStart + 1 + i*3 + 1]
-                    local c = nod.indices[l.listStart + 1 + i*3 + 2]
-                   
-                    if a == b or a == c or b == c then continue
-                    
-                    append faces [a,b,c]
-                )
-            )
-            
-            local theMesh = mesh name:meshName vertices:verts faces:faces vnorms:norms tverts:uvs
-            local wirecolor = color (random 100 200) (random 100 150) (random 1 50)
-            
-            theMesh.WireColor = wireColor
-            try (
-                buildTVFaces theMesh false
-                for i = 1 to faces.count do
-                ( setTVFace theMesh i faces[i] )
-            )
-            catch()
-            
-            meshLayer.AddNode theMesh
             
         )
-                
+        
     ),
+    
+
     function ReadNod file=
     (
         format "Reading 3D model file '%'\n" (filenameFromPath file)
@@ -560,9 +475,9 @@ struct Starcraft_Ghost_Tools
                 append vg.uvs      ( gshelp.ReadUV3 stream )
             
                 if ( vg.vertexType == 1 ) then
-                    gshelp.SkipBytes stream 4
+                    gshelp.SkipBytes stream 4 --> probably vertex weights
                 if ( vg.vertexType == 2 ) then
-                    gshelp.SkipBytes stream 16
+                    gshelp.SkipBytes stream 16 --> probably vertex weights
             )
         )
         
@@ -667,7 +582,7 @@ struct Starcraft_Ghost_Tools
         
         BuildMesh nod
        -- BuildNodMesh nod
-       -- BuildGhostBones nod.boneList
+        BuildGhostBones nod.boneList
         
         return "Import Done"
     )
