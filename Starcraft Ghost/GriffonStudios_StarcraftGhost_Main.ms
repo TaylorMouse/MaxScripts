@@ -406,8 +406,6 @@ struct Starcraft_Ghost_Tools
         )
         
     ),
-    
-
     function ReadNod file=
     (
         format "Reading 3D model file '%'\n" (filenameFromPath file)
@@ -461,6 +459,12 @@ struct Starcraft_Ghost_Tools
 
         )
 
+        for vg in nod.vertexGroups do
+        (
+            format "Vertex type %  vertexCount % \n" vg.vertexType vg.vertexCount
+        )
+        
+
         for i=1 to nod.nVertGrp do
         (
             local vg = nod.vertexGroups[i]
@@ -478,7 +482,16 @@ struct Starcraft_Ghost_Tools
                     gshelp.SkipBytes stream 4 --> probably vertex weights
                 if ( vg.vertexType == 2 ) then
                     gshelp.SkipBytes stream 16 --> probably vertex weights
+                
+                if ( vg.vertexType == 4 ) then
+                    gshelp.SkipBytes stream 4 --> probably vertex weights
+                
+                if ( vg.vertexType == 5 ) then
+                    gshelp.SkipBytes stream 16 --> probably vertex weights
+
             )
+            if ( vg.vertexType >= 3 ) then gshelp.SkipBytes stream ( vg.vertexCount * 36 )
+
         )
         
         nod.indices = #()
@@ -580,9 +593,9 @@ struct Starcraft_Ghost_Tools
         
         ghostModel = nod
         
-        BuildMesh nod
-       -- BuildNodMesh nod
-        BuildGhostBones nod.boneList
+       BuildMesh nod
+       
+        --BuildGhostBones nod.boneList
         
         return "Import Done"
     )
@@ -592,6 +605,6 @@ struct Starcraft_Ghost_Tools
 */
 clearListener()
 --file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zealot.nod"
-file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zealot.nod"
+file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lurker.nod"
 
 Starcraft_Ghost_Tools.ImportModel file
