@@ -11,6 +11,9 @@
 
 */
 global ghostModel
+global ghostConvertMaterialToSC2 = true
+global ghostShaderList 
+
 struct GriffonStudios_Helpers
 (
     function BuildSpline spline points=
@@ -145,30 +148,140 @@ struct GriffonStudios_Helpers
 
 struct Starcraft_Ghost_Tools
 (
+    function FindNadFile file nadFile=
+    (
+        local filePath = getFileNamePath file
+        local fileName = tolower ( getFileNameFile nadFile )
+        local rootPath = substring file 1 (findString filePath @"\3D\")
+        
+        local nadFiles = GriffonStudios_Helpers.FindFiles rootPath "*.nad"
+        
+        local animFile = undefined
+        
+        for nad in nadFiles do
+        (
+            local nadFileName = tolower ( getFilenameFile nad )
+            if ( nadFileName == fileName ) then 
+            (
+                --format "Animation file found '%.nad'\n" fileName
+                animFile = nad
+                exit
+            )
+            
+        )
+        return animFile
+        
+    ),
+    function FindMotionFile file=
+    (
+        local filePath = getFileNamePath file
+        local fileName = tolower ( getFileNameFile file )
+        local rootPath = substring file 1 (findString filePath @"\3D\")
+        
+        local motionFiles = GriffonStudios_Helpers.FindFiles rootPath "*.nms"
+        
+        local motionFile = undefined
+        
+        for nms in motionFiles do
+        (
+           -- format "Checking %\n" nms
+            local nmsFileName = tolower ( getFilenameFile nms )
+            if ( nmsFileName == fileName ) then 
+            (
+                format "Motion file found '%.nms'\n" fileName
+                motionFile = nms
+                exit
+            )
+            
+        )
+        return motionFile
+    ),
+    function ReadMotionFile nmsFile=
+    (
+       struct ghost_motion 
+            ( OverlayName, AnimName, animFile, lowPriority, noLoop, variable, fidget, endPause, endTag, noFadeIn, noFadeOut, noFrameReset, highPriority )
+        
+        local motionStream = openfile nmsFile
+        local l = readLine motionStream
+        
+        local motions = #()
+        local currentOverlayName = "Standard"
+        
+        Format "Parsing motion file '%.nms'\n" ( getFileNameFile nmsFile )
+        
+        while ( ( eof motionStream ) == false ) do
+        (
+            if ( eof motionStream ) then exit
+            
+            l = readLine motionStream
+            
+            if ( l.count == 0 ) then continue
+            if ( l[1] == ";" ) then continue
+            
+            local parts = filterString l "\t, "
+            
+            
+            if ( parts.count < 2 ) then continue --> for the moment do nothing
+            if ( parts[1] == "numOverlays" ) then continue
+            
+            if ( parts[1] == "overlay" ) then
+            (
+                currentOverlayName = parts[2]
+                continue
+            )
+            
+            local motion = ghost_motion noLoop:false lowPriority:false variable:false fidget:false endPause:false endTag:false noFadeIn:false noFrameReset:false noFadeOut:false highPriority:false
+            motion.overlayName = currentOverlayName
+            motion.animName = parts[1]
+            motion.animFile = Starcraft_Ghost_Tools.FindNadFile nmsFile parts[2]
+            
+            for i=3 to parts.count do
+            (
+                if ( parts[i] == "noloop" ) then motion.noLoop = true
+                if ( parts[i] == "lowpriority" ) then motion.lowPriority = true
+                if ( parts[i] == "variable" ) then motion.variable = true
+                if ( parts[i] == "fidget" ) then motion.fidget = true
+                if ( parts[i] == "endpause" ) then motion.endPause = true
+                if ( parts[i] == "endtag" ) then motion.endTag = true
+                if ( parts[i] == "nofadein" ) then motion.noFadeIn = true
+                if ( parts[i] == "noframereset" ) then motion.noFrameReset = true
+            )
+            
+            --format "%\n" motion
+            append motions motion
+            
+        )
+        close motionStream
+        return motions
+    ),
     function ReadGhostBone stream=
     (
-        struct Ghost_bone ( id, parentId, tagId, translation, invTranslation, boneRef )
+        struct Ghost_bone ( id, parentId, tagId, unk1, unk2, identityMatrix, translation, invTranslation, boneRef )
         -- 64 bytes
         
         local gb = Ghost_bone()
-        gb.translation = [readFloat stream, readFloat stream, readFloat stream] * 100.0
         
-        SkipBytes stream 36
         
+        local row4 = [readFloat stream, readFloat stream, readFloat stream] * 100.0 
+        local row1 = [readFloat stream, readFloat stream, readFloat stream] 
+        local row2 = [readFloat stream, readFloat stream, readFloat stream] 
+        local row3 = [readFloat stream, readFloat stream, readFloat stream]
+        
+        gb.identityMatrix = matrix3 row1 row2 row3 row4
         gb.invTranslation = [readFloat stream, readFloat stream, readFloat stream] * 100.0
-        
-        local unk1 = readByte stream as integer
-        local unk2 = readByte stream as integer
+        gb.unk1 = readByte stream as integer
+        gb.unk2 = readByte stream as integer
         gb.parentId = ( readByte stream as integer ) + 1
         gb.tagId    = readByte stream as integer
+        
         return gb
     ),
     function ReadMaterials file=
     (
-        format "Parsing materials ( shaders and textures )\n"
+        --format "Looking for shaders and textures\n"
         
         struct ghost_material ( shaders, textures )
-        struct ghost_shader   ( name, shader, texture, sound, surfflags, envmap, meshtype, sightForce )
+        struct ghost_shader   ( name, shader, texture, sound, surfflags, envmap, meshtype, sightForce, refMaterial)
         
         local filePath = getFilenamePath file
         local rootPath = substring file 1 (findString filePath @"\3D\")
@@ -180,20 +293,29 @@ struct Starcraft_Ghost_Tools
         
         if ( doesdirectoryexist rootPath ) then
         (
-            gmat.textures = GriffonStudios_Helpers.FindFiles rootPath "*.dds"
-            format "- % textures (.dds) found\n" gmat.textures.count
+            local textureFiles = GriffonStudios_Helpers.FindFiles rootPath "*.dds"
+            
+            for f in textureFiles do
+            (
+                local gs = ghost_shader()
+                gs.name = getfilenamefile f
+                gs.texture = f
+                append gmat.textures gs
+            )
+            
+            
+            --format "- % textures (.dds) found\n" gmat.textures.count
             local shaderFiles = GriffonStudios_Helpers.FindFiles rootPath "*.nsa"
-
             
             for f in shaderFiles do
             (
                 local str = openfile f
                 
+                
                 while ( ( eof str ) == false ) do
                 (
                     local l = readLine str
                     if ( eof str ) then exit
-                    
                     local gs = ghost_shader()
                     
                     gs.name = l
@@ -222,14 +344,17 @@ struct Starcraft_Ghost_Tools
                 )
                 close str
             )
-            format "- % shaders found\n" gmat.shaders.count
+            --format "- % shaders found\n" gmat.shaders.count
         )
         
         return gmat
     ),
     function FindMaterial nod materials=
     (
+        struct ghost_shader   ( name, shader, texture, sound, surfflags, envmap, meshtype, sightForce, refMaterial)
+        
         local mats = #()
+        
         for i=1 to nod.nShaders do
         (
             local shaderName = tolower nod.shaderNames[i]
@@ -241,39 +366,128 @@ struct Starcraft_Ghost_Tools
             (
                 if ( ( tolower ghostShader.name ) == shaderName ) then
                 (
-                    --format "Shader found %\n" ghostShader.name
                     mats[i] = ghostShader
-                    format "Shader '%'\n" shaderName 
-                    shaderFound = true
                     exit
                 )
             )
            
             if ( mats[i] == undefined ) then 
             (
-                
-                
-                for texture in materials.textures do
+                for textureShader in materials.textures do
                 (
+                    texture = textureShader.Texture
                     if ( ( findstring ( tolower texture ) textureName ) != undefined ) then
                     (
-                        --format "Texture found '%'\n" texture
-                        mats[i] = texture
-                        format "Texture '%.dds' \n" shaderName
-                        textureFound = true
+                        mats[i] = textureShader
                         exit
                     )
                 )
-           
             )
+            
+            
+            if ( mats[i] == undefined ) then 
+            (
+                -- additional searching
+                local newShaderName = substituteString shaderName "_gloss" ""
+                
+                if ( newShaderName == shaderName ) then newShaderName = substituteString shaderName "_glo" ""
+                
+                for ghostShader in materials.shaders do
+                (
+                    if ( ( tolower ghostShader.name ) == newShaderName ) then
+                    (
+                        mats[i] = ghostShader
+                        exit
+                    )
+                )
+                if ( mats[i] == undefined ) then 
+                (
+                    for textureShader in materials.textures do
+                    (
+                        texture = textureShader.Texture
+                        if ( ( findstring ( tolower texture ) newShaderName ) != undefined ) then
+                        (
+                            mats[i] = textureShader
+                            exit
+                        )
+                    )
+                )
+                if ( mats[i] == undefined ) then 
+                (
+                    mats[i] = ghost_shader ()
+                    mats[i].name = shaderName
+                )
+            )
+            
         )
         
         return mats
+    ),
+    function FindTextureFile textureName=
+    (
+        --format "Looking for %\n" textureName
+        local fileFound = undefined
+        if (textureName != undefined ) then 
+        (
+            for f in ghostShaderList.textures do
+            (
+                if ( (findString f.texture textureName ) != undefined ) then 
+                (
+                    --format "File found\n" 
+                    fileFound= f.texture
+                    exit 
+                )
+            )
+        )
+        return fileFound
+        
+    ),
+    function BuildMaterials nod=
+    (
+
+        for m=1 to nod.materials.count do
+        (
+            local mat = nod.materials[m]
+            local matRef = StandardMaterial()
+
+            showTextureMap matRef true
+
+            if (mat != undefined ) then 
+            (
+                matRef.name = mat.name
+                
+                local textureFile = Starcraft_Ghost_Tools.FindTextureFile mat.texture
+                local envTexture  = Starcraft_Ghost_Tools.FindTextureFile mat.envMap
+                
+                if ( textureFile != undefined ) then
+                (
+                    matRef.diffuseMap = Bitmaptexture fileName:textureFile
+                    
+                    matRef.opacityMap = Bitmaptexture fileName:textureFile
+                    matRef.opacityMap.alphaSource = 2
+                    matRef.opacityMapEnable = off --> to be set manully if required !
+                )
+                if ( envTexture != undefined )  then 
+                (
+                    matRef.reflectionMap = Bitmaptexture fileName:envTexture
+
+                )
+                
+            )
+            else
+            (
+                matRef.name = nod.shaderNames[m]
+            )
+            mat.refMaterial = matRef
+            meditMaterials[m] = matRef
+        )
     ),
     function BuildGhostBones boneList=
     (
         local boneLayer = GriffonStudios_Helpers.CreateLayer "Bones"
         
+        format "Building Bones\n"
+        -- create the bones
         for b in boneList do
         (
             local bName = "bone_" + (b.id as string)
@@ -283,27 +497,43 @@ struct Starcraft_Ghost_Tools
             aBone.showLinks = true
             aBone.Width = 0.05
             aBone.Height = 0.05
+            aBone.Pos.controller      = TCB_position ()
+            aBone.rotation.controller = TCB_rotation ()
+            aBone.setBoneEnable false 0
             
             b.boneRef = aBone
             
             boneLayer.AddNode aBone
         )
         
+        -- link the parents
         for b in boneList do
         (
             if (b.parentID > 0) then
             (
                 b.boneRef.Parent = boneList[b.parentID].boneRef
-                
-                b.boneRef.Pos = b.translation + boneList[b.parentID].boneRef.pos
+            )
+        )   
+
+        for b in boneList do
+        (
+            if (b.parentID > 0) then
+            (
+                b.boneRef.Rotation = b.identityMatrix.rotationPart
+                b.boneRef.pos = b.identityMatrix.translationpart + b.boneRef.parent.pos
             )
             else
-                b.boneRef.Pos = b.translation
+                b.boneRef.Pos = b.identityMatrix.translationpart
+        ) 
 
-        )        
+
+        
     ),
     function BuildMesh nod=
     (
+        format "Building Materials\n"
+        Starcraft_Ghost_Tools.BuildMaterials nod
+        
         format "Building 3D Model\n"
         local help = GriffonStudios_Helpers()
         
@@ -312,24 +542,53 @@ struct Starcraft_Ghost_Tools
         
         /* build bounding box */
         
-        local bbox = help.BuildBoundingBox nod.bbox
-        bboxLayer.AddNode bbox
+        --local bbox = help.BuildBoundingBox nod.bbox
+        --bboxLayer.AddNode bbox
         
+        
+        /* build the correct set of faces */
         local meshId = 0
         for mg in nod.meshGroups do
         (
             meshId = meshId + 1
+            local name = nod.name + "_" + (meshId as string)
+            
+            local mat = nod.materials[mg.matId+1].refMaterial
+
+            format "Building Mesh '%'\n" name
             for l in mg.lods do
             (
                 if (l.lod == 0 ) then 
                 (
+                    --// get the vertices, normals, uvs, weights and boneIds
+                    local vg = nod.vertexGroups[mg.vertexGroupId]
+                    local vStart = mg.vertexStart
                     
-                    local backfaceCullingIssue = 1
+                    local verts = #()
+                    local norms = #()
+                    local uvs = #()
+                    local weights = #()
+                    local boneIds = #()
+                    
+                    for v=vStart+1 to vStart + l.vertexCount do
+                    (
+                        append verts vg.vertices[v]
+                        append norms vg.normals[v]
+                        append uvs   vg.uvs[v]
+                        append weights vg.vertexWeights[v] --> corrected weights 
+                        append boneIds vg.boneIds[v] --> correctedBoneIds
+                        
+                    )
+
+
+                    
+                    --// get the faces
+                    local backfaceCullingIssue = 0
                     local faces = #()
                     
                     if( l.stripCount > 0 ) then
                     (
-                        format "Mesh %  Indices to process: %\n" meshId l.stripCount 
+                        --format " - Strip % Indices to process: %\n" meshId l.stripCount 
                     
                         for i=0  to l.stripCount - 3 do
                         (
@@ -337,6 +596,8 @@ struct Starcraft_Ghost_Tools
                             local a = nod.indices[s + i+1]
                             local b = nod.indices[s + i+2]
                             local c = nod.indices[s + i+3]
+                            
+                            
                             backfaceCullingIssue = 1 - backfaceCullingIssue
                             if( a!=b and a!=c and b!=c ) then 
                             (
@@ -345,73 +606,122 @@ struct Starcraft_Ghost_Tools
                                 else
                                     append faces [a,c,b] 
                             )
+
                         )
                     )
-                    
-                    backfaceCullingIssue = 1
-                    
+                                       
                     if( l.listCount > 0 ) then 
                     (
-                        format "Mesh %  Strip to process: %\n" meshId l.listCount 
+                        --format " - List  % Indices to process: %\n" meshId l.listCount 
                         for i=0  to l.listcount / 3  do
                         (
-                            local s = l.ListStart +1 
+                            local s = l.ListStart + 1 
                             local a = nod.indices[s + i*3]
                             local b = nod.indices[s + i*3+1]
                             local c = nod.indices[s + i*3+2]
                             
-                            backfaceCullingIssue = 1 - backfaceCullingIssue
-                            if( a!=b and a!=c and b!=c ) then 
-                            (
-                                if ( backfaceCullingIssue == 1 ) then
-                                    append faces [a,b,c]
-                                else
-                                    append faces [a,c,b]    
+                            try ( 
+                                append faces [a,b,c]
                             )
+                            catch (
+                                format "ERROR - Unable to add face % % % \n" a b c
+                            )
+                            
                         )
                     )
-                    local vg = nod.vertexGroups[mg.vertexGroupId]
-                    local vStart = mg.vertexStart
                     
-                    local verts = #()
-                    local norms = #()
-                    local uvs = #()
-                    for v=vStart+1 to vStart + l.vertexCount do
+                    /*
+                        Create the mesh
+                    
+                    */
+                    
+                    
+                    try 
                     (
-                        append verts vg.vertices[v]
-                        append norms vg.normals[v]
-                        append uvs   vg.uvs[v]
+                        theMesh = mesh name:name vertices:verts faces:faces vnorms:norms tverts:uvs
+                        
+                        local wirecolor = color (random 100 150) (random 100 150) (random 50 250)
+                
+                        theMesh.WireColor = wireColor
+                        
+                        if( uvs.count > 0 ) then 
+                        (
+                            try (
+                                buildTVFaces theMesh false
+                                for i = 1 to faces.count do
+                                ( setTVFace theMesh i faces[i] )
+                            )
+                            catch()
+                        )
+                        
+                        theMesh.Material = mat
+                        meshLayer.AddNode theMesh
+                        mg.refMesh = theMesh
+                        mg.refWeights = weights
+                        mg.refBoneIds = boneIds
                         
                     )
-                    name = nod.name + "_" + (meshId as string)
-                    theMesh = mesh name:name vertices:verts faces:faces vnorms:norms tverts:uvs
-                    
-                    local wirecolor = color (random 100 150) (random 100 150) (random 50 250)
-            
-                    theMesh.WireColor = wireColor
-                    
-                    if( uvs.count > 0 ) then 
+                    catch
                     (
-                        try (
-                            buildTVFaces theMesh false
-                            for i = 1 to faces.count do
-                            ( setTVFace theMesh i faces[i] )
-                        )
-                        catch()
+                        format "ERROR - Unable to create Mesh '%'\n" name
+                        
                     )
-                    meshLayer.AddNode theMesh
+
+                )
+                
+            )
+            max views redraw
+        )
+        
+    ),
+    function ApplySkin nod=
+    (
+        Format "Applying Vertex Weights\n"
+        disableSceneRedraw()
+        
+        for mg in nod.meshGroups do
+        (
+            if ( mg.refMesh == undefined ) then continue
+            --// apply skin modifier to the mesh
+            local skinMod = skin name:"Skin"
+            max modify mode
+            addModifier mg.refMesh skinMod
+            modPanel.setCurrentObject skinMod
+            
+            -- //  add the bones to the mesh
+            for i=1 to mg.nBones do
+            (
+                if ( mg.boneList[i] != 205) then  --// bone 205 is not a real bone
+                (
+                    
+                    local b = nod.boneList[mg.boneList[i]].boneRef
+                    if ( b != undefined ) then
+                    (
+                        if ( i == mg.nBones ) then 
+                            skinOps.addBone skinMod b 1
+                        else
+                            skinOps.addBone skinMod b 0
+                    )
                 )
             )
             
+            --// apply vertex weights
+            for v=1 to mg.refWeights.count do 
+            (
+                local weights = mg.refWeights[v]
+                local boneIds = mg.refBoneIds[v]
+                skinOps.ReplaceVertexWeights skinMod v boneIds weights
+            )
+            update mg.refMesh
         )
-        
+        enableSceneRedraw()
     ),
     function ReadNod file=
     (
         format "Reading 3D model file '%'\n" (filenameFromPath file)
-        struct ghost_nod ( name, version, nShaders, nBones, nVertGrp, nMeshGrp, flags, bbox, vertexGroups, vertexGroupOffsets, meshGroups, nIndices, indices, lodStarts, lodCount, shaderNames, boneList, materials )
-        struct ghost_mesh_grp ( id, matId, vertexCount, flags, nBlendShapes, blendGroup, boneList, nBones, vertexGroupId, lods, faces, vertexStart )
-        struct ghost_vert_grp ( vertexCount, vertexType, vertices, normals, uvs, vertexOffset )
+        struct ghost_nod ( name, version, nShaders, nBones, nVertGrp, nMeshGrp, flags, bbox, vertexGroups, vertexGroupOffsets, meshGroups, nIndices, indices, lodStarts, lodCount, shaderNames, boneList, materials, motions )
+        struct ghost_mesh_grp ( id, matId, vertexCount, flags, nBlendShapes, blendGroup, boneList, nBones, vertexGroupId, lods, faces, vertexStart, refMesh, refWeights, refBoneIds )
+        struct ghost_vert_grp ( vertexCount, vertexType, vertices, normals, uvs, vertexOffset, boneIds, vertexWeights )
         struct ghost_mesh_lod ( lod, stripStart, stripCount, listStart, listCount, vertexCount )
         
         local gshelp = GriffonStudios_Helpers()
@@ -453,45 +763,79 @@ struct Starcraft_Ghost_Tools
         nod.boneList = #()
         for i=1 to nod.nBones do
         (
-            local gb = ReadGhostBone stream
+            local gb = Starcraft_Ghost_Tools.ReadGhostBone stream
             gb.id = i
             append nod.boneList gb
 
         )
 
-        for vg in nod.vertexGroups do
+        for g=1 to nod.nVertGrp do
         (
-            format "Vertex type %  vertexCount % \n" vg.vertexType vg.vertexCount
-        )
-        
-
-        for i=1 to nod.nVertGrp do
-        (
-            local vg = nod.vertexGroups[i]
+            local vg = nod.vertexGroups[g]
             vg.vertices = #()
             vg.normals  = #()
             vg.uvs      = #()
+            vg.boneIds  = #()
+            vg.vertexWeights = #()
             
+            --format "Vertex Type %\n" vg.vertexType
             for i=1 to vg.vertexCount do
             (
                 append vg.vertices ( gshelp.ReadVector3 stream 100.0 )
                 append vg.normals  ( gshelp.ReadVector3 stream 1.0)
                 append vg.uvs      ( gshelp.ReadUV3 stream )
             
-                if ( vg.vertexType == 1 ) then
-                    gshelp.SkipBytes stream 4 --> probably vertex weights
-                if ( vg.vertexType == 2 ) then
-                    gshelp.SkipBytes stream 16 --> probably vertex weights
+                if ( vg.vertexType == 0 ) then 
+                (
+                    append vg.boneIds ( #(1) )
+                    append vg.vertexWeights ( #(1.0) )
+                )
                 
-                if ( vg.vertexType == 4 ) then
-                    gshelp.SkipBytes stream 4 --> probably vertex weights
+                if ( vg.vertexType == 1 or vg.vertexType == 4 ) then
+                (
+                    append vg.boneIds ( #(readLong stream + 1) )
+                    append vg.vertexWeights ( #(1.0) )
+                    
+                )
                 
-                if ( vg.vertexType == 5 ) then
-                    gshelp.SkipBytes stream 16 --> probably vertex weights
+                if ( vg.vertexType == 2 or vg.vertexType == 5 ) then
+                (
+                    local weights = #()
+                    
+                    for w=1 to 3 do 
+                        append weights ( readfloat stream )
+                        
+                    append vg.vertexWeights weights
+                    
+                    local boneIndices = #()
+                    
+                    for b=1 to 4 do
+                        append boneIndices ( (readByte stream #unsigned ) as integer + 1 )
+                    
+                    append vg.boneIds boneIndices
+                )
 
+                
             )
             if ( vg.vertexType >= 3 ) then gshelp.SkipBytes stream ( vg.vertexCount * 36 )
 
+           
+            -- clean up for max
+            for v=1 to vg.vertexCount do
+            (
+                local weights = #()
+                local boneIds = #()
+                for w=1 to vg.vertexWeights[v].count do
+                (
+                    if ( vg.vertexWeights[v][w] > 0.0 ) then
+                    (
+                        append weights vg.vertexWeights[v][w]
+                        append boneIds vg.boneIds[v][w]
+                    )
+                )    
+                vg.vertexWeights[v] = weights
+                vg.boneIds[v] = boneIds
+            )
         )
         
         nod.indices = #()
@@ -540,7 +884,7 @@ struct Starcraft_Ghost_Tools
             mg.boneList = #()
             for b=1 to 20 do --> bones with id 204 -> are not used...
             (
-                append mg.boneList (readByte stream #unsigned as integer)
+                append mg.boneList ((readByte stream #unsigned as integer) + 1 )
             )
 
             mg.nBones = readByte stream as integer
@@ -578,24 +922,31 @@ struct Starcraft_Ghost_Tools
         
         fClose stream
 
-        local materials = ReadMaterials file
-        nod.materials = FindMaterial nod materials
+        ghostShaderList = Starcraft_Ghost_Tools.ReadMaterials file
+        nod.materials = Starcraft_Ghost_Tools.FindMaterial nod ghostShaderList
         
         return nod
     ),
     /* 
-        Main functions
+        Main Import
     */
     function ImportModel file=
     (
+        local _ghost = Starcraft_Ghost_Tools()
+        local nod = _ghost.ReadNod file
+        local motionFile = _ghost.FindMotionFile file
         
-        local nod = ReadNod file
+        if ( motionFile != undefined ) then nod.motions = _ghost.ReadMotionFile motionFile
         
+        --// assign to global for easy debugging
         ghostModel = nod
         
-       BuildMesh nod
-       
-        --BuildGhostBones nod.boneList
+        --_ghost.BuildMesh nod
+        --_ghost.BuildGhostBones nod.boneList
+        --_ghost.ApplySkin nod
+        
+        
+        gc()
         
         return "Import Done"
     )
@@ -604,7 +955,9 @@ struct Starcraft_Ghost_Tools
     Testing only
 */
 clearListener()
---file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zealot.nod"
-file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lurker.nod"
+
+file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zergling.nod"
+
 
 Starcraft_Ghost_Tools.ImportModel file
+enableSceneRedraw()
