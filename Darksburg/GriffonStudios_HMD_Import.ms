@@ -1,5 +1,5 @@
 /*
-    ©2014 ~ 2020 Script by Taylor Mouse
+    Â©2014 ~ 2020 Script by Taylor Mouse
 	Shiro Games models from 
     - Northgard
     - Darksburg

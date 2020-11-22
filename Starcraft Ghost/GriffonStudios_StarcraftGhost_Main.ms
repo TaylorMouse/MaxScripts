@@ -17,143 +17,14 @@
         v0.01 - read the nod file
 
 */
+filein "GriffonStudios_HelperScripts.ms"
+
 global ghostModel
 global ghostConvertMaterialToSC2 = true
 global ghostShaderList 
+global ghostStartAnimationFrame = 10.0
 
-struct GriffonStudios_Helpers
-(
-    function BuildSpline spline points=
-    (
-        if spline == undefined then spline = SplineShape pos:[0,0,0]
-        spline.WireColor = gray
-        spline.renderable = off
-        
-        local index = addNewSpline spline
-        
-        for p in points do addKnot spline index #corner #curve p
-        
-        close spline index
-
-        updateShape spline
-        
-        return spline
-    ),
-    function BuildBoundingBox bbBox=
-    (
-        local p1 = bbBox[1]
-        local p2 = bbBox[2]
-
-        local xMin = 0
-        local xMax = 0
-        local yMin = 0
-        local yMax = 0
-        local zMin = 0
-        local zMax = 0
-        
-        if p1.x < p2.x then 
-            ( 
-                xMin = p1.x
-                xMax = p2.X
-            )
-        else
-            ( 
-                xMin = p2.x
-                xMax = p1.x
-            )
-        if p1.y < p2.y then 
-            ( 
-                yMin = p1.y
-                yMax = p2.y
-            )
-        else
-            ( 
-                yMin = p2.y
-                yMax = p1.y
-            )
-        if p1.z < p2.z then 
-            ( 
-                zMin = p1.z
-                zMax = p2.z
-            )
-        else
-            ( 
-                zMin = p2.z
-                zMax = p1.z
-            )
-        
-        local help = GriffonStudios_Helpers()
-        local s = help.BuildSpline s #([xMin, yMin, zMin], [xMax, yMin, zMin], [xMax,yMin, zMax], [xMin,yMin, zMax], [xMin, yMin, zMin] )
-        s = help.BuildSpline s #([xMin, yMax, zMin], [xMax, yMax, zMin], [xMax,yMax, zMax], [xMin,yMax, zMax], [xMin, yMax, zMin] )
-        s = help.BuildSpline s #([xMin, yMax, zMin], [xMin, yMin, zMin])
-        s = help.BuildSpline s #([xMin, yMax, zMax], [xMin, yMin, zMax])    
-        s = help.BuildSpline s #([xMax, yMax, zMin], [xMax, yMin, zMin])
-        s = help.BuildSpline s #([xMax, yMax, zMax], [xMax, yMin, zMax])
-        
-        s.name = "Bounding Box"
-        freeze s
-        return s
-    ),
-    function CreateLayer layerName =
-    (
-        layer = LayerManager.GetLayerFromName layerName
-        if(layer == undefined) then
-        (
-            layer = LayerManager.NewLayerFromName layerName
-        )
-        return layer
-    ),
-    function FindFiles root pattern=
-    (
-        dirList = GetDirectories (root+"/*")
-        for d in dirList do
-          join dirList (GetDirectories (d+"/*"))
-        files = #()
-        for f in dirList do
-          join files (getFiles (f + pattern))
-        return files
-    ),
-    function ReadBoundingBox stream=
-    (
-        local bbox = #()
-        local pointA = [readFloat stream, readFloat stream, readFloat stream] * 100.0
-        local pointB = [readFloat stream, readFloat stream, readFloat stream] * 100.0
-        
-        append bbox pointA
-        append bbox pointB
-        
-        return bbox
-    ),
-    function ReadFixedString stream val =
-    (
-        /* Read n-length string */
-        local str = ""
-
-        for i=1 to val do
-        (
-            s= bit.IntAsChar(ReadByte stream)
-
-            if ( s !="\0") then str+=s
-        )
-        return str
-
-    ),
-    function SkipBytes stream nBytesToSkip=
-    (
-        /* Skip n-bytes without reading them into memory */
-        fseek stream nBytesToSkip #seek_cur
-    ),
-    function ReadVector3 stream correction=
-    (
-        return [readFloat stream, readFloat stream, readFloat stream] * correction
-    ),
-    function ReadUV3 stream=
-    (
-        return [readFloat stream, 1.0 - (readFloat stream), 0.0]
-    )
-)
-
-struct Starcraft_Ghost_Tools
+struct Starcraft_Ghost_Main
 (
     /* Find stuff */
     
@@ -338,7 +209,7 @@ struct Starcraft_Ghost_Tools
             local motion = ghost_motion noLoop:false lowPriority:false variable:false fidget:false endPause:false endTag:false noFadeIn:false noFrameReset:false noFadeOut:false highPriority:false
             motion.overlayName = currentOverlayName
             motion.animName = parts[1]
-            motion.animFile = Starcraft_Ghost_Tools.FindNadFile nmsFile parts[2]
+            motion.animFile = Starcraft_Ghost_Main.FindNadFile nmsFile parts[2]
             
             for i=3 to parts.count do
             (
@@ -352,11 +223,16 @@ struct Starcraft_Ghost_Tools
                 if ( parts[i] == "noframereset" ) then motion.noFrameReset = true
             )
             
+            --motion.nad =  Starcraft_Ghost_Main.ReadNadFile motion.animFile
             --format "%\n" motion
             append motions motion
             
         )
         close motionStream
+        
+        
+        
+        
         return motions
     ),
     function ReadGhostBone stream=
@@ -396,7 +272,6 @@ struct Starcraft_Ghost_Tools
                                flags:(readLong stream #unsigned) \
                                duration:(readFloat stream) --> duration in frames
 
-        format "%\n" nad
         nad.boneTracks = #()
         for i=1 to nad.numBoneTracks do
         (
@@ -556,7 +431,7 @@ struct Starcraft_Ghost_Tools
         nod.boneList = #()
         for i=1 to nod.nBones do
         (
-            local gb = Starcraft_Ghost_Tools.ReadGhostBone stream
+            local gb = Starcraft_Ghost_Main.ReadGhostBone stream
             gb.id = i
             append nod.boneList gb
 
@@ -716,12 +591,12 @@ struct Starcraft_Ghost_Tools
         fClose stream
 
         /* Materials and shaders */
-        ghostShaderList = Starcraft_Ghost_Tools.ReadMaterials file
-        nod.materials = Starcraft_Ghost_Tools.FindMaterial nod ghostShaderList
+        ghostShaderList = Starcraft_Ghost_Main.ReadMaterials file
+        nod.materials = Starcraft_Ghost_Main.FindMaterial nod ghostShaderList
         
         /* motion and animations */
-        motionFile = _ghost.FindMotionFile file
-        if ( motionFile != undefined ) then nod.motions = _ghost.ReadMotionFile motionFile
+        motionFile = Starcraft_Ghost_Main.FindMotionFile file
+        if ( motionFile != undefined ) then nod.motions = Starcraft_Ghost_Main.ReadMotionFile motionFile
         
         return nod
     ),
@@ -742,8 +617,8 @@ struct Starcraft_Ghost_Tools
             (
                 matRef.name = mat.name
                 
-                local textureFile = Starcraft_Ghost_Tools.FindTextureFile mat.texture
-                local envTexture  = Starcraft_Ghost_Tools.FindTextureFile mat.envMap
+                local textureFile = Starcraft_Ghost_Main.FindTextureFile mat.texture
+                local envTexture  = Starcraft_Ghost_Main.FindTextureFile mat.envMap
                 
                 if ( textureFile != undefined ) then
                 (
@@ -819,7 +694,7 @@ struct Starcraft_Ghost_Tools
     function BuildMesh nod=
     (
         format "Building Materials\n"
-        Starcraft_Ghost_Tools.BuildMaterials nod
+        Starcraft_Ghost_Main.BuildMaterials nod
         
         format "Building 3D Model\n"
         local help = GriffonStudios_Helpers()
@@ -964,7 +839,7 @@ struct Starcraft_Ghost_Tools
     function ApplySkin nod=
     (
         Format "Applying Vertex Weights\n"
-        disableSceneRedraw()
+        --disableSceneRedraw()
         
         for mg in nod.meshGroups do
         (
@@ -1003,31 +878,209 @@ struct Starcraft_Ghost_Tools
         )
         enableSceneRedraw()
     ),
-    function ApplyMotions nod=
+    function CreateSequences nod=
     (
         
+        local theAnimTrack = undefined
+        local nNoteTracks = numNoteTracks rootNode
         
+        if(  nNoteTracks > 0 ) then
+        (
+            for n=1 to nNoteTracks do 
+                deleteNoteTrack rootNode (getNoteTrack rootNode 1)
+        )
+        
+        if( numNoteTracks rootNode == 0 ) then
+        (
+            local animTrack1 = notetrack "AnimTrack"
+            addNoteTrack rootNode animTrack1
+        )
+        
+        local theAnimTrack = getNoteTrack rootNode 1
+        local startFrame = ghostStartAnimationFrame as integer
+        
+       
+        for motion in nod.motions do
+        (
+            local uniqueMotionName = motion.overlayName + " - " + motion.animName
+            
+            local startNote = AddNewNoteKey theAnimTrack startFrame
+            local endFrame = (startFrame + motion.nad.duration) as integer
+            local endNote = AddNewNoteKey theAnimTrack endFrame
+            
+            local rarity = 100
+            local pri = 0
+             
+            if ( motion.highPriority == true ) then pri= 100
+            
+            local movementSpeed = 0
+            if (motion.noFrameReset == true ) then movementSpeed = 300
+            
+            local val = uniqueMotionName + "\r\n"
+                  val += "rarity = " 	 + (rarity as string)    + "\r\n"
+                  val += "moveSpeed = "  + (movementSpeed as string) + "\r\n"
+                  val += "nonLoop = " 	 + (motion.NoLoop as string)    + "\r\n"
+                  val += "default_Anim = false\r\nsub_anim = false\r\n"
+                  val += "defaultPriority = " + (pri as string )
+
+           
+            startNote.Value = val
+            endNote.Value = val
+
+            --format "% (% - %)\n" theAnimTrack.name uniqueMotionName startFrame endFrame
+            
+            startFrame = (startFrame + motion.nad.duration + 10.0) as integer
+        )
+        
+    ),
+    function AddSequences animName startFrame endFrame=
+    (
+        
+        local theAnimTrack = undefined
+        local nNoteTracks = numNoteTracks rootNode
+        
+        if( numNoteTracks rootNode == 0 ) then
+        (
+            local animTrack1 = notetrack "AnimTrack"
+            addNoteTrack rootNode animTrack1
+        )
+        
+        local theAnimTrack = getNoteTrack rootNode 1
+        local startNote = AddNewNoteKey theAnimTrack startFrame
+        local endNote = AddNewNoteKey theAnimTrack endFrame
+        
+        local rarity = 100
+        local pri = 0
+        local movementSpeed = 0
+        
+        
+        local val = animName + "\r\n"
+              val += "rarity = " 	 + (rarity as string)    + "\r\n"
+              val += "moveSpeed = "  + (movementSpeed as string) + "\r\n"
+              val += "nonLoop = " 	 + (true as string)    + "\r\n"
+              val += "default_Anim = false\r\nsub_anim = false\r\n"
+              val += "defaultPriority = " + (pri as string )
+
+       
+        startNote.Value = val
+        endNote.Value = val
+
+        format "% (% - %)\n" theAnimTrack.name animName startFrame endFrame
+        
+    ),
+    function ApplyMotion nod index=
+    (
+        local animFile = nod.motions[index].animFile
+        
+        local nad = Starcraft_Ghost_Main.ReadNadFile animFile
+        local uniqueMotionName = getfilenamefile animFile
+        
+        local startFrame = 10 --GriffonStudios_Helpers.FindLastKeyFrame() + 10
+        local endFrame = startFrame + (nad.duration as integer)
+        format "- % (% - %)\n" uniqueMotionName startFrame endFrame
+
+        Starcraft_Ghost_Main.AddSequences uniqueMotionName startFrame endFrame
+        
+        for boneTrack in nad.boneTracks do
+        (
+            --local boneRef = getnodebyname nod.boneList[boneTrack.boneNum + 1].boneRef.name
+            print boneTrack
+            boneRef = nod.boneList[boneTrack.boneNum + 1].boneRef
+            
+            if ( boneRef == undefined ) then continue
+            
+            --local parentBone = boneRef.parent
+            --boneRef.assumeSkinPose()
+           -- for k=1 to boneTrack.numKeys do
+           -- (
+
+                if ( boneTrack.trackType==0 ) then --// 0 = rotation, 1 = translate, 2 = scale
+                (
+--                     local dr = dummy name:"DummyRotationController"
+--                     dr.rotation.controller = boneRef.rotation.controller
+--                     local q0 = dr.transform
+--                     
+                    for k=1 to boneTrack.keys.count do
+                    (
+                        local key = boneTrack.keys[k]
+--                         at time 0
+--                             q0 = boneRef.transform
+                        
+                        
+                        
+                        
+                        rot = eulerangles key.values[1] key.values[2] key.values[3]
+                        
+                        if k > 1 then
+                        (
+                            
+                            local prevKey = boneTrack.keys[k-1]
+                            local values = key.values - prevKey.values
+                            --rot = eulerangles values[1] values[2] values[3]
+                            
+                        )
+                        
+                        format "Bone %   frame % rotate %\n" boneRef.Name (key.frame + startFrame) rot
+                        
+                        with animate on
+                            at time (key.frame + startFrame)
+--                                 in coordsys q0
+                                    rotate boneRef rot
+--                         with animate on 
+--                             at time (key.frame + startFrame)
+                                --in coordsys q0 dr.rotation = q
+                                
+                    )
+                    
+--                     with animate on boneRef.rotation.controller = copy dr.rotation.controller
+                        
+--                     delete dr
+                )
+                if ( boneTrack.trackType==1 ) then --// 0 = rotation, 1 = translate, 2 = scale
+                (
+                    local dp = dummy name:"DummyPositionController" 
+                    dp.position.controller = boneRef.position.controller
+                    local p0 = dp.transform
+                    
+                    for key in boneTrack.keys do
+                    (
+                        with animate on 
+                            at time (key.frame + startFrame)
+                                boneRef.pos = key.values
+                                --in coordsys p0 dp.pos = key.values
+                    )
+                    with animate on boneRef.position.controller = copy dp.position.controller
+                        
+                    delete dp
+                )
+                
+            --)
+        )
+        return nad
     ),
     /*  Main Method */
     function ImportModel file=
     (
-        local _ghost = Starcraft_Ghost_Tools()
+        local _ghost = Starcraft_Ghost_Main()
         
         /* read in all data for this model */
         local nod = _ghost.ReadNod file
         
-        
         --//  debugging only
         ghostModel = nod
         
-        --_ghost.BuildMesh nod
+        
+        _ghost.BuildMesh nod
         _ghost.BuildGhostBones nod
-        --_ghost.ApplySkin nod
-        _ghost.ApplyMotions nod
+        _ghost.ApplySkin nod
+        --_ghost.CreateSequences nod
+        --_ghost.ApplyMotions nod
         
         gc()
         
-        return "Import Done"
+        format "Import Done\n"
+        
+        return nod
     )
 )
 /*
@@ -1035,8 +1088,18 @@ struct Starcraft_Ghost_Tools
 */
 clearListener()
 
-file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\Zergling.nod"
+file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\missileturret_01.nod"
+
+nod = Starcraft_Ghost_Main.ImportModel file
+
+for motion in nod.motions do
+    print motion.animName
+
+GriffonStudios_Helpers.ResetNoteTracks() 
+--nad = Starcraft_Ghost_Main.ApplyMotion nod 1
+--nod.boneList
 
 
-Starcraft_Ghost_Tools.ImportModel file
+
+
 enableSceneRedraw()
