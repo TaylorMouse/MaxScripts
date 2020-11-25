@@ -1,5 +1,5 @@
 /*
-    ©2020 Script by Taylor Mouse
+    ï¿½2020 Script by Taylor Mouse
     Amped up my initial script to display notes on the animation track
 */
 
@@ -7,7 +7,7 @@
 rollout GriffonStudios_AnimationProperties "Animation Properties" width:250 height:810
 (
     /*********************************************************************************************************/
-    label lblTM "©2020 Taylor Mouse"
+    label lblTM "ï¿½2020 Taylor Mouse"
     
     dropdownlist ddlTracks "" height:20
     dotNetControl lv "System.Windows.Forms.ListView" width:230 height:300 align:#center

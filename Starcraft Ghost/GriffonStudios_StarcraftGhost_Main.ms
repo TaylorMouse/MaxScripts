@@ -659,8 +659,8 @@ struct Starcraft_Ghost_Main
             aBone.showLinks = true
             aBone.Width = 0.05
             aBone.Height = 0.05
-            aBone.Pos.controller      = TCB_position ()
-            aBone.rotation.controller = TCB_rotation ()
+            --aBone.Pos.controller      = TCB_position ()
+            --aBone.rotation.controller = TCB_rotation ()
             aBone.setBoneEnable false 0
             
             b.boneRef = aBone
@@ -970,102 +970,90 @@ struct Starcraft_Ghost_Main
     ),
     function ApplyMotion nod index=
     (
+        format "Applying animation: % \n" ( nod.motions[index].overlayName + " - " + nod.motions[index].animName )
+        
+        if ( ( substring nod.motions[index].animName 1 2 ) == "ik" ) then 
+        (
+            format "[WARNING] - Not a valid animation, layered animation, import aborted\n"
+            return false
+            
+        )
+        
         local animFile = nod.motions[index].animFile
         
         local nad = Starcraft_Ghost_Main.ReadNadFile animFile
-        local uniqueMotionName = getfilenamefile animFile
+        local uniqueMotionName = nod.motions[index].overlayName + " - " + nod.motions[index].animName
+        
+        uniqueMotionName = GriffonStudios_Helpers.CheckUniqueSequenceName uniqueMotionName
+        
         
         local startFrame = GriffonStudios_Helpers.FindLastKeyFrame() + 10
         local endFrame = startFrame + (nad.duration as integer)
-        format "- % (% - %)\n" uniqueMotionName startFrame endFrame
+        --format "(% - %)\n" startFrame endFrame
 
         Starcraft_Ghost_Main.AddSequences uniqueMotionName startFrame endFrame
         
+        --format "Applying animation '%'\n" uniqueMotionName
+        -- // rotation 
         for boneTrack in nad.boneTracks do
         (
-            boneRef = nod.boneList[boneTrack.boneNum + 1].boneRef
-
+            if (boneTrack.boneNum + 1 > nod.boneList.count ) then continue
+            local boneRef = nod.boneList[boneTrack.boneNum + 1].boneRef
             if ( boneRef == undefined ) then continue
-            
-            with animate on at time (startFrame-10) 
-                pose = boneRef.transform
-            
-            boneRef.assumeSkinPose()
-            
-            format "Bone: (%)\n" boneRef.name
-            
-            -- // rotation 
+
             if ( boneTrack.trackType==0 ) then 
             (
-                local dr = dummy name:"DummyRotationController"
-                dr.rotation.controller = boneRef.rotation.controller
-                local q0 = dr.transform
-                local prevTime = 0
-                local keyId = 1
-                
                 for key in boneTrack.keys do
                 (
-                    local rot = ( eulerangles key.values[1] key.values[2] key.values[3] ) as matrix3
-                    
-                    format "Time % Values: %\n" (key.frame + startFrame) key.values
-
-                    local x = key.values[1]
-                    local y = key.values[2]
-                    local z = key.values[3]
-                    
-                    if (keyId > 1 ) then 
-                    (
-                        x = x - boneTrack.keys[keyId-1].values[1]
-                        y = y - boneTrack.keys[keyId-1].values[2]
-                        z = z - boneTrack.keys[keyId-1].values[3]
-                    )
-                    
-                    local q = eulertoquat ( eulerangles key.values[1] key.values[2] key.values[3] )
-                    
+                    q = EulerToQuat (eulerangles key.values[1] key.values[2] key.values[3])
+                    t = startFrame + key.frame
                     with animate on
-                        at time (key.frame + startFrame)
                     (
-                         in coordsys local 
-                            dr.rotation = q
---                       boneRef.transform = rot *pose
---                         rotate boneRef (angleaxis x [1,0,0])
---                         rotate boneRef (angleaxis y [0,1,0])
---                         rotate boneRef (angleaxis z [0,0,1])
+                        at time t 
+                        (
+                            boneRef.assumeSkinPose()
+                            local mtrx = matrix3 1
+                            rotate mtrx q
+                            mtrx.row4 = boneRef.pos
+                            if ( boneRef.Parent != undefined ) then (
+                                mtrx = mtrx * boneRef.parent.transform
+                            )
+                            boneRef.transform = mtrx
+                            deletekey boneRef.position.controller ( numkeys boneRef.position.controller )
+                            deletekey boneRef.scale.controller ( numkeys boneRef.scale.controller )
+                            
+                        )
                     )
+                )
 
-                    keyId = keyId + 1
-                )
-                with animate on boneRef.rotation.controller = copy dr.rotation.controller
-                delete dr
-            )
-            
-            --// Position
-            if ( boneTrack.trackType==1 ) then 
-            (
-                local dp = dummy name:"DummyPositionController" 
-                dp.position.controller = boneRef.position.controller
-                local p0 = dp.transform
-                local prevTime = 0
-                
-                for key in boneTrack.keys do
-                (
-                    local pos = pose
-                    pos.row4 = pos.row4 + key.values
-                    local p = key.values
-                    with animate on 
-                        at time (key.frame + startFrame)
-                    (
-                        in coordsys local 
-                            dp.position = p 
---                             boneRef.transform = pos
-                    )
-                )
-                with animate on boneRef.position.controller = copy dp.position.controller
-                delete dp
             )
             
         )
-        return nad
+        -- // position 
+        for boneTrack in nad.boneTracks do
+        (
+            if (boneTrack.boneNum + 1 > nod.boneList.count ) then continue
+            local boneRef = nod.boneList[boneTrack.boneNum + 1].boneRef
+            if ( boneRef == undefined ) then continue
+            
+            if ( boneTrack.trackType==1) then 
+            (
+                for key in boneTrack.keys do
+                (
+                    pos = key.values
+                    t = startFrame + key.frame
+                    
+                    with animate on
+                        at time t 
+                            in coordsys parent boneRef.position = pos * 100.0
+                    
+                )
+
+            )
+            
+        )
+        
+        return true
     ),
     /*  Main Method */
     function ImportModel file=
@@ -1098,18 +1086,22 @@ struct Starcraft_Ghost_Main
 clearListener()
 
 --file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\missileturret_01.nod"
-file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\scientist.nod"
+--file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lightInfantry.nod"
 
 --nod = Starcraft_Ghost_Main.ImportModel file
 
--- for motion in nod.motions do
---     print motion.animName
+-- for i=1 to nod.motions.count do
+-- (
+--     local motion = nod.motions[i]
+--     format "%\t% \n" i (motion.overlayname  +" - " + motion.animName) 
+-- )
+--GriffonStudios_Helpers.ResetNoteTracks() 
 
-GriffonStudios_Helpers.ResetNoteTracks() 
-nad = Starcraft_Ghost_Main.ApplyMotion nod 1
---nod.boneList
+for m=1 to 84 do
+    Starcraft_Ghost_Main.ApplyMotion nod m
 
 
-
+--myNad = Starcraft_Ghost_Main.ReadNadFile nod.motions[1].animFile
+--myNad.bonetracks[1]
 
 enableSceneRedraw()

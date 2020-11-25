@@ -1,6 +1,37 @@
 
 struct GriffonStudios_Helpers
 (
+    function CheckUniqueSequenceName name=
+    (
+        local nNoteTracks = numNoteTracks rootNode
+        if (nNoteTracks == 0 ) then return name
+        
+        local theAnimTrack = getNoteTrack rootNode 1
+        
+        local existingNames = #()
+        for key in theAnimTrack.keys do
+        (
+            local pos = (findstring key.value "\n" ) - 2
+            if( pos != undefined ) then 
+            (
+                local animName = substring key.value 1 pos
+                appendifunique existingNames animName
+            )
+        )
+        local nameAlreadyExist = false
+        for n in existingNames do
+            if ( n == name ) then nameAlreadyExist = true
+
+        if ( nameAlreadyExist == false) then return name
+        
+        local nbrSameName = 65
+        
+        for n in existingNames do
+            if ((findstring n name) != undefined ) then nbrSameName = nbrSameName + 1 
+        
+        local newName = name + " " + (bit.intAsChar nbrSameName )
+            
+    ),
     function FindLastKeyFrameByObject obj last_frame = 
     (
         for i=1 to obj.numSubs do -- number of possible animation controllers
