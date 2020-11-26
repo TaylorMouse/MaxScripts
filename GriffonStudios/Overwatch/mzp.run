@@ -1,0 +1,6 @@
+name "OverwatchImportTools"
+description "Import Overwatch models and animations. By Taylor Mouse (c)2018"
+extract to $temp\OverwatchImportTools_mzp
+run "OverwatchImportTools.ms"
+copy "*.mzp" to $plugins
+clear temp on MAX exit
