@@ -127,8 +127,10 @@ struct Warcraft3_Reforged_PRE2
 
 GLOBAL mdxFileVersion = 0
 GLOBAL mdx = undefined   
-    
-    
+GLOBAL mdxConvertToSC2AnimationNames = true
+GLOBAL mdxFilterMode = #("none","transparent","blend","additive","add alpha","modulate","modulate 2x","fallback" )    
+GLOBAL mdxShadingFlag = # ("Unshaded","Sphere environment map","Wrap Width","Wrap Hieght","Two sided","Unfogged","No depth test","No depth set","Fallback" )
+
 struct StarTools_Helpers
 (
     function RenameSEQS seqs=
@@ -150,7 +152,109 @@ struct StarTools_Helpers
             seq.name = trimRight newName
         )
         
-    ) 
+    ),
+    function ConvertAttachmentPoints=
+    (
+        try
+        (
+            for obj in objects do 
+            (
+                if ( classof obj == WC3RefAttachment ) then
+                (
+                    local pt = SC2AttachPt()
+                    local parts = filterstring obj.name " "
+                    local newName = "Ref_"
+                    for p in parts do 
+                    (
+                        if ( p != "Ref" ) then newName +=p
+                    )
+                    
+                    pt.Name = newName
+                    pt.Pos = obj.pos
+                    pt.Rotation = obj.rotation
+                    pt.parent = obj.parent
+                )
+            )
+            
+            for obj in objects do
+            (
+                if ( classof obj == WC3RefAttachment ) then 
+                    delete obj
+            )
+        )
+        catch ()
+    ),
+    function ConvertHitTestBoxes=
+    (
+        local index = 1
+        for obj in objects do
+        (
+            
+            if obj.isfrozen then 
+            (    
+                if obj.name == "B_KGS_Root" then 
+                    obj.name = "HitTestTight"
+                else
+                if ( substring obj.name 1 6 ) == "B_KGS_" then
+                (
+                    
+                    obj.name = "HitTestFuzzy" + ( substring ( (1000 + index)  as string ) 2 3  )
+                    
+                    index +=1
+                    
+                )
+            
+            )
+        )
+        
+    ),
+    function GetBoundingBox=
+    (
+        local bbPoints = #()
+        local bbMax = [0,0,0]
+        local bbMin = [0,0,0]
+        
+        for obj in objects do
+        (
+            if ( classof obj == Editable_mesh ) then
+            (
+                --> TODO loop over every frame 
+                
+                if ( obj.Max.X > bbMax.X) then bbMax.X = obj.Max.X
+                if ( obj.Max.Y > bbMax.Y) then bbMax.Y = obj.Max.Y
+                if ( obj.Max.Z > bbMax.Z) then bbMax.Z = obj.Max.Z
+                if ( obj.Min.X < bbMin.X) then bbMin.X = obj.Min.X
+                if ( obj.Min.Y < bbMin.Y) then bbMin.Y = obj.Min.Y
+                if ( obj.Min.Z < bbMin.Z) then bbMin.Z = obj.Min.Z
+                
+            )
+        )
+        append bbPoints bbMin 
+        append bbPoints bbMax
+        return bbPoints
+    ),
+    function ConvertToBoundingSphere theBox name=
+    (
+        if (theBox != undefined) then
+        (
+            local radius = ( distance theBox.max theBox.min ) / 2.0
+            local pos = theBox.center
+            
+            theSphere = sphere name:name pos:pos radius:radius segs:32
+            
+            theSphere.parent = theBox.Parent
+            theSphere.wirecolor = color 255 0 0
+            theSphere.boxmode = on
+            theSphere.renderable = off
+            freeze theSphere
+            
+            
+            
+            delete theBox
+            
+            return theSphere
+        )
+    )
 )
 
 struct GriffonStudios_Helpers
@@ -221,6 +325,8 @@ struct GriffonStudios_Helpers
         s = help.BuildSpline s #([xMin, yMax, zMax], [xMin, yMin, zMax])    
         s = help.BuildSpline s #([xMax, yMax, zMin], [xMax, yMin, zMin])
         s = help.BuildSpline s #([xMax, yMax, zMax], [xMax, yMin, zMax])
+            
+        return s
     ),
     
     function IsUndefinedBoolean val=
@@ -376,6 +482,7 @@ struct Warcraft3_Reforged
             currentStreamPos = ftell stream
             
             append tags tag
+            --print tag
         )
         return tags
     ),
@@ -441,6 +548,7 @@ struct Warcraft3_Reforged
     ),
     function ReadFloatAnim stream=
     (
+        
         -- Key Attachment visibility
         /* presumably the visibility of the object, the lineType will indicate the trasition tangent */
         
@@ -509,10 +617,10 @@ struct Warcraft3_Reforged
             
             k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
             k.Point = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
-            k.LineType = anim.lineType
+            k.LineType = lineType
             if( anim.lineType > 1)  then
             (
-               -- format "Linetype: % \n" anim.lineType
+                format "Linetype: %" lineType
                 k.inTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
                 k.outTan = quat (readFloat stream) (readFloat stream) (readFloat stream) (readFloat stream) 
             )
@@ -542,6 +650,7 @@ struct Warcraft3_Reforged
     (
         fseek stream tag.Offset #seek_set
         local version = readLong stream
+        mdxFileVersion = version
         return version
         
     ),
@@ -564,7 +673,7 @@ struct Warcraft3_Reforged
             t.extension = getFilenameType name 
             t.flags = readLong stream
             
-            
+            format "Texture: % %\n" i name
             
             append texs t
         )
@@ -577,8 +686,6 @@ struct Warcraft3_Reforged
         
         local currentRelativePosition = 0
         local geos = #()
-        
-        local geoId = 1
         
         while ( tag.Size > currentRelativePosition ) do
         (
@@ -616,6 +723,7 @@ struct Warcraft3_Reforged
                         append verts vert
                     )
                     geo.VRTX = verts
+                    
                 )
                 /* Normals */
                 if ( chnk == "NRMS" ) then 
@@ -701,14 +809,9 @@ struct Warcraft3_Reforged
                     gMats.ID = readLong stream + 1 --> reference to the MAT ID in MTLS
                     
                     GriffonStudios_Helpers.SkipBytes stream 8
-                    
-                    if ( mdxFileVersion > 800 ) then 
-                    (
-                        gMats.LOD = readLong stream
-                        gMats.Name = GriffonStudios_Helpers.ReadFixedString stream 80
-                    )
-                    if gMats.Name == "" or gMats.Name == undefined then 
-                        gMats.Name = mdx.modl.name
+                    gMats.LOD = readLong stream
+                    gMats.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+                    if gMats.Name == "" then gMats.Name = mdx.modl.name
                     
                     for i=1 to 7 do readfloat stream
                         
@@ -853,141 +956,107 @@ struct Warcraft3_Reforged
         
         return boneList
     ),
+    function ReadLayer stream=
+    (
+        /* filterMode
+                 0x0: none
+                 0x1: transparent
+                 0x2: blend
+                 0x3: additive
+                 0x4: add alpha
+                 0x5: modulate
+                 0x6: modulate 2x
+                 0x7: fallback
+                */
+        
+        /* ShadingFlag
+                 0x1: unshaded
+                 0x2: sphere environment map
+                 0x4: Wrap Width
+                 0x8: Wrap Hieght
+                 0x10: two sided
+                 0x20: unfogged
+                 0x40: no depth test
+                 0x80: no depth set               
+                 0x100: Fallback
+                */
+                
+        local currentPos = ftell stream
+        local layer = Warcraft3_Reforged_LAYS()
+        local layerSize = readLong stream  --> without any specific animations, the layer is 52 bytes
+
+        layer.filterMode = readLong stream + 1
+        layer.shadingFlags = readLong stream + 1
+        layer.textureId = readLong stream + 1
+        layer.parentId = readLong stream + 1
+        layer.Alpha = 1.0
+
+        GriffonStudios_Helpers.SkipBytes stream ( 52 - 20 )
+        
+        if ( layerSize > 52 ) then (
+            for i=1 to 2 do
+            (
+                local km = GriffonStudios_Helpers.ReadFixedString stream 4
+                if ( km == "KMTA" ) then layer.KMTA = Warcraft3_Reforged.ReadFloatAnim stream
+                if ( km == "KMTE" ) then layer.KMTE = Warcraft3_Reforged.ReadFloatAnim stream
+            )
+            if ( layer.KMTA == undefined ) then fseek stream -4 #seek_cur
+            if ( layer.KMTE == undefined ) then fseek stream -4 #seek_cur
+        )   
+        
+        fseek stream ( currentPos + layerSize ) #seek_set
+        
+--         format "Layer size: %\n" layerSize
+--         format "\tFilter Mode: %\n" mdxFilterMode[layer.filterMode]
+--         format "\tShading Flag: %\n" mdxShadingFlag[layer.shadingFlags]
+--         format "\tTexture id: %\n" layer.TextureId
+--         print layer.KMTA
+        
+        return layer
+        
+    ),
     function ReadMTLS stream tag=
     (
-        fseek stream tag.offset #seek_set
-        
+ 
         local mtls = #()
         local mtlsId = 1
-        local totalSize = tag.Size
+        local mtlsSize = tag.Size
+        local offset = tag.offset
         
-        if ( mdxFileVersion == 800 ) then
+        /* read multiple shaders */
+        for i=1 to 100 do -- for safety purposes make it ending
         (
-            while ( totalSize > 0 ) do
-            (
-                local mtl = Warcraft3_Reforged_MTLS id:mtlsId
-                
-                local size = readLong stream
-                totalSize -= size
-                
-                local unk1 = readLong stream
-                local unk2 = readLong stream
-                
-                local lays = GriffonStudios_Helpers.ReadFixedString stream 4
-                local nLays = readLong stream
-                
-                local laysList = #()
-                
-                for n=1 to nLays do
-                (
-                    local lay = Warcraft3_Reforged_LAYS()
-                    
-                    local laySize = readLong stream
-                    
-                    lay.filterMode = readLong stream
-                    lay.shadingFlags = readLong stream
-                    lay.textureId = readLong stream + 1
-                    lay.parentId = readLong stream + 1
-                    local textureAnimationId = readLong stream 
-                    lay.alpha =  readFloat stream
-                    
-                    GriffonStudios_Helpers.SkipBytes stream ( laySize - 28 )
-                    
-                    append laysList lay
-                )
-                
-                mtl.LAYS = laysList
-                mtlsId +=1
-                append mtls mtl
-            )
-        )
-        
-        
-        if ( mdxFileVersion > 800 ) then 
-        (
-            while ( totalSize > 0 ) do
-            (
-                local mtl = Warcraft3_Reforged_MTLS()
-                mtl.Id = mtlsId
-
-                local size = readLong stream
-                totalSize -= size
+            fseek stream offset #seek_set
+            local shaderSize = readLong stream
+            mtlsSize = mtlsSize - shaderSize
+            offset = offset + shaderSize
             
-                mtl.priorityPlane = readLong stream
-                local unk2 = readLong stream
-                mtl.shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
-                local lays = GriffonStudios_Helpers.ReadFixedString stream 4
-                local nLays = readLong stream
+            local mtl = Warcraft3_Reforged_MTLS()
+            mtl.Id = mtlsId
             
-                local laysList = #()
-                
-                for l=1 to nLays do
-                (
-                    local lay = Warcraft3_Reforged_LAYS()
-                    lay.Id = l
-                    local bytes     = readLong stream -- 52
-                    lay.filterMode  = readLong stream + 1
-                    /* filterMode
-                     0x0: none
-                     0x1: transparent
-                     0x2: blend
-                     0x3: additive
-                     0x4: add alpha
-                     0x5: modulate
-                     0x6: modulate 2x
-                     0x7: fallback
-                    */
-                    
-                    lay.shadingFlags   = readLong stream
-                    /* ShadingFlag
-                     0x1: unshaded
-                     0x2: sphere environment map
-                     0x4: Wrap Width
-                     0x8: Wrap Hieght
-                     0x10: two sided
-                     0x20: unfogged
-                     0x40: no depth test
-                     0x80: no depth set               
-                     0x100: Fallback
-                    */
-                    
-                   
-                    lay.textureId   = readLong stream + 1
-                    lay.parentId    = readLong stream + 1
-                    
-                    local textureAnimationId = readLong stream
-                    local coordId = readFloat stream
-                    lay.alpha = readFloat stream
-                    
-                    if ( mdxFileVersion == 1000 ) then
-                    (
-                        for i=1 to 5 do readFloat stream --> always [1.0, 1.0, 1.0, 0.0, 0.0]
-                        if bytes == 52 then 
-                        (
-                            readlong stream 
-                            readlong stream 
-                        )
-                    )
-                    
-                    for i=1 to 2 do
-                    (
-                        local km = GriffonStudios_Helpers.ReadFixedString stream 4
-                        if ( km == "KMTA" ) then lay.KMTA = Warcraft3_Reforged.ReadFloatAnim stream
-                        if ( km == "KMTE" ) then lay.KMTE = Warcraft3_Reforged.ReadFloatAnim stream
-                        
-                    )
-                    if ( lay.KMTA == undefined ) then fseek stream -4 #seek_cur
-                    if ( lay.KMTE == undefined ) then fseek stream -4 #seek_cur
-
-                    append laysList lay
-                )
-                mtl.LAYS = laysList
-
-                mtlsId +=1
-                
-                append mtls mtl
+            mtl.priorityPlane = readLong stream
+            readLong stream
+            
+            local shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
+            format "Shader: %\n" shaderName
+            local lays = GriffonStudios_Helpers.ReadFixedString stream 4
+            local nLays = readLong stream
+            format "Layers: %\n" nLays
+            
+            mtl.LAYS = #()
+            
+            for l=1 to nLays do
+            (
+                local layer = Warcraft3_Reforged.ReadLayer stream
+                layer.id = l
+                append mtl.LAYS layer
             )
+
+            mtlsId += 1
+            append mtls mtl
+            if mtlsSize <= 0 then exit
         )
+
         return mtls
         
     ),
@@ -1057,6 +1126,7 @@ struct Warcraft3_Reforged
         fseek stream tag.offset #seek_set
         
         local nbrSeqs = tag.size / 132
+        --print nbrSeqs
         
         local seqs = #()
         
@@ -1082,7 +1152,10 @@ struct Warcraft3_Reforged
 
             append seqs seq
         )
-        
+
+        if (mdxConvertToSC2AnimationNames == true ) then 
+            StarTools_Helpers.RenameSEQS seqs
+
         return seqs
         
     ),
@@ -1720,6 +1793,8 @@ struct Warcraft3_Reforged
         obj.name = modl.name
         
         freeze obj
+        
+        return obj
     ),
     function BuildGEOS=
     (
@@ -1735,8 +1810,7 @@ struct Warcraft3_Reforged
 
             format "Building %\n" geo.MATS.Name
             
-            if ( geo.MATS.LOD == undefined ) then geo.MATS.LOD = 0
-            local layerName = "LOD " + (geo.MATS.LOD as string)
+            local layerName = modl.name + " - LOD " + (geo.MATS.LOD as string)
             local layer = GriffonStudios_Helpers.CreateLayer layerName
             
             if (geo.MATS.LOD != 0 ) then layer.isHidden = true
@@ -1752,7 +1826,7 @@ struct Warcraft3_Reforged
                 local n = geo.NRMS
                 local f = geo.PVTX
                 local uv = geo.UVS[1]
-                local meshName =  geo.MATS.Name + "_" + ( uniqueId as string )
+                local meshName = ( uniqueId as string ) + "_" + geo.MATS.Name
                 geo.uniqueName = meshName
                 local theMesh = mesh vertices:v vnorms:n name:meshName faces:f tverts:uv 
 
@@ -1765,6 +1839,10 @@ struct Warcraft3_Reforged
                 layer.AddNode theMesh
                 
                 update theMesh
+                resetXform theMesh
+                
+                maxOps.CollapseNodeTo theMesh 1 off
+                
                 geo.meshRef = theMesh
             )
             catch (
@@ -1814,10 +1892,13 @@ struct Warcraft3_Reforged
             
             for layer in mtl.lays do
             (
+               -- print layer
                 local textureId = layer.TextureId
                 local parts = filterString texs[textureId].path @"\"
                 local textureFile = Warcraft3_AssetFolder + texs[textureId].path + texs[textureId].fileNameOnly + ".dds"
 
+                
+                --print textureFile
                 --if ( texs[textureId].fileNameOnly == "" or texs[textureId].fileNameOnly == undefined ) then continue
 
                 case of 
@@ -1862,8 +1943,8 @@ struct Warcraft3_Reforged
                         )
                     )
                 )
-                
-               
+                    
+                   
             )
             if( mtl.id < 25 ) then meditMaterials[mtl.id] = mat
             
@@ -2003,7 +2084,6 @@ struct Warcraft3_Reforged
     (
         local boneList = mdx.bone
         local bpos = mdx.bpos
-        local pivt = mdx.pivt
         if ( boneList == undefined ) then return undefined
         format "Building Bones\n"
         local layer = GriffonStudios_Helpers.CreateLayer "Bones"
@@ -2029,16 +2109,14 @@ struct Warcraft3_Reforged
         (
             local b = obj.boneRef
 
-            local mtrx = undefined
             if bpos != undefined then 
             (
+            
                 local mtrx = bpos[obj.id].matrix
+                
                 b.pos = mtrx.translationpart
             )
-            else
-            (
-                b.pos = pivt[obj.id].pivotpoint
-            )
+
         )
 
         -- apply bone animation
@@ -2157,7 +2235,7 @@ struct Warcraft3_Reforged
                 if ( obj == undefined ) then continue
                 
                 local mshSkin = skin name:"Skin"
-
+                mshSkin.bone_Limit = 4
                 max modify mode
                 addmodifier obj mshSkin
 
@@ -2313,6 +2391,7 @@ struct Warcraft3_Reforged
 
             freeze cap
             resetXform cap
+            maxOps.CollapseNodeTo capp 1 off
             
             layer.AddNode cap
             cap.assumeSkinPose()
@@ -2979,7 +3058,7 @@ struct Warcraft3_Reforged
         
         
     ),
-    function FixAnimation=
+    function FindObjects=
     (
         local geos = mdx.geos
         local boneList = mdx.bone
@@ -3012,28 +3091,66 @@ struct Warcraft3_Reforged
                     format "% not found\n" item
             )
         )
+    ),
+    function FixAnimation=
+    (
+        /* Very dirty fix for the animation, please check !! */
+        
+        local completeFilePath = (getDir #scene) + "\\temp.fbx"
+        FbxExporterSetParam "Animation" true
+        FbxExporterSetParam "ASCII" false
+        FbxExporterSetParam "BakeAnimation" false
+        FbxExporterSetParam "BakeFrameStep" 1
+        FbxExporterSetParam "BakeResampleAnimation" false
+        FbxExporterSetParam "Cameras" false
+        FbxExporterSetParam "CAT2HIK" false
+        FbxExporterSetParam "ColladaTriangulate" false
+        FbxExporterSetParam "ColladaSingleMatrix" true
+        FbxExporterSetParam "ColladaFrameRate" 30.0
+        FbxExporterSetParam "EmbedTextures" false
+        FbxExporterSetParam "FileVersion" #FBX201600
+        FbxExporterSetParam "FilterKeyReducer" false
+        FbxExporterSetParam "GeomAsBone" false
+        FbxExporterSetParam "GenerateLog" false
+        FbxExporterSetParam "Lights" false
+        FbxExporterSetParam "UpAxis" #y
+        FbxExporterSetParam "ScaleFactor" 1.0
+        FbxExporterSetParam "ShowWarnings" false
+        FbxExporterSetParam "SmoothMeshExport" false
+        exportFile completeFilePath #noPrompt using:FBXEXP
+        --resetMaxFile #noPrompt
+        importFile completeFilePath #noPrompt using:FBXIMP
+        
+        Warcraft3_Reforged.FindObjects()
         
     ),
     function AssignMTLS=
     (
-        local geos = mdx.geos
-        local mtls = mdx.mtls
-        for item in geos do
+        try
         (
-            local m = item.meshRef
-            if m !=undefined then 
-                if mtls != undefined then 
-                    m.material = mtls[item.MATS.ID].MaterialRef
-        )  
+            local geos = mdx.geos
+            local mtls = mdx.mtls
+            for item in geos do
+            (
+                local m = item.meshRef
+                if m !=undefined then 
+                    if mtls != undefined then 
+                        m.material = mtls[item.MATS.ID].MaterialRef
+            )  
+        )catch()
     ),
     /*
         MAIN IMPORT
     */
-    function Import800 file=
+    function Import file=
     (
         struct wc3_reforged_mdx ( TAGS, VERS, MODL, SEQS, MTLS, TEXS, GEOS, BONE, ATCH, CLID, BPOS, GEOA, EVTS, PIVT, FAFX, CAMS, CORN, LITE, GLBS, TXAN, RIBB, PRE2)
 
         mdx = wc3_reforged_mdx()
+        
+        local assetFolder = getinisetting "griffonstudios.config" "Warcraft3Reforged" "AssetFolder"
+        Warcraft3_AssetFolder = assetFolder   
+        
         
         ClearListener()
         print file
@@ -3053,14 +3170,13 @@ struct Warcraft3_Reforged
         for tag in mdx.tags do 
             if( tag.Name == "VERS" ) then 
             (
-                mdxFileVersion = Warcraft3_Reforged.ReadVERS stream tag
-                format "File version :%\n" mdxFileVersion
-                if ( mdxFileVersion != 800 and   mdxFileVersion != 900 and   mdxFileVersion != 1000) then 
+                mdx.vers = Warcraft3_Reforged.ReadVERS stream tag
+                
+                if ( mdx.vers < 900 ) then 
                 (
-                    throw( "Incorrect version, found " + (mdxFileVersion as string) + ", should be 80, 900 or 1000")
+                    throw( "Incorrect version, found " + (mdx.vers as string) + ", should be at least 900")
                 )
             )
-        print mdx.tags
         
         -- read tag by tag
         for tag in mdx.tags do
@@ -3083,10 +3199,10 @@ struct Warcraft3_Reforged
             if( tag.Name == "CLID" ) then mdx.clid = Warcraft3_Reforged.ReadCLID stream tag
             -- BPOS // binding position
             if( tag.Name == "BPOS" ) then mdx.bpos = Warcraft3_Reforged.ReadBPOS stream tag
-             -- GEOA // geoset animation
-             if( tag.Name == "GEOA" ) then mdx.geoa = Warcraft3_Reforged.ReadGEOA stream tag
+            -- GEOA // geoset animation
+            if( tag.Name == "GEOA" ) then mdx.geoa = Warcraft3_Reforged.ReadGEOA stream tag
             -- EVTS // events
---             if( tag.Name == "EVTS" ) then mdx.evts = Warcraft3_Reforged.ReadEVTS stream tag
+            if( tag.Name == "EVTS" ) then mdx.evts = Warcraft3_Reforged.ReadEVTS stream tag
             -- PIVT // pivots
             if( tag.Name == "PIVT" ) then mdx.pivt = Warcraft3_Reforged.ReadPIVT stream tag
             -- FAFX // facial effects
@@ -3109,35 +3225,66 @@ struct Warcraft3_Reforged
             -- TODO PREM // particle emitters    
             
         )
-        
-        --print mdx.pre2
-        
 
         
-        Warcraft3_Reforged.BuildBONE()
-        Warcraft3_Reforged.BuildSEQS()
-        Warcraft3_Reforged.BuildGEOS()
-        Warcraft3_Reforged.BuildSKIN()
+--         print mdx.TAGS
+--         print mdx.VERS
+--         print mdx.MODL
+--         print mdx.SEQS
+--         print mdx.MTLS
+--         print mdx.TEXS
+--         print mdx.GEOS
+--         print mdx.BONE
+--         print mdx.ATCH
+--         print mdx.CLID
+--         print mdx.BPOS
+--         print mdx.GEOA
+--         print mdx.EVTS
+--         print mdx.PIVT
+--         print mdx.FAFX
+--         print mdx.CAMS
+--         print mdx.CORN
+--         print mdx.LITE
+--         print mdx.GLBS
+--         print mdx.TXAN
+--         print mdx.RIBB
+--         print mdx.PRE2
+        
+Warcraft3_Reforged.BuildBONE()
+Warcraft3_Reforged.BuildGEOS()
+Warcraft3_Reforged.BuildSKIN()
 
-         Warcraft3_Reforged.FixAnimation()
+Warcraft3_Reforged.FixAnimation()
 
-         Warcraft3_Reforged.BuildMODL()
-         Warcraft3_Reforged.BuildMTLS()
-         Warcraft3_Reforged.AssignMTLS()
+Warcraft3_Reforged.BuildMODL()
+Warcraft3_Reforged.BuildMTLS()
+Warcraft3_Reforged.AssignMTLS()
+Warcraft3_Reforged.BuildATCH()
+Warcraft3_Reforged.BuildCLID()
+Warcraft3_Reforged.BuildGEOA()
+Warcraft3_Reforged.BuildSEQS()
+Warcraft3_Reforged.BuildEVTS()
+Warcraft3_Reforged.BuildFAFX()
+Warcraft3_Reforged.BuildCAMS()
+Warcraft3_Reforged.BuildLITE()
+Warcraft3_Reforged.BuildPIVT()
+Warcraft3_Reforged.BuildRIBB()
+Warcraft3_Reforged.BuildPRE2()
+Warcraft3_Reforged.BuildCORN()
 
-         Warcraft3_Reforged.BuildATCH()
-         Warcraft3_Reforged.BuildCLID()
-         Warcraft3_Reforged.BuildGEOA()
-         Warcraft3_Reforged.BuildEVTS()
-         Warcraft3_Reforged.BuildFAFX()
-         Warcraft3_Reforged.BuildCAMS()
-         Warcraft3_Reforged.BuildLITE()
-         Warcraft3_Reforged.BuildPIVT()
-         Warcraft3_Reforged.BuildRIBB()
-         Warcraft3_Reforged.BuildPRE2()
-         Warcraft3_Reforged.BuildCORN()
 
         fclose stream
+
+        if (mdxConvertToSC2AnimationNames == true ) then
+        (
+            StarTools_Helpers.ConvertAttachmentPoints()
+            StarTools_Helpers.ConvertHitTestBoxes()
+            StarTools_Helpers.ConvertToBoundingSphere collBox "Vol_Shield"
+            
+        )
+
+
+
         mdx = undefined
         gc()
         local endedAt = timestamp()
@@ -3152,10 +3299,11 @@ ClearListener()
 -- Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
 -- Warcraft3_ImportAllLOD = false
 
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\meatwagonmissile.mdx"
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\doodads\silvermoon\prop\tulips\silvermoon_tulips_00.mdx"
+--file = @"G:\Game Dev\Griffon Studios\My 3D Models\Starcraft II\Requests\Nightmare Doors\WC3Ref Zergling\zergling.mdx"
 -- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\silvermoon_tulips_test.mdx"
---file= @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
---Warcraft3_Reforged.Import800 file
+-- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
+-- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
+-- Warcraft3_Reforged.Import file
 

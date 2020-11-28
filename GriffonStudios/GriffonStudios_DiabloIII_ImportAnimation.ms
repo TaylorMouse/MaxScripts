@@ -40,20 +40,29 @@
 
     fn GetAnimationTrack =
     (
+        local animationTrack = undefined
+
         local noteTracks = numNoteTracks rootNode
+        
         if( noteTracks > 0 ) then
         (
             for n=1 to noteTracks do
             (
-                track = getNoteTrack rootNode n
-                if( track.name == "StarAnimTrack") then
-                    return track
+                track = getNoteTrack rootNode 1
+                track.name = "StarAnimTrack"
+                animationTrack = track
             )
         )
-
-        animationTrack = noteTrack "StarAnimTrack"
-        addNoteTrack rootNode animationTrack
-
+        if ( animationTrack == undefined ) then
+        (        
+            animationTrack = noteTrack "StarAnimTrack"
+            animationTrack.name = "StarAnimTrack"
+            addNoteTrack rootNode animationTrack
+            
+        )
+        
+        --format "Notetrack: %s\n" track.name
+        
         return animationTrack
 
     )
@@ -95,7 +104,7 @@
         (
             finalAnimName = ( toUpper animNameSplit[numSplit-2][1] ) + (substring animNameSplit[numSplit-2] 2 -1) + ( toUpper finalAnimName[1] ) + substring finalAnimName 2 -1
         )
-
+    
         return finalAnimName
     )
 
@@ -106,17 +115,56 @@
         animNote.Value = txt
 
     )
+    function GetLastAnimFrame=
+    (
+        local lastTimeFrame = 0
 
+        for obj in objects do
+        (
+            local ctrl = obj.pos.controller
+            --getKey
+            
+            if(ctrl != undefined ) then 
+            (
+                if(ctrl.keys.count > 0 ) then 
+                (
+                    local maxTimeFrame = ctrl.keys[ctrl.keys.count].time
+            
+                    if (lastTimeFrame < maxTimeFrame) then lastTimeFrame = maxTimeFrame
+                )
+            )
+        )
+        return lastTimeFrame
+    )
+    function GetNextStartFrame=
+    (
+         local lf = (GetLastAnimFrame() as string ) 
+        local len = lf.count
+        len = len - 1
+        nbr = (  substring lf 1 len ) as  integer
+        local lfi = ( nbr  / 10) * 10 + 20
+        
+        return lfi
+    )    
     /************************************************************************************************
         MAIN METHOD
     ************************************************************************************************/
-    function GriffonStudios_DiabloIII_ImportAnimation file startFrame =
+    function GriffonStudios_DiabloIII_ImportAnimation file startFrame animName=
     (
         local  animationNotes = GetAnimationTrack()
 
+--         d = GetNodeByName "Animations"
+--         if(d==undefined) then d = dummy pos:[0,0,0] Scale:[0.5,0.5,0.5] name:"Animations"
+
+--         hide d
+
+        startingFrame = 0
         startingFrame = startFrame
 
         animStartNote = AddNewNoteKey animationNotes startFrame
+
+
+        --SetUserProp d ((GetFileNameFile file) + " START") (startingFrame as string)
 
         Format "	START READING ANIMATION FILE"
 
@@ -126,6 +174,14 @@
 
         animationName = ReadFixedString stream 64	-- Animation name
         parsedAnimName = ParseAnimationName animationName
+        if (parsedAnimName.count == 0) then 
+        (
+            parsedAnimName = "Unkown"
+        )
+        if( animName != "" ) then 
+            animationName = animName
+        print animationName
+        
         SetNote animStartNote parsedAnimName
 
         SkipBytes stream 52 		-- Skip 52 bytes
@@ -280,6 +336,10 @@
                 append allScaling s
             )
         )
+        --print allScaling
+
+        -- TODO:  get the last used animation key, so we can add multiple animations to the scene
+
 
         --Apply the Rotation
         prevQ = quat 1 -- set a starting rotation

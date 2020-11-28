@@ -19,9 +19,9 @@
     CollisionShape:8192
 */
 struct MDX_EXPORT
-( exportFileName, stream, vers, modl, seqs, mtls, texs, geos, geoa, bone, pivt, bpos )
+(  seqs, mtls, texs, bone, bpos, geos, geoa )
     
-global mdxExport = undefined 
+global mdxExport = MDX_EXPORT()
 
 struct Writer_Helpers
 (
@@ -86,18 +86,10 @@ struct Writer_Helpers
     (
         struct WC3RefTexs ( ReplacableId, fileName, flag, originalFileName )
         
-        if file == undefined then file = ""
-        
-        local pos = findstring file Warcraft3_AssetFolder
-        local fileName = ""
-        if ( pos != undefined ) then  
-            fileName = substring file (Warcraft3_AssetFolder.count + 1) -1
-        else
-            fileName = ( filenameFromPath file )
-
-        if ( getfilenamefile fileName == "" ) then fileName = ""
-        
+        local fileName = substring file (Warcraft3_AssetFolder.count + 1) -1
         fileName = Writer_Helpers.replaceAll fileName @"\" "/"
+        
+        if ( getfilenamefile fileName == "" ) then fileName = ""
         
         local t = WC3RefTexs ReplacableId:replacableId fileName:fileName flag:3 originalFileName:file
         
@@ -229,7 +221,7 @@ struct Writer_Helpers
             local w = dot ( cross n t ) tan2[i]
             
             if ( w < 0.0 ) then w = -1.0 else w = 1.0
-            tangent[i] = [v.y, v.x, v.z, w]
+            tangent[i] = [v.x, v.y, v.z, w]
         )
         return tangent
     ),
@@ -367,70 +359,51 @@ struct Warcraft3_Reforged_Export
 (
     function WriteLAYR stream filtermode flags textureFileName texs=
     (
-            --writelong stream 32
-            writelong stream 52
+            writelong stream 32
             writelong stream ( filterMode - 1 )
             writelong stream flags
             
-            local textureId = 0
-        
             for t=1 to texs.count do
             (
                 if ( texs[t].originalFileName == textureFileName ) then 
                 ( 
-                    textureId = t - 1 
+                    writelong stream ( t - 1 )
                     exit 
                 )
             )
-            writelong stream textureId
             writelong stream -1 #signed
             writeLong stream 0 
-            for i=1 to 5 do writefloat stream 1
-            writeLong stream 0 
-            writeLong stream 0 
+            writefloat stream 1
+            writefloat stream 1  
         
         
     ),
-    function WriteMDLX=
+    function WriteMDLX stream=
     (
-        local stream = mdxExport.Stream
-        
-        struct vers ( len, version )
-        
-        mdxExport.vers = vers()
-        mdxExport.vers.len = 4
-        mdxExport.vers.version = 1000
-        
         Writer_Helpers.WriteFixedString stream "MDLX" 4
         Writer_Helpers.WriteFixedString stream "VERS" 4
-        writeLong stream mdxExport.vers.len
-        writeLong stream mdxExport.vers.version
+        writeLong stream 4
+        writeLong stream 900
     ),
-    function WriteMODL=
+    function WriteMODL stream file=
     (
-        local stream = mdxExport.Stream
-        local file = mdxExport.ExportFileName
-        
-        struct modl ( size, name, bbBox, always150 )
-        
-        mdxExport.modl = modl()
-        mdxExport.modl.size = 372
-        mdxExport.modl.name = getfilenamefile file 
-        mdxExport.modl.bbBox = Writer_Helpers.GetBoundingBox()
-        mdxExport.modl.always150 = 150
-        
+        -- size 372 bytes
         Writer_Helpers.WriteFixedString stream "MODL" 4
-        writeLong stream mdxExport.modl.size
-        Writer_Helpers.WriteFixedString stream mdxExport.modl.name 80
+        writeLong stream 372
+
+        local name = getfilenamefile file 
+        Writer_Helpers.WriteFixedString stream name 80
         Writer_Helpers.WriteBytes stream 0 264
-        Writer_Helpers.WriteVector3 stream mdxExport.modl.bbBox[1]
-        Writer_Helpers.WriteVector3 stream mdxExport.modl.bbBox[2]
-        writeLong stream mdxExport.modl.always150
+
+        local bbBox = Writer_Helpers.GetBoundingBox()
+
+        Writer_Helpers.WriteVector3 stream bbBox[1]
+        Writer_Helpers.WriteVector3 stream bbBox[2]
+        writeLong stream 150
         
     ),
-    function WriteSEQS=
+    function WriteSEQS stream=
     (
-        local stream = mdxExport.Stream
         struct WC3Seqs ( Name, Rarity, MoveSpeed, NonLoop, DefaultAnim, Sub_Anim, Priority, BBox, StartFrame, endFrame )
         
         local seqs = #()
@@ -531,10 +504,9 @@ struct Warcraft3_Reforged_Export
         
         mdxExport.seqs = seqs
     ),
-    function WriteMTLS_TEXS=
+    function WriteMTLS_TEXS stream=
     (
-        local stream = mdxExport.Stream
-        
+
         Writer_Helpers.WriteFixedString stream "MTLS" 4
         
         local shaderName = "Shader_HD_DefaultUnit"
@@ -542,8 +514,7 @@ struct Warcraft3_Reforged_Export
         local mats = #()
         
         for obj in objects do
-            if ( classof obj.material == WC3RefMaterial ) then 
-                appendifunique mats obj.material
+            if ( classof obj.material == WC3RefMaterial ) then append mats obj.material
         
         mdxExport.mtls = mats
         
@@ -577,12 +548,12 @@ struct Warcraft3_Reforged_Export
         )
 
         local nbrMtls = mats.count
-        Writelong stream ( 412 * nbrMtls )
+        Writelong stream ( 292 * nbrMtls )
         
         -- 1 layer with no anim = 292 bytes
         for m in mats do
         (
-            Writelong stream 412
+            Writelong stream 292
             writelong stream m.priorityPlane
             writelong stream 0
             Writer_Helpers.WriteFixedString stream shaderName 80
@@ -607,10 +578,10 @@ struct Warcraft3_Reforged_Export
             Warcraft3_Reforged_Export.WriteLAYR stream m.filtermode flags m.emissive_map.fileName texs
             Warcraft3_Reforged_Export.WriteLAYR stream m.filtermode flags m.replacable_map.fileName texs
             Warcraft3_Reforged_Export.WriteLAYR stream m.filtermode flags m.reflection_map.fileName texs
-
             
         )
-
+        
+        
         Writer_Helpers.WriteFixedString stream "TEXS" 4
         
         writelong stream ( 268 * texs.count )
@@ -668,9 +639,8 @@ struct Warcraft3_Reforged_Export
         )
         
     ),
-    function WriteGEOS=
+    function WriteGEOS stream=
     (
-        local stream = mdxExport.Stream
         local meshes = #()
         for obj in objects do
             if (classof obj == Editable_mesh ) then append meshes obj
@@ -909,7 +879,6 @@ struct Warcraft3_Reforged_Export
     ),
     function ReadGEOA=
     (
-        
         struct wc3geoa ( meshId, keys, size )
         struct wc3geoakey ( frame, visible )
         
@@ -923,9 +892,10 @@ struct Warcraft3_Reforged_Export
         
         for m in meshes do
         (
-            local geoa = wc3geoa meshid:meshId size:0
-            if ( m.visibility != undefined and (getVisController m) != undefined ) then 
+
+            if ( m.visibility != undefined and  classof m.visibility.controller == on_off) then 
             (
+                local geoa = wc3geoa meshid:meshId size:0
                 geoa.keys = #()
                 -- add ZERO frame
                 local g = wc3geoakey frame:0
@@ -964,9 +934,8 @@ struct Warcraft3_Reforged_Export
         mdxExport.geoa = geoas
         
     ),
-    function WriteGEOA=
+    function WriteGEOA stream=
     (
-        local stream = mdxExport.Stream
         Warcraft3_Reforged_Export.ReadGEOA()
         
         if ( mdxExport.geoa == undefined ) then return undefined
@@ -976,15 +945,10 @@ struct Warcraft3_Reforged_Export
         for g in mdxExport.geoa do
         (
             totalSize +=28
-            g.Size = 28
-            if( g.keys != undefined ) then 
-            (
-                g.Size +=16
-                g.Size += g.keys.count * 8 
-                totalSize +=16 -- KGAO nbrofKGAO linetype=0 -1
-                totalSize += g.keys.count * 8 
-            )
-
+            totalSize +=16 -- KGAO nbrofKGAO linetype=0 -1
+            totalSize += g.keys.count * 8 
+            
+            g.Size = 28 + 16 + g.keys.count * 8 
             
         )
 
@@ -1001,33 +965,29 @@ struct Warcraft3_Reforged_Export
             writefloat stream 1
             writefloat stream 1
             writeLong stream ( g.meshId - 1 )
+            Writer_Helpers.WriteFixedString stream "KGAO" 4
+            writeLong stream g.keys.count
+            writeLong stream 0
+            writeLong stream -1 #signed
             
-            if( g.keys != undefined ) then 
+            for i=1 to g.keys.count do
             (
-                Writer_Helpers.WriteFixedString stream "KGAO" 4
-                writeLong stream g.keys.count
-                writeLong stream 0
-                writeLong stream -1 #signed
+                local key = g.keys[i]
+                local frameStr = ( key.frame as string )
+                local frameInt = (substring frameStr 1 (frameStr.count - 1 )) as integer
+                local frame = frameInt * 1000 / 30
                 
-                for i=1 to g.keys.count do
-                (
-                    local key = g.keys[i]
-                    local frameStr = ( key.frame as string )
-                    local frameInt = (substring frameStr 1 (frameStr.count - 1 )) as integer
-                    local frame = frameInt * 1000 / 30
+                writeLong stream frame
+                
+                if ( key.visible == true ) then writefloat stream 1 else writefloat stream 0
                     
-                    writeLong stream frame
-                    
-                    if ( key.visible == true ) then writefloat stream 1 else writefloat stream 0
-                        
-                )
             )
+            
             
         )
     ),
-    function WriteBONE=
+    function WriteBONE stream=
     (
-        local stream = mdxExport.Stream
         -- Calculate the sizes first
         local totalSize = 0 --> BONE + size
         for b in mdxExport.Bone do
@@ -1037,8 +997,7 @@ struct Warcraft3_Reforged_Export
             totalSize += 4  -- Id
             totalSize += 4  -- ParentBoneId
             totalSize += 4  -- Flags = 256
-            totalSize += 4  -- 0000
-            totalSize += 4  -- ffff
+            
             b.Size = 96
             
             if ( b.KGTR.Count > 0 ) then 
@@ -1060,7 +1019,6 @@ struct Warcraft3_Reforged_Export
                 b.Size += 16 + b.KGSC.Count * 16
             )
         )
-
         -- Write out
         Writer_Helpers.WriteFixedString stream "BONE" 4
         WriteLong stream totalSize
@@ -1070,14 +1028,12 @@ struct Warcraft3_Reforged_Export
             writelong stream b.Size
             Writer_Helpers.WriteFixedString stream b.BoneRef.Name 80
             writeLong stream ( b.Id - 1 )
-            writeLong stream ( b.ParentId - 1 ) #signed
+            writeLong stream ( b.ParentId - 1 )
             writeLong stream 256
 
             Writer_Helpers.WriteFloatAnim stream b.KGTR "KGTR"
             Writer_Helpers.WriteFloatAnim stream b.KGRT "KGRT"
             Writer_Helpers.WriteFloatAnim stream b.KGSC "KGSC"
-            writelong stream 0
-            writelong stream -1 #signed
         )
         
         
@@ -1095,9 +1051,8 @@ struct Warcraft3_Reforged_Export
         )
         mdxExport.bpos = bpos
     ),
-    function WriteBPOS=
+    function WriteBPOS stream=
     (
-        local stream = mdxExport.Stream
         Writer_Helpers.WriteFixedString stream "BPOS" 4
         writelong stream ( mdxExport.bpos.count * 48 + 4 )
         writelong stream mdxExport.bpos.count
@@ -1112,9 +1067,8 @@ struct Warcraft3_Reforged_Export
             )
         )
     ),
-    function WritePIVT=
+    function WritePIVT stream=
     (
-        local stream = mdxExport.Stream
         local totalSize = 0
         
         totalSize += mdxExport.Bone.Count * 12
@@ -1143,30 +1097,28 @@ struct Warcraft3_Reforged_Export
             format "[WARNING] Warcraft3_AssetFolder is not set !"
         )
         
-        mdxExport = MDX_EXPORT()
-        mdxExport.stream = fopen file "wb"
-        mdxExport.exportFileName = file
-        
+        stream = fopen file "wb"
+
         export.ReadBONE()
         export.ReadBPOS()
         export.ReadBoneAnim()
         
-        export.WriteMDLX()
-        export.WriteMODL()
-        export.WriteSEQS()
-        export.WriteMTLS_TEXS() --> TODO write Alpha animation !!
-        export.WriteGEOS()
-        export.WriteGEOA()
-        export.WriteBONE()
-        export.WritePIVT()
+        export.WriteMDLX stream
+        export.WriteMODL stream file
+        export.WriteSEQS stream
+        export.WriteMTLS_TEXS stream --> TODO write Alpha animation !!
+        export.WriteGEOS stream
+        export.WriteGEOA stream
+        export.WriteBONE stream
+        export.WritePIVT stream
         
         -- CORN
         -- EVNTS
 		
-        export.WriteBPOS()
+        export.WriteBPOS stream
         
-        fflush mdxExport.stream
-        fclose mdxExport.stream
+        fflush stream
+        fclose stream
         
         mdxExport = undefined
         gc()
@@ -1177,6 +1129,6 @@ struct Warcraft3_Reforged_Export
 clearlistener()
 
 
--- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
+-- file = @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\test3.mdx"
 
 -- Warcraft3_Reforged_Export.Write file

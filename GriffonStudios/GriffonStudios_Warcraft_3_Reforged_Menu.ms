@@ -1,25 +1,34 @@
-/*
-    .AUTHOR
-        Taylor Mouse
-
-    .COPYRIGHT
-        (c)2010-2021 Griffon Studios
-    
-    .DESCRIPTION
-        Create a Menu specifically for Warcraft 3 Reforged
-*/
-
-fileIn "GriffonStudios_Warcraft_3_Reforged_Macros.ms"
-fileIn "GriffonStudios\\GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
-
 struct Warcraft3_Reforged_Menu
 (
+    function RemoveMenu menuName=
+    (
+        for i = 1 to menuman.numMenus() do
+        (
+            local mnu = menuman.FindMenu menuName
+            if( mnu == undefined ) then
+                exit
+            else
+                menuMan.unRegisterMenu mnu
+        )
+
+    ),
+    function GetHelpMenuPosition =
+    (
+        local mainMenu = menuMan.getMainMenuBar() 
+        for i=1 to mainMenu.numItems() do
+        (
+            local title = ((mainMenu.getItem(i)).getTitle())
+            if(title == "&Help" ) then return i
+        )
+        
+        return undefined
+    ),
     function CreateMenu=
     (
         local mainMenu = menuMan.getMainMenuBar() 
 
-        GriffonStudios_Helpers.Menu.RemoveMenu "WC3 Reforged Tools"
-        GriffonStudios_Helpers.Menu.RemoveMenu "Reforged Helpers"
+        Warcraft3_Reforged_Menu.RemoveMenu "WC3 Reforged Tools"
+        Warcraft3_Reforged_Menu.RemoveMenu "Reforged Helpers"
             
         local wc3Menu = menuMan.createMenu "WC3 Reforged Tools"
         local wc3MenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" wc3Menu
@@ -86,7 +95,7 @@ struct Warcraft3_Reforged_Menu
         wc3Menu.addItem wc3Action11 -1
         wc3Menu.addItem wc3Action4 -1
         
-        local pos = GriffonStudios_Helpers.GetHelpMenuPosition()
+        local pos = Warcraft3_Reforged_Menu.GetHelpMenuPosition()
         
         mainMenu.AddItem wc3MenuItems pos
         

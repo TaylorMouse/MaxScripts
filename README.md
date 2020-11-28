@@ -4,7 +4,7 @@ Griffon Studios 3D Studio Max Scripts
 
 ## How to install
 
-- Download the folder content GriffonStudios and the GriffonsStudios_Tools.ms scripts.
+- Download the folder content GriffonStudios and the GriffonsStudios_StartUp.ms scripts.
 - Place them in the startup script folder of your 3D Stusio Max folder.
 
     Example:
@@ -14,7 +14,13 @@ Griffon Studios 3D Studio Max Scripts
     ```
 
 - Start 3D Studio Max
-- If everything went well you should see an additional Griffon Studios Tools menu and find additional scripts in the Utilities pane.
+- If everything went well you should see an additional **Griffon Studios Tools**  and a **Warcraft 3 Reforged Tools** menu 
+
+![utilities](images/gsmenu.png)
+
+and find additional scripts in the Utilities pane.
+
+![utilities](images/gsmenu2.png)
 
 ## Supported versions
 
@@ -25,6 +31,8 @@ Griffon Studios 3D Studio Max Scripts
 It is possible that for some scripts, like the Starcraft 2 & Heroes of the Storm Scripts require the official Blizzard ArtTools (sometimes called StarTools).
 The [Official Starcrat II Art Tools](https://news.blizzard.com/en-gb/starcraft2/10788362/starcraft-ii-art-tools-open-beta) are only fully supported for 3D Studio Max 2011. However you can download the Art Tools for 3D Studio Max 2016 here:
 [SC2ArtTools2016.zip](https://drive.google.com/file/d/1-ZM4tPded4LEDnJZw7CxwKy_qTAhVR4m/view?usp=sharing)
+
+Not all of the supported games, listed below are found in the menu, some of them are still script only.
 
 ## Supported games
 

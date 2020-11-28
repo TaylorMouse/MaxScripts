@@ -1,9 +1,13 @@
-/*
-    Griffon Studios
-    (c)2014 ~ 2021 Script by Taylor Mouse
+/* 
+    .AUTHOR
+        Taylor Mouse
 
-    Import Blizzards Diablo III app models and animations dialog
-        
+    .COPYRIGHT
+        (c)2010-2021 Griffon Studios
+    
+    .DESCRIPTION
+        Import Blizzards Diablo III app models and animations dialog
+
 */
 fileIn "GriffonStudios_DiabloIII_ImportModel.ms"
 fileIn "GriffonStudios_DiabloIII_ImportAnimation.ms"
@@ -12,7 +16,6 @@ fileIn "GriffonStudios_HelperScripts.ms"
 rollout GriffonStudios_DiabloIIIModel_Rollout "Import Diablo III Model" height:200 width:400 
 (
     local selectedFile = ""
-    local useSC2ArtTools = true
     local applySkin = true
     local isScenery = false
     
@@ -40,7 +43,8 @@ rollout GriffonStudios_DiabloIIIModel_Rollout "Import Diablo III Model" height:2
 	(
 		cbApplySkin.Checked = true
 		cbIsScenery.Checked = false
-        cbUseSC2ArtTools.checked = true
+        cbUseSC2ArtTools.enabled = STARCRAFT_II_ARTTOOLS_INSTALLED
+        cbUseSC2ArtTools.checked = STARCRAFT_II_ARTTOOLS_INSTALLED
 	)
     
     /* actions */
@@ -63,13 +67,16 @@ rollout GriffonStudios_DiabloIIIModel_Rollout "Import Diablo III Model" height:2
         if ( selectedFile != undefined and selectedFile != "") then
         (
             if( doesFileExist selectedFile ) then
-                GriffonStudios_DiabloIII_ImportAppFile selectedFile applySkin isScenery useSC2ArtTools
+                GriffonStudios_DiabloIII_ImportAppFile selectedFile applySkin isScenery STARCRAFT_II_ARTTOOLS_INSTALLED
         )
     )
 )
 
-rollout GriffonStudios_DiabloIIIAnimation_Rollout "Import Diablo III Animation" height:180  width:400
+rollout GriffonStudios_DiabloIIIAnimation_Rollout "Import Diablo III Animation" height:220  width:400
 (
+    
+    
+    
     local selectedFile = ""
     
     /* Layout */
@@ -87,15 +94,20 @@ rollout GriffonStudios_DiabloIIIAnimation_Rollout "Import Diablo III Animation" 
         button   btnSelectFile "..." align:#right offset:[0,-26]
     )
 
+    group "Name of the animation"
+    (
+        edittext txtAnimName "" fieldWidth:320 align:#left height:20
+        
+    )
+    
     button btnImport "Start Import..." width:300 height:35
     
     /* actions */
     on GriffonStudios_DiabloIIIAnimation_Rollout open do
     (
-        local lf = FindLastKeyFrame() as string
-        local lfi = substring lf  1 ( lf.count - 1 ) as integer
+        local nextStartFrame = GetNextStartFrame()
 
-        txtFrameNbr.Text = ( lfi + 10 ) as string 
+        txtFrameNbr.Text = nextStartFrame as string 
         
     )
     
@@ -121,7 +133,13 @@ rollout GriffonStudios_DiabloIIIAnimation_Rollout "Import Diablo III Animation" 
         if ( selectedFile != undefined and selectedFile != "") then
         (
             if( doesFileExist selectedFile ) then
-                GriffonStudios_DiabloIII_ImportAnimation selectedFile frameStartsAt
+            (
+                GriffonStudios_DiabloIII_ImportAnimation selectedFile frameStartsAt animName
+                local nextStartFrame = GetNextStartFrame()
+
+                txtFrameNbr.Text = nextStartFrame as string 
+            )
+        
         )
     )
 )

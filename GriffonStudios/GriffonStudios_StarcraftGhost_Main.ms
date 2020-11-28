@@ -1,6 +1,9 @@
 /* 
-    .SYNOPSYS
-        (c) 2020 Griffon Studios by Taylor Mouse
+    .AUTHOR
+        Taylor Mouse
+
+    .COPYRIGHT
+        (c)2010-2021 Griffon Studios
     
     .DESCRIPTION
         Imports Starcraft Ghost (xbox game) models ( .nod, .noc )
@@ -20,9 +23,9 @@
 */
 
 global ghostModel
-global ghostConvertMaterialToSC2 = true
 global ghostShaderList 
-global ghostStartAnimationFrame = 10.0
+
+filein "GriffonStudios_HelperScripts_Struct.ms"
 
 struct Starcraft_Ghost_Main
 (
@@ -261,7 +264,7 @@ struct Starcraft_Ghost_Main
     (
         
         struct nad_header ( version, numBoneTracks, flags, duration, boneTracks, numTags, tags )
-        struct nad_bone_track ( numKeys, boneNum, trackType, keys )
+        struct nad_bone_track ( numKeys, boneNum, trackType, keys, bone_ref )
         struct nad_tag ( frameNum, tagType )
         struct nad_keyFrame ( frame, values, CFactor, BFactor, AFactor )
         
@@ -902,7 +905,7 @@ struct Starcraft_Ghost_Main
         )
         
         local theAnimTrack = getNoteTrack rootNode 1
-        local startFrame = ghostStartAnimationFrame as integer
+        local startFrame = 10
         
        
         for motion in nod.motions do
@@ -970,8 +973,106 @@ struct Starcraft_Ghost_Main
         startNote.Value = val
         endNote.Value = val
 
-        format "% (% - %)\n" theAnimTrack.name animName startFrame endFrame
+        format "- % (% - %)\n" animName startFrame endFrame
         
+    ),
+    function ApplyMotion2 motion=
+    (
+        if (motion == undefined ) then return false
+        
+        local uniqueMotionName = motion.overlayName + " - " + motion.animName
+        
+        uniqueMotionName = GriffonStudios_Helpers.CheckUniqueSequenceName uniqueMotionName
+        
+        --format "Applying animation: % \n" uniqueMotionName
+        
+        if ( ( substring motion.animName 1 2 ) == "ik" ) then 
+        (
+            format "[WARNING] - Not a valid animation, layered animation, import aborted\n"
+            return false
+        )
+        
+        local nad = Starcraft_Ghost_Main.ReadNadFile motion.animFile
+        
+        local lastKeyFrame = GriffonStudios_Helpers.FindLastKeyFrame()
+        local lastNoteFrame = GriffonStudios_Helpers.GetLastNoteFrame()
+        local startFrame = lastKeyFrame + 10
+        
+        if ( lastNoteFrame > lastKeyFrame ) then startFrame = lastNoteFrame + 10
+        
+        local endFrame = startFrame + (nad.duration as integer)
+        
+        Starcraft_Ghost_Main.AddSequences uniqueMotionName startFrame endFrame
+        
+        -- // rotation 
+        for boneTrack in nad.boneTracks do
+        (
+            local boneRef = boneTrack.bone_ref
+            if ( boneRef == undefined ) then 
+            (
+                local boneName = "bone_" + (boneTrack.boneNum + 1) as string
+                boneRef = getNodeByName boneName
+                boneTrack.bone_ref = boneRef
+            )
+            if ( boneRef == undefined ) then continue
+
+            if ( boneTrack.trackType==0 ) then 
+            (
+                for key in boneTrack.keys do
+                (
+                    q = EulerToQuat (eulerangles key.values[1] key.values[2] key.values[3])
+                    t = startFrame + key.frame
+                    with animate on
+                    (
+                        at time t 
+                        (
+                            boneRef.assumeSkinPose()
+                            local mtrx = matrix3 1
+                            rotate mtrx q
+                            mtrx.row4 = boneRef.pos
+                            if ( boneRef.Parent != undefined ) then (
+                                mtrx = mtrx * boneRef.parent.transform
+                            )
+                            boneRef.transform = mtrx
+                            deletekey boneRef.position.controller ( numkeys boneRef.position.controller )
+                            deletekey boneRef.scale.controller ( numkeys boneRef.scale.controller )
+                            
+                        )
+                    )
+                )
+
+            )
+            
+        )
+        -- // position 
+        for boneTrack in nad.boneTracks do
+        (
+            local boneName = "bone_" + (boneTrack.boneNum + 1) as string
+            local boneRef = getNodeByName boneName
+            
+            if ( boneRef == undefined ) then continue
+            
+            if ( boneTrack.trackType==1) then 
+            (
+                for key in boneTrack.keys do
+                (
+                    pos = key.values
+                    t = startFrame + key.frame
+                    
+                    with animate on
+                        at time t 
+                            in coordsys parent boneRef.position = pos * 100.0
+                )
+
+            )
+            
+        )
+        
+        -- lock the keys
+        for obj in objects do
+            addNewKey obj.controller ( endFrame + 1 )
+        
+        return true
     ),
     function ApplyMotion nod index=
     (
@@ -992,7 +1093,11 @@ struct Starcraft_Ghost_Main
         uniqueMotionName = GriffonStudios_Helpers.CheckUniqueSequenceName uniqueMotionName
         
         
-        local startFrame = GriffonStudios_Helpers.FindLastKeyFrame() + 10
+        local lastKeyFrame = GriffonStudios_Helpers.FindLastKeyFrame()
+        local lastNoteFrame = GriffonStudios_Helpers.GetLastNoteFrame()
+        local startFrame = lastKeyFrame + 10
+        
+        if ( lastNoteFrame > lastKeyFrame ) then startFrame = lastNoteFrame + 10
         local endFrame = startFrame + (nad.duration as integer)
         --format "(% - %)\n" startFrame endFrame
 
@@ -1057,6 +1162,12 @@ struct Starcraft_Ghost_Main
             )
             
         )
+        
+        -- lock the keys
+        for obj in objects do
+            addNewKey obj.controller ( endFrame + 1 )
+        
+
         
         return true
     ),

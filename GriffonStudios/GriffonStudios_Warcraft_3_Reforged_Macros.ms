@@ -19,7 +19,7 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
             checkbox chkConvertToSC2 "Convert to SC2 Compatible"
         )
 
-        label lbl1 "(c)2020 Created by" align:#center
+        label lbl1 "©2020 Created by" align:#center
         label lbl2 "Taylor Mouse"  align:#center
         button btnClose "Close" height:30 width:80 offset:[115,-35]
         button btnImport "Import" height:30 width:80 offset:[-115,-35]
@@ -41,9 +41,9 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
                         caption:"Warcraft 3 Reforged" \
                         types:"Supported Files|*.mdx|Warcraft 3 Reforged(*.mdx)|*.mdx|All Files|*.*" \
                         historyCategory:"ReforgedPreset"
-
-            if (doesfileexist file == true ) then 
-                txtSelectedFile.Text = file
+            if (file != undefined) then 
+                if (doesfileexist file == true ) then 
+                    txtSelectedFile.Text = file
         )
         on btnImport pressed do
         (
@@ -116,7 +116,7 @@ macroscript Warcaft3Reforged_ExportModel category:"Warcraft 3 Reforged Tools" to
 
 macroscript Warcaft3Reforged_Animations category:"Warcraft 3 Reforged Tools" tooltip:"Animation Selector" 
 (
-    -- filein "GriffonStudios_AnimationProperties.ms"
+    filein "GriffonStudios_AnimationProperties.ms"
     if(GriffonStudios_AnimationProperties != undefined) then destroydialog GriffonStudios_AnimationProperties
         CreateDialog GriffonStudios_AnimationProperties lockwidth: true     
 )
@@ -127,9 +127,9 @@ macroscript Warcaft3Reforged_About      category:"Warcraft 3 Reforged Tools" too
     
     rollout aboutWindow "Warcraft 3 Reforged Tools" 
     (
-        label lbl1 "(c)2020 Created by Taylor Mouse" align:#center
+        label lbl1 "©2020 Created by Taylor Mouse" align:#center
         label lbl2 "Get the latest version from my github:" align:#center
-        hyperlink lnk1 "github.com/TaylorMouse/Warcraft 3 Reforged"  address:"https://github.com/TaylorMouse/MaxScripts" align:#center color:(color 255 128 0)
+        hyperlink lnk1 "github.com/TaylorMouse/Warcraft 3 Reforged"  address:"https://github.com/TaylorMouse/MaxScripts/tree/master/Warcraft 3 Reforged" align:#center color:(color 255 128 0)
         button btn "Close" height:30 width:80 offset:[0,10]
         
         on btn pressed do

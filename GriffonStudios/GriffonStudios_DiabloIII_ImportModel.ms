@@ -152,8 +152,44 @@
         offRefPoints = ReadLong stream
         sizeRefPoints = ReadLong stream
 
-        allBones = #()
+        -- Textures
+    --     fseek stream 432 #seek_set
 
+    --     id = readlong stream
+    --     nbrTextures   = readlong stream
+    --     offsetTexture = readlong stream
+    --     sizeTexture   = readlong stream -- per texture 144 bytes, 128 as the name of the texture
+
+    --     fseek stream ( offsetTexture + 16 ) #seek_set
+
+    --     textures = #()
+    --     for t=1 to nbrTextures do
+    --     (
+    --         textureName = ReadFixedString stream 128
+    --         print textureName
+
+    --         ReadBytes stream 16
+
+    --         textureFileName = GetTexture file textureName texturePath
+
+    --         mat = Standard()
+    --         mat.name = textureName
+
+    --         if( textureFileName != undefined ) then
+    --         (
+    --             mat.diffuseMap = Bitmaptexture fileName:textureFileName
+    --             mat.opacityMap = Bitmaptexture fileName:textureFileName
+    --             mat.opacityMap.monooutput = 1
+    --         )
+    --         meditMaterials[t] = mat
+    --         meditMaterials[t].diffuseMapEnable = on
+    --         showTextureMap meditMaterials[t] true
+
+    --         Append textures mat
+    --     )
+
+
+        allBones = #()
         /* BONES */
         print "Building Bones"
         if(ofBones > 0 ) then
@@ -223,7 +259,7 @@
                 aBone.Scale = point3 s s s
                 allBones[b].TheBone = aBone
             )
-
+            --max views redraw
 
             /* Build the bone Hierarchy */
             for b=1 to nBones do
@@ -234,7 +270,7 @@
                     allBones[b].TheBone.Parent = parentBone
                 )
             )
-
+            --max views redraw
 
             /* Build Skin Pose for each bone */
             for b=1 to nbones do
@@ -251,7 +287,8 @@
             for b=1 to nBones do
                 bonesLayer.AddNode allBones[b].TheBone
 
-         )
+            --max views redraw
+        )
 
         /* REFERENCE POINTS */
         print "Building Ref Points"
@@ -358,6 +395,9 @@
                 vY = ReadFloat stream * -17
                 vX = ReadFloat stream * 17
                 vZ = ReadFloat stream * 17
+    -- 			vX = ReadFloat stream
+    -- 			vY = ReadFloat stream
+    -- 			vZ = ReadFloat stream
                 vert = [ vX, vY, vZ ]
                 append verts vert
 
@@ -435,7 +475,21 @@
             meshOp.setMapSupport theMesh 1 true
             for t = 1 to geosets[i].Verts.count do
                 meshop.setMapVert theMesh 1 t geosets[i].UVWs[t]
+            update theMesh
 
+            -- create the materials
+    -- 		meditMaterials[i] = Standard()
+    -- 		meditMaterials[i].name = geosets[i].Name
+    -- 		meditMaterials[i].diffuseMapEnable = on
+    --
+    -- 		diffuseTexture =  FindDiffuseTexture file texturePath
+    -- 		if(diffuseTexture!=undefined and diffuseTexture !="" ) then
+    -- 		(
+    -- 			meditMaterials[i].diffuseMap  = Bitmaptexture fileName:diffuseTexture
+    -- 		)
+    --
+    -- 		showTextureMap meditMaterials[i] true
+    -- 		theMesh.material = meditMaterials[i]
             update theMesh
 
             geosets[i].theMesh = theMesh
@@ -458,7 +512,6 @@
 
         for i=1 to nSubset do
                 unitLayer.AddNode geosets[i].theMesh
-
         print "Applying Skin Modifier"
         if(applySkin) then
         (
@@ -743,6 +796,7 @@
             hardPoints=#()
             for i=1 to nRefPoints do
             (
+                --d = Dummy name:allRefPoints[i].Name Scale:[0.5,0.5,0.5] pos:allRefPoints[i].Position rot:allRefPoints[i].Rotation
 
                 local d = undefined
 
@@ -759,6 +813,13 @@
                 if (allRefPoints[i].ParID != 0) then d.parent = allBones[allRefPoints[i].ParID].TheBone
                 append hardPoints d
 
+
+
+
+
+
+
+
                 if (allRefPoints[i].ParID != 0) then d.parent = allBones[allRefPoints[i].ParID].TheBone
                 append hardPoints d
             )
@@ -771,6 +832,8 @@
                 hardPointLayer.AddNode hardPoints[i]
 
         )
+
+
 
 
         /* GEOSETS */
@@ -911,6 +974,18 @@
                 meshop.setMapVert theMesh 1 t geosets[i].UVWs[t]
             update theMesh
 
+            -- create the materials
+    -- 		meditMaterials[i] = Standard()
+    -- 		meditMaterials[i].name = geosets[i].Name
+    -- 		meditMaterials[i].diffuseMapEnable = on
+    --
+    -- 		diffuseTexture =  FindDiffuseTexture file texturePath
+    -- 		if(diffuseTexture!=undefined and diffuseTexture !="" ) then
+    -- 		(
+    -- 			meditMaterials[i].diffuseMap  = Bitmaptexture fileName:diffuseTexture
+    -- 		)
+    --
+    -- 		showTextureMap meditMaterials[i] true
             if( textures[i] != undefined ) then theMesh.material = textures[i]
             update theMesh
 

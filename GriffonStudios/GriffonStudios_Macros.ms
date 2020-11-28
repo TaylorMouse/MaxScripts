@@ -1,8 +1,23 @@
-fileIn "Diablo\\GriffonStudios_DiabloIII_Dialog.ms"
-fileIn "World of Warcraft\\GriffonStudios_WorldOfWarcraft_Dialog.ms"
-fileIn "Starcraft Ghost\\GriffonStudios_StarcraftGhost_Dialog.ms"
-fileIn "Additional Tools\\GriffonStudios_XNA_Lara.ms"
+fileIn "GriffonStudios_DiabloIII_Dialog.ms"
+fileIn "GriffonStudios_WorldOfWarcraft_Dialog.ms"
+fileIn "GriffonStudios_XNA_Lara.ms"
+fileIn "GriffonStudios_AnimationProperties.ms"
 
+macroscript GriffonStudios_AnimationSelection
+category:"Griffon Studios"
+    internalcategory:"Griffon Studios"
+    buttonText:"Animation Selection Tool"
+    toolTip:"Animation Selection"
+(
+    on execute do (
+        
+        if ( GriffonStudios_AnimationProperties != undefined ) then destroydialog GriffonStudios_AnimationProperties
+        createDialog GriffonStudios_AnimationProperties
+        
+	)
+    
+)
+    
 macroscript GriffonStudios_About
     category:"Griffon Studios"
     internalcategory:"Griffon Studios"
