@@ -246,7 +246,8 @@ rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft 
 
 /*
     TESTING
-*/
+
 clearlistener()
 if ( GriffonStudios_StarcraftGhostAnimationsImport_Rollout != undefined ) then destroydialog GriffonStudios_StarcraftGhostAnimationsImport_Rollout
 createDialog GriffonStudios_StarcraftGhostAnimationsImport_Rollout
+*/
