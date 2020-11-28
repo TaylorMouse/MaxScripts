@@ -24,7 +24,7 @@ and find additional scripts in the Utilities pane.
 
 ## Example
 
-![example](images/infantry_anim.gif){loop=""}
+![example](images/infantry_anim.gif)
 
 
 ## Supported versions
