@@ -16,11 +16,16 @@ Griffon Studios 3D Studio Max Scripts
 - Start 3D Studio Max
 - If everything went well you should see an additional **Griffon Studios Tools**  and a **Warcraft 3 Reforged Tools** menu 
 
-![utilities](images/gsmenu.png)
+![main menu](images/gsmenu.png)
 
 and find additional scripts in the Utilities pane.
 
-![utilities](images/gsmenu2.png)
+![utilities menu](images/gsmenu2.png)
+
+## Example
+
+![example](images/infantry_anim.gif){loop=""}
+
 
 ## Supported versions
 
