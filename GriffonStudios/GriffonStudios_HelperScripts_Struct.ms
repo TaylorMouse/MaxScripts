@@ -10,6 +10,29 @@ STRUCT GriffonStudios_Helpers
 (
     /*
         .DESCRIPTION
+            Set the (default) layer as the current one and delete all empty layers
+    */
+    function CleanUpLayers=
+    (
+    
+        local nLayers = LayerManager.Count
+        local defaultLayer = LayerManager.GetLayer(0)
+        defaultLayer.current = true
+    
+        local layers = #()
+        for i= 1 to nLayers do append layers (LayerManager.GetLayer(i-1))
+    
+        for layer in layers do
+        (
+            layer.nodes &nodes
+            
+            if ( layer.name != "0" and nodes.count == 0 ) then 
+                LayerManager.deleteLayerByName layer.name 
+        )  
+    ),
+
+    /*
+        .DESCRIPTION
             Copy and map the SC2 textures to the destination folder.
     */
     function CopyAndMapSC2MaterialFileName matTexture=
