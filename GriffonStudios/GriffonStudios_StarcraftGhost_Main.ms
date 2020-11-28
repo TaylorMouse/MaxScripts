@@ -878,9 +878,12 @@ struct Starcraft_Ghost_Main
             --// apply vertex weights
             for v=1 to mg.refWeights.count do 
             (
-                local weights = mg.refWeights[v]
-                local boneIds = mg.refBoneIds[v]
-                skinOps.ReplaceVertexWeights skinMod v boneIds weights
+                if ( v <= mg.refMesh.verts.count ) then 
+                (
+                    local weights = mg.refWeights[v]
+                    local boneIds = mg.refBoneIds[v]
+                    skinOps.ReplaceVertexWeights skinMod v boneIds weights
+                )
             )
             update mg.refMesh
         )
