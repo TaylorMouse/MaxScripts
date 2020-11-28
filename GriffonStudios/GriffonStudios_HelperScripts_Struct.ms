@@ -1,8 +1,12 @@
-/*
-    (c)2016 - 2021 Griffon Studios
-    Author: Taylor Mouse
+/* 
+    .AUTHOR
+        Taylor Mouse
 
-    Helper functions
+    .COPYRIGHT
+        (c)2010-2021 Griffon Studios
+    
+    .DESCRIPTION
+        Helper functions
     
 */
 
@@ -272,7 +276,7 @@ STRUCT GriffonStudios_Helpers
                 (
                     for j=1 to obj[i].numSubs do
                     (
-                        last_frame = FindLastKeyFrameByObject obj[i] last_frame
+                        last_frame = GriffonStudios_Helpers.FindLastKeyFrameByObject obj[i] last_frame
                     )
                     
                 )
@@ -293,7 +297,7 @@ STRUCT GriffonStudios_Helpers
         local last_frame = 0
         for obj in objects do
         (
-            last_frame = FindLastKeyFrameByObject obj last_frame
+            last_frame = GriffonStudios_Helpers.FindLastKeyFrameByObject obj last_frame
         )
         return last_frame
     ),
