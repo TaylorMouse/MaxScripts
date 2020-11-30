@@ -78,13 +78,18 @@ rollout GriffonStudios_StarcraftGhostModelImport_Rollout "Import Starcraft Ghost
 )
 
 
-rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft Ghost Animation(s)" height:530 width:500 
+rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft Ghost Animation(s)" height:570 width:500 
 (
     local motions
     local file
     local fileType
     
     label info "\xa9 2020 Importer by Taylor Mouse"
+    
+    group "Options"
+    (
+        CheckBox cbResetAnimTrack "Reset animation track"
+    )
     
     group "Select motion/model file"
     (
@@ -124,7 +129,8 @@ rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft 
     )    
     on btnImport pressed do
     (
-        GriffonStudios_Helpers.ResetNoteTracks() 
+        if ( cbResetAnimTrack.checked == true ) then GriffonStudios_Helpers.ResetNoteTracks() 
+        
         local motionsToImport = #()
         local errors = false
         
@@ -169,6 +175,8 @@ rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft 
         lv.Columns.Add " " 20
         lv.Columns.Add "Overlay" 80
         lv.Columns.Add "Animation" 200
+        
+        cbResetAnimTrack.checked = false
     )
     
     function UpdateLV motions=
@@ -205,7 +213,7 @@ rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft 
 			types:"Supported Files (*.nod,*.noc, *.nms)|*.nod;*.noc;*.nms|All Files|*.*" \
 			historyCategory:"StarcraftGhostMotionObjectPresets"
         
-        if ( doesFileExist file != true or file == undefined ) then
+        if ( file == undefined or doesFileExist file != true ) then
         (
             fileType = undefined
             motions = #()
@@ -243,11 +251,3 @@ rollout GriffonStudios_StarcraftGhostAnimationsImport_Rollout "Import Starcraft 
     )
     
 )
-
-/*
-    TESTING
-
-clearlistener()
-if ( GriffonStudios_StarcraftGhostAnimationsImport_Rollout != undefined ) then destroydialog GriffonStudios_StarcraftGhostAnimationsImport_Rollout
-createDialog GriffonStudios_StarcraftGhostAnimationsImport_Rollout
-*/

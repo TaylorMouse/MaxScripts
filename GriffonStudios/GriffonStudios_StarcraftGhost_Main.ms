@@ -603,8 +603,8 @@ struct Starcraft_Ghost_Main
         nod.materials = Starcraft_Ghost_Main.FindMaterial nod ghostShaderList
         
         /* motion and animations */
-        motionFile = Starcraft_Ghost_Main.FindMotionFile file
-        if ( motionFile != undefined ) then nod.motions = Starcraft_Ghost_Main.ReadMotionFile motionFile
+        --motionFile = Starcraft_Ghost_Main.FindMotionFile file
+        --if ( motionFile != undefined ) then nod.motions = Starcraft_Ghost_Main.ReadMotionFile motionFile
         
         return nod
     ),
@@ -1204,10 +1204,10 @@ struct Starcraft_Ghost_Main
 */
 --clearListener()
 
---file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lurker.nod"
+-- file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\2_2_2_hangarDome.nod"
 --file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lightInfantry.nod"
 
---nod = Starcraft_Ghost_Main.ImportModel file
+-- nod = Starcraft_Ghost_Main.ImportModel file
 
 -- for i=1 to nod.motions.count do
 -- (
