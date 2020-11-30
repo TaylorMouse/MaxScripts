@@ -9,6 +9,7 @@
         Imports Starcraft Ghost (xbox game) models ( .nod, .noc )
     
     .VERSIONING
+        v0.11 - fixed an animation error yet again
         v0.10 - applying animation
         v0.09 - Reading nad files
         v0.08 - testing different models & bugfixing
@@ -240,23 +241,24 @@ struct Starcraft_Ghost_Main
     ),
     function ReadGhostBone stream=
     (
-        struct Ghost_bone ( id, parentId, tagId, unk1, unk2, identityMatrix, translation, invTranslation, boneRef )
+        struct Ghost_bone ( id, parentId, tagId, siblingId, childId, translation, invTranslation, boneRef )
         -- 64 bytes
         
         local gb = Ghost_bone()
         
         
-        local row4 = [readFloat stream, readFloat stream, readFloat stream] * 100.0 
+        gb.translation = [readFloat stream, readFloat stream, readFloat stream] * 100.0 
         local row1 = [readFloat stream, readFloat stream, readFloat stream] 
         local row2 = [readFloat stream, readFloat stream, readFloat stream] 
         local row3 = [readFloat stream, readFloat stream, readFloat stream]
+        local row4 = [readFloat stream, readFloat stream, readFloat stream]
         
-        gb.identityMatrix = matrix3 row1 row2 row3 row4
-        gb.invTranslation = [readFloat stream, readFloat stream, readFloat stream] * 100.0
-        gb.unk1 = readByte stream as integer
-        gb.unk2 = readByte stream as integer
-        gb.parentId = ( readByte stream as integer ) + 1
-        gb.tagId    = readByte stream as integer
+        gb.invTranslation = matrix3 row1 row2 row3 row4
+        
+        gb.siblingId = readByte stream as integer
+        gb.childId   = ( readByte stream as integer ) + 1
+        gb.parentId  = ( readByte stream as integer ) + 1
+        gb.tagId     = readByte stream as integer
         
         return gb
     ),
@@ -687,13 +689,21 @@ struct Starcraft_Ghost_Main
 
         for b in boneList do
         (
+            
+            
             if (b.parentID > 0) then
             (
-                b.boneRef.Rotation = b.identityMatrix.rotationPart
-                b.boneRef.pos = b.identityMatrix.translationpart + b.boneRef.parent.pos
+
+                
+                b.boneRef.Rotation = b.invTranslation.rotationPart
+                b.boneRef.pos = b.translation + b.boneRef.parent.pos
             )
             else
-                b.boneRef.Pos = b.identityMatrix.translationpart
+            (
+                b.boneRef.Rotation = b.invTranslation.rotationPart
+                b.boneRef.Pos = b.translation
+            )
+            
         ) 
 
 
@@ -1007,6 +1017,16 @@ struct Starcraft_Ghost_Main
         
         Starcraft_Ghost_Main.AddSequences uniqueMotionName startFrame endFrame
         
+        boneList = #()
+        for obj in objects do
+        (
+            slidertime = 0
+            with animate off at time 0
+                if ( (classof obj) == BoneGeometry) then append boneList obj
+        )
+        
+        
+        
         -- // rotation 
         for boneTrack in nad.boneTracks do
         (
@@ -1029,10 +1049,11 @@ struct Starcraft_Ghost_Main
                     (
                         at time t 
                         (
-                            boneRef.assumeSkinPose()
+                           -- boneRef.assumeSkinPose()
                             local mtrx = matrix3 1
                             rotate mtrx q
                             mtrx.row4 = boneRef.pos
+                            
                             if ( boneRef.Parent != undefined ) then (
                                 mtrx = mtrx * boneRef.parent.transform
                             )
@@ -1046,35 +1067,45 @@ struct Starcraft_Ghost_Main
 
             )
             
-        )
-        -- // position 
-        for boneTrack in nad.boneTracks do
-        (
-            local boneName = "bone_" + (boneTrack.boneNum + 1) as string
-            local boneRef = getNodeByName boneName
-            
-            if ( boneRef == undefined ) then continue
-            
             if ( boneTrack.trackType==1) then 
             (
                 for key in boneTrack.keys do
                 (
-                    pos = key.values
+                    local pos = key.values * 100.0
                     t = startFrame + key.frame
                     
                     with animate on
+                    (
                         at time t 
-                            in coordsys parent boneRef.position = pos * 100.0
+                        (
+                            if( pos.x as string == "0.0" and pos.y as string == "0.0" and pos.z as string == "0.0" ) then
+                            (
+                            )
+                            else
+                            (
+                                boneRef.pos = pos  
+                            )
+
+                        )
+                    )
                 )
 
             )
             
+            
         )
-        
+      
         -- lock the keys
         for obj in objects do
             addNewKey obj.controller ( endFrame + 1 )
         
+        for b in boneList do
+        (
+            local baseTransform = b.transform
+            with animate on 
+                at time ( endFrame + 5 )
+                    b.transform = baseTransform
+        )
         return true
     ),
     function ApplyMotion nod index=
@@ -1199,28 +1230,3 @@ struct Starcraft_Ghost_Main
         return nod
     )
 )
-/*
-    Testing only
-*/
---clearListener()
-
--- file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\2_2_2_hangarDome.nod"
---file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lightInfantry.nod"
-
--- nod = Starcraft_Ghost_Main.ImportModel file
-
--- for i=1 to nod.motions.count do
--- (
---     local motion = nod.motions[i]
---     format "%\t% \n" i (motion.overlayname  +" - " + motion.animName) 
--- )
---GriffonStudios_Helpers.ResetNoteTracks() 
-
---for m=1 to 84 do
---    Starcraft_Ghost_Main.ApplyMotion nod m
-
-
---myNad = Starcraft_Ghost_Main.ReadNadFile nod.motions[1].animFile
---myNad.bonetracks[1]
-
---enableSceneRedraw()
