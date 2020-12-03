@@ -1,5 +1,6 @@
 fileIn "GriffonStudios_Macros.ms"
 fileIn "GriffonStudios_HelperScripts_Struct.ms"
+fileIn "GriffonStudios_StarcraftGhost_Macros.ms"
 
 struct GriffonStudios_Menu
 (

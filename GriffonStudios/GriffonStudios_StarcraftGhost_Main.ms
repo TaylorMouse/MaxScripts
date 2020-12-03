@@ -319,12 +319,17 @@ struct Starcraft_Ghost_Main
     function ReadMaterials file=
     (
         --format "Looking for shaders and textures\n"
-        
+        Format "Using %\n " file
         struct ghost_material ( shaders, textures )
         struct ghost_shader   ( name, shader, texture, sound, surfflags, envmap, meshtype, sightForce, refMaterial)
         
         local filePath = getFilenamePath file
-        local rootPath = substring file 1 (findString filePath @"\3D\")
+        
+        local pos = findString filePath @"\3D\"
+        if ( pos == undefined ) then pos = findString filePath @"\Levels\"
+        if ( pos == undefined ) then return undefined
+        
+        local rootPath = substring file 1 pos
         
         local gmat = ghost_material ()
         
