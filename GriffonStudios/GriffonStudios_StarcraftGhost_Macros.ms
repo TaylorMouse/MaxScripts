@@ -9,6 +9,7 @@
         Starcraft Ghost Macros
 
 */
+fileIn "GriffonStudios_StarcraftGhost_Dialog.ms"
 
 macroscript GriffonStudios_ImportStarcraftGhostModel
     category:"Griffon Studios"

@@ -77,7 +77,7 @@ struct GriffonStudios_Menu
                 /* menus with sub action items */
                 #("1", "Diablo III Tools",        #("GriffonStudios_ImportDiabloIIIModel", "GriffonStudios_ImportDiabloIIIAnimation") ),
                 #("1", "World Of Warcraft Tools", #("GriffonStudios_WoWSettings", "GriffonStudios_ImportWmoModel", "GriffonStudios_ImportM2StaticModel") ),
-                #("1", "Starcraft Ghost Tools",   #("GriffonStudios_ImportStarcraftGhostModel", "GriffonStudios_ImportStarcraftGhostAnimation") ),
+                #("1", "Starcraft Ghost Tools",   #("GriffonStudios_ImportStarcraftGhostModel", "GriffonStudios_ImportStarcraftGhostAnimation", "GriffonStudios_ConvertToSC2Materials") ),
                 #("1", "Other Tools",             #("GriffonStudios_ShrinkUV2x", "GriffonStudios_GradienMapTool", "GriffonStudios_AnimationSelection") ),
                 
                 /* seperator */
