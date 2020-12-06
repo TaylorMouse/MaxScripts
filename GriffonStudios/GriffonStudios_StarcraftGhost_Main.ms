@@ -9,7 +9,6 @@
         Imports Starcraft Ghost (xbox game) models ( .nod, .noc )
     
     .VERSIONING
-        v0.11 - fixed an animation error yet again
         v0.10 - applying animation
         v0.09 - Reading nad files
         v0.08 - testing different models & bugfixing
@@ -25,11 +24,65 @@
 
 global ghostModel
 global ghostShaderList 
-
+global ghostScaleCorrection = 25.0
 filein "GriffonStudios_HelperScripts_Struct.ms"
 
 struct Starcraft_Ghost_Main
 (
+    function ConvertSC2MaterialFromSCGhostMaterial=
+    (
+        if ( STARCRAFT_II_ARTTOOLS_INSTALLED == false ) then return false
+        
+        struct ghost_mat_map ( mesh, textureName )
+        local textures = #()
+        local ghost_mapping = #()
+        
+        for obj in objects do
+        (
+            if ( obj.material != undefined and ( classof obj.material ) == standard and obj.material.diffuseMap != undefined ) then        
+            (
+                appendifunique textures obj.material.diffuseMap.fileName
+                append ghost_mapping ( ghost_mat_map mesh:obj textureName:obj.material.diffuseMap.fileName )
+                
+            )
+        )
+        
+        for i=1 to 24 do meditmaterials[i] = Standard()
+        
+        local sc2materials = #()
+        for t=1 to textures.count do
+        (
+            local sc2mat = SC2_Standard_Material()
+            sc2mat.name = "ghost_mat_" + ( t as string )
+            sc2mat.Diffuse.fileName = textures[t]
+            sc2mat.Diffuse.ColorChannels = 0 
+            sc2mat.Gloss.fileName = textures[t]
+            sc2mat.Gloss.ColorChannels = 2
+            
+            showTextureMap sc2mat sc2mat.Diffuse true
+            append sc2materials sc2mat
+            meditmaterials[t] = sc2mat
+        )
+        
+        for i=1 to ghost_mapping.count do
+        (
+            local m = ghost_mapping[i].mesh
+            local textureName = ghost_mapping[i].textureName
+            
+            for t=1 to textures.count do
+            (
+                if ( textureName == textures[t] ) then m.material = sc2materials[t]
+                
+            )
+            
+        )
+        
+    ),
+
+    
+    
+    
+    
     /* Find stuff */
     
     function FindNadFile file nadFile=
@@ -247,7 +300,7 @@ struct Starcraft_Ghost_Main
         local gb = Ghost_bone()
         
         
-        gb.translation = [readFloat stream, readFloat stream, readFloat stream] * 100.0 
+        gb.translation = [readFloat stream, readFloat stream, readFloat stream] * ghostScaleCorrection
         local row1 = [readFloat stream, readFloat stream, readFloat stream] 
         local row2 = [readFloat stream, readFloat stream, readFloat stream] 
         local row3 = [readFloat stream, readFloat stream, readFloat stream]
@@ -319,17 +372,12 @@ struct Starcraft_Ghost_Main
     function ReadMaterials file=
     (
         --format "Looking for shaders and textures\n"
-        Format "Using %\n " file
+        
         struct ghost_material ( shaders, textures )
         struct ghost_shader   ( name, shader, texture, sound, surfflags, envmap, meshtype, sightForce, refMaterial)
         
         local filePath = getFilenamePath file
-        
-        local pos = findString filePath @"\3D\"
-        if ( pos == undefined ) then pos = findString filePath @"\Levels\"
-        if ( pos == undefined ) then return undefined
-        
-        local rootPath = substring file 1 pos
+        local rootPath = substring file 1 (findString filePath @"\3D\")
         
         local gmat = ghost_material ()
         
@@ -460,7 +508,7 @@ struct Starcraft_Ghost_Main
             print vg.vertexCount
             for i=1 to vg.vertexCount do
             (
-                append vg.vertices ( gshelp.ReadVector3 stream 100.0 )
+                append vg.vertices ( gshelp.ReadVector3 stream ghostScaleCorrection )
                 append vg.normals  ( gshelp.ReadVector3 stream 1.0)
                 append vg.uvs      ( gshelp.ReadUV3 stream )
           
@@ -1054,7 +1102,7 @@ struct Starcraft_Ghost_Main
                     (
                         at time t 
                         (
-                           -- boneRef.assumeSkinPose()
+                            boneRef.assumeSkinPose()
                             local mtrx = matrix3 1
                             rotate mtrx q
                             mtrx.row4 = boneRef.pos
@@ -1076,7 +1124,7 @@ struct Starcraft_Ghost_Main
             (
                 for key in boneTrack.keys do
                 (
-                    local pos = key.values * 100.0
+                    local pos = key.values * ghostScaleCorrection
                     t = startFrame + key.frame
                     
                     with animate on
@@ -1152,6 +1200,7 @@ struct Starcraft_Ghost_Main
 
             if ( boneTrack.trackType==0 ) then 
             (
+                boneRef.assumeSkinPose()
                 for key in boneTrack.keys do
                 (
                     q = EulerToQuat (eulerangles key.values[1] key.values[2] key.values[3])
@@ -1160,7 +1209,7 @@ struct Starcraft_Ghost_Main
                     (
                         at time t 
                         (
-                            boneRef.assumeSkinPose()
+                            
                             local mtrx = matrix3 1
                             rotate mtrx q
                             mtrx.row4 = boneRef.pos
@@ -1194,7 +1243,7 @@ struct Starcraft_Ghost_Main
                     
                     with animate on
                         at time t 
-                            in coordsys parent boneRef.position = pos * 100.0
+                            in coordsys parent boneRef.position = pos * ghostScaleCorrection
                     
                 )
 
@@ -1235,3 +1284,4 @@ struct Starcraft_Ghost_Main
         return nod
     )
 )
+
