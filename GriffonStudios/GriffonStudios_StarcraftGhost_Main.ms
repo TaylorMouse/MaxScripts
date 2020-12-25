@@ -79,10 +79,6 @@ struct Starcraft_Ghost_Main
         
     ),
 
-    
-    
-    
-    
     /* Find stuff */
     
     function FindNadFile file nadFile=
@@ -756,7 +752,7 @@ struct Starcraft_Ghost_Main
                 b.boneRef.Rotation = b.invTranslation.rotationPart
                 b.boneRef.Pos = b.translation
             )
-            
+            b.boneRef.assumeSkinPose()
         ) 
 
 
@@ -886,7 +882,9 @@ struct Starcraft_Ghost_Main
                             )
                             catch()
                         )
-                        
+                        resetXform theMesh
+                
+                        maxOps.CollapseNodeTo theMesh 1 off
                         theMesh.Material = mat
                         meshLayer.AddNode theMesh
                         mg.refMesh = theMesh
@@ -910,15 +908,18 @@ struct Starcraft_Ghost_Main
     function ApplySkin nod=
     (
         Format "Applying Vertex Weights\n"
-        --disableSceneRedraw()
+        disableSceneRedraw()
         
         for mg in nod.meshGroups do
         (
             if ( mg.refMesh == undefined ) then continue
+            
             --// apply skin modifier to the mesh
-            local skinMod = skin name:"Skin"
-            max modify mode
-            addModifier mg.refMesh skinMod
+            select mg.refMesh
+            max modify mode --> VERY IMPORTANT!!!
+            modPanel.addModToSelection(skin())
+            skinMod = mg.refMesh.Modifiers["skin"]
+            skinMod.bone_Limit = 4
             modPanel.setCurrentObject skinMod
             
             -- //  add the bones to the mesh
@@ -926,17 +927,13 @@ struct Starcraft_Ghost_Main
             (
                 if ( mg.boneList[i] != 205) then  --// bone 205 is not a real bone
                 (
-                    
                     local b = nod.boneList[mg.boneList[i]].boneRef
                     if ( b != undefined ) then
-                    (
-                        if ( i == mg.nBones ) then 
-                            skinOps.addBone skinMod b 1
-                        else
                             skinOps.addBone skinMod b 0
-                    )
                 )
             )
+            update mg.refMesh
+            max views redraw
             
             --// apply vertex weights
             for v=1 to mg.refWeights.count do 
@@ -950,7 +947,9 @@ struct Starcraft_Ghost_Main
             )
             update mg.refMesh
         )
+        
         enableSceneRedraw()
+        redrawViews()
     ),
     function CreateSequences nod=
     (
@@ -1102,7 +1101,7 @@ struct Starcraft_Ghost_Main
                     (
                         at time t 
                         (
-                            boneRef.assumeSkinPose()
+                           -- boneRef.assumeSkinPose()
                             local mtrx = matrix3 1
                             rotate mtrx q
                             mtrx.row4 = boneRef.pos
@@ -1200,7 +1199,6 @@ struct Starcraft_Ghost_Main
 
             if ( boneTrack.trackType==0 ) then 
             (
-                boneRef.assumeSkinPose()
                 for key in boneTrack.keys do
                 (
                     q = EulerToQuat (eulerangles key.values[1] key.values[2] key.values[3])
@@ -1209,7 +1207,7 @@ struct Starcraft_Ghost_Main
                     (
                         at time t 
                         (
-                            
+                            --boneRef.assumeSkinPose()
                             local mtrx = matrix3 1
                             rotate mtrx q
                             mtrx.row4 = boneRef.pos
@@ -1276,12 +1274,16 @@ struct Starcraft_Ghost_Main
         _ghost.ApplySkin nod
         --_ghost.CreateSequences nod
         --_ghost.ApplyMotions nod
-        
+        clearSelection()
         gc()
         
         format "Import Done\n"
         
-        return nod
+        return true
     )
 )
+--GriffonStudios_Helpers.FreeUpMemory()
+--clearlistener()
 
+--file = @"F:\Blizzard\Starcraft Ghost\StarCraft Ghost Xbox\3D\Models\lightInfantry.nod"
+--Starcraft_Ghost_Main.ImportModel file
