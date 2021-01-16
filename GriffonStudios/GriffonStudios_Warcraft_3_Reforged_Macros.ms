@@ -61,6 +61,17 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
     
 )
 
+macroscript Warcraft3Reforged_ResetAnimationTracks category:"Warcraft 3 Reforged Tools" tooltip:"Reset Animation Tracks"
+(
+    local nNoteTracks = numNoteTracks rootNode
+        
+    if(  nNoteTracks > 0 ) then
+    (
+        for n=1 to nNoteTracks do 
+            deleteNoteTrack rootNode (getNoteTrack rootNode 1)
+    )
+)
+
 macroscript Warcaft3Reforged_Settings category:"Warcraft 3 Reforged Tools" tooltip:"Settings" 
 (
     fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"

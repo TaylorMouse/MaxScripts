@@ -41,18 +41,21 @@ struct Warcraft3_Reforged_Menu
         local wc3Action3 = menuMan.createActionItem "Warcaft3Reforged_Animations" subset
         local wc3Action4 = menuMan.createActionItem "Warcaft3Reforged_About" subset
         local wc3Action11 = menuMan.createActionItem "Warcaft3Reforged_Settings" subset
+        local wc3Action12 = menuMan.createActionItem "Warcraft3Reforged_ResetAnimationTracks" subset
         
         wc3Action1.SetTitle "Import Model ..."
         wc3Action2.SetTitle "Export Model ..."
         wc3Action3.SetTitle "Animation Selector"
         wc3Action4.SetTitle "About"
         wc3Action11.SetTitle "Settings ..."
+        wc3Action12.SetTitle "Reset Animation Tracks"
         
         wc3Action1.setUseCustomTitle true
         wc3Action2.setUseCustomTitle true
         wc3Action3.setUseCustomTitle true
         wc3Action4.setUseCustomTitle true
         wc3Action11.setUseCustomTitle true
+        wc3Action12.setUseCustomTitle true
 
         local helperMenu = menuMan.createMenu "Reforged Helpers"
         local helperMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" helperMenu
@@ -93,6 +96,7 @@ struct Warcraft3_Reforged_Menu
         wc3Menu.addItem helperMenuItems -1
         wc3Menu.addItem wc3Seperator -1
         wc3Menu.addItem wc3Action11 -1
+        wc3Menu.addItem wc3Action12 -1
         wc3Menu.addItem wc3Action4 -1
         
         local pos = Warcraft3_Reforged_Menu.GetHelpMenuPosition()

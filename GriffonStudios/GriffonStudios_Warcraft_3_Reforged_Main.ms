@@ -2217,6 +2217,145 @@ struct Warcraft3_Reforged
             )
         )
     ),
+    function BuildBONE2=
+    (
+        local boneList = mdx.bone
+        local bpos = mdx.bpos
+        local boneLayer = GriffonStudios_Helpers.CreateLayer "Bones"
+        
+        format "Building Bones\n"
+        -- create the bones
+        for b in boneList do
+        (
+            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
+            aBone.Name = b.name
+            aBone.showLinks = true
+            aBone.Width = 0.05
+            aBone.Height = 0.05
+            aBone.setBoneEnable false 0
+            
+            b.boneRef = aBone
+            
+            boneLayer.AddNode aBone
+        )
+        
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+
+            if bpos != undefined then 
+            (
+            
+                local mtrx = bpos[obj.id].matrix
+                
+                b.pos = mtrx.translationpart
+            )
+        )
+        
+        -- build the hierarchy
+        for b in boneList do
+        (
+            if ( b.ParentBoneId > 0 and b.ParentBoneId <= boneList.count ) then 
+            (
+                local parentBone = boneList[b.ParentBoneId].boneRef
+                b.boneRef.parent = parentBone
+            )
+        )
+
+        for objX in objects do
+            addNewKey objX.controller 0
+        
+       -- apply bone animation
+        local applyBoneAnim = true
+        if applyBoneAnim == true then 
+        for obj in boneList do
+        (
+            local b = obj.boneRef
+            
+            b.assumeSkinPose()
+
+            if ( obj.KGRT != undefined ) then 
+            (
+               -- b.assumeSkinPose()
+                
+                local dr = dummy name:"DummyRotationController"
+                dr.rotation.controller = b.rotation.controller
+                local q0 = dr.transform
+                local prevTime = 0
+                
+                for anim in obj.KGRT.KG do
+                (
+                    local t = anim.Time + 10
+                    local q = anim.Point
+                    
+                    if ( prevTime == t ) then continue else prevTime = t
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys q0 dr.rotation = q
+                        )
+                )
+                with animate on b.rotation.controller = copy dr.rotation.controller
+                
+                delete dr
+
+            )
+            if ( obj.KGTR != undefined ) then
+            (
+                    local dp = dummy name:"DummyPositionController" 
+                    dp.position.controller = b.position.controller
+                    local p0 = dp.transform
+                    local prevTime = 0
+
+                    for anim in obj.KGTR.KG do
+                    (
+                        local t = anim.Time + 10
+                        local p = anim.Point
+
+                        if ( prevTime == t ) then continue else prevTime = t
+                        
+                        with animate on 
+                            at time t
+                            (
+                                in coordsys p0 dp.position = p 
+                            )
+                    )
+                    with animate on b.position.controller = copy dp.position.controller
+                    
+                    delete dp
+            )
+            
+            if ( obj.KGSC != undefined ) then
+            (
+               -- b.assumeSkinPose()
+                
+                local ds = dummy name:"DummyScaleController" 
+                ds.scale.controller = b.scale.controller
+                local p0 = ds.transform
+                local prevTime = 0
+                
+                for anim in obj.KGSC.KG do
+                (
+                    local t = anim.Time + 10
+                    local p = anim.Point
+                        
+                    if ( prevTime == t ) then continue else prevTime = t
+                    
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 ds.scale = p 
+                        )
+                )
+                with animate on b.scale.controller = copy ds.scale.controller
+                
+                delete ds
+            )
+            
+        )
+   
+    ),
+    
     function BuildSKIN =
     (
         local geos = mdx.geos
@@ -3250,13 +3389,16 @@ struct Warcraft3_Reforged
 --         print mdx.RIBB
 --         print mdx.PRE2
         
-Warcraft3_Reforged.BuildBONE()
+--Warcraft3_Reforged.BuildBONE()
+Warcraft3_Reforged.BuildBONE2()
 Warcraft3_Reforged.BuildGEOS()
+
 Warcraft3_Reforged.BuildSKIN()
+/*
+--Warcraft3_Reforged.FixAnimation()
 
-Warcraft3_Reforged.FixAnimation()
-
-Warcraft3_Reforged.BuildMODL()
+--Warcraft3_Reforged.BuildMODL()
+*/
 Warcraft3_Reforged.BuildMTLS()
 Warcraft3_Reforged.AssignMTLS()
 Warcraft3_Reforged.BuildATCH()
