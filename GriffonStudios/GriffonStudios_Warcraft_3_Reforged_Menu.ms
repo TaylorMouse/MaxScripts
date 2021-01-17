@@ -29,6 +29,7 @@ struct Warcraft3_Reforged_Menu
 
         Warcraft3_Reforged_Menu.RemoveMenu "WC3 Reforged Tools"
         Warcraft3_Reforged_Menu.RemoveMenu "Reforged Helpers"
+        Warcraft3_Reforged_Menu.RemoveMenu "Reforged Utilities"
             
         local wc3Menu = menuMan.createMenu "WC3 Reforged Tools"
         local wc3MenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" wc3Menu
@@ -41,21 +42,41 @@ struct Warcraft3_Reforged_Menu
         local wc3Action3 = menuMan.createActionItem "Warcaft3Reforged_Animations" subset
         local wc3Action4 = menuMan.createActionItem "Warcaft3Reforged_About" subset
         local wc3Action11 = menuMan.createActionItem "Warcaft3Reforged_Settings" subset
-        local wc3Action12 = menuMan.createActionItem "Warcraft3Reforged_ResetAnimationTracks" subset
+        
         
         wc3Action1.SetTitle "Import Model ..."
         wc3Action2.SetTitle "Export Model ..."
         wc3Action3.SetTitle "Animation Selector"
         wc3Action4.SetTitle "About"
         wc3Action11.SetTitle "Settings ..."
-        wc3Action12.SetTitle "Reset Animation Tracks"
+        
         
         wc3Action1.setUseCustomTitle true
         wc3Action2.setUseCustomTitle true
         wc3Action3.setUseCustomTitle true
         wc3Action4.setUseCustomTitle true
         wc3Action11.setUseCustomTitle true
+        
+
+        
+        local utilitiesMenu = menuMan.createMenu "Reforged Utilities"
+        local utilitiesMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" utilitiesMenu
+        utilitiesMenuItems.SetTitle "Utilities"
+        utilitiesMenuItems.setUseCustomTitle true
+        
+        local wc3Action12 = menuMan.createActionItem "Warcraft3Reforged_ResetAnimationTracks" subset
+        local wc3Action13 = menuMan.createActionItem "Warcaft3Reforged_SC2AttachmentpointConvertor" subset
+        
+        wc3Action12.SetTitle "Reset Animation Tracks"
+        wc3Action13.SetTitle "Convert to SC2 Attachment Points"
+        
         wc3Action12.setUseCustomTitle true
+        wc3Action13.setUseCustomTitle true
+        
+        utilitiesMenu.addItem wc3Action12 -1
+        utilitiesMenu.addItem wc3Action13 -1
+
+
 
         local helperMenu = menuMan.createMenu "Reforged Helpers"
         local helperMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" helperMenu
@@ -94,9 +115,9 @@ struct Warcraft3_Reforged_Menu
         wc3Menu.addItem wc3Action2 -1
         wc3Menu.addItem wc3Action3 -1
         wc3Menu.addItem helperMenuItems -1
+        wc3Menu.addItem utilitiesMenuItems -1
         wc3Menu.addItem wc3Seperator -1
         wc3Menu.addItem wc3Action11 -1
-        wc3Menu.addItem wc3Action12 -1
         wc3Menu.addItem wc3Action4 -1
         
         local pos = Warcraft3_Reforged_Menu.GetHelpMenuPosition()

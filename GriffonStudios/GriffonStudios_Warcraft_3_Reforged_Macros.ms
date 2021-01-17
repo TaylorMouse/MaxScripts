@@ -188,3 +188,9 @@ macroscript Warcaft3Reforged_PopCorn    category:"Warcraft 3 Reforged Tools" too
     fileIn "GriffonStudios_Warcraft_3_Reforged_Plugins_PopCorn.ms"
     WC3RefPopCorn()
 )
+
+macroscript Warcaft3Reforged_SC2AttachmentpointConvertor    category:"Warcraft 3 Reforged Tools" tooltip:"Convert Attachmentpoints" 
+(
+    fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
+    StarTools_Helpers.ConvertAttachmentPoints()
+)

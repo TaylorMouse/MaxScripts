@@ -1,11 +1,17 @@
 /*
-    (c) 2020 Griffon Studios
+    .COPYRIGHT
+    |   (c) 2020-2021 Griffon Studios
+    |   Warcraft and Warcraft III Reforged are properties of Blizzard Entertainment
     
-    by Taylor Mouse
+    .AUTHOR
+    |   Taylor Mouse
     
-    Warcraft III Reforged Import model
+    .DESCRIPTION
+    |   Warcraft III Reforged Import model
     
 */
+global gClid
+global gBpos
 
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
@@ -32,7 +38,7 @@ struct Warcraft3_Reforged_KG
 	( Time, Point, inTan, outTan, LineType )
 
 struct Warcraft3_Reforged_CLID
-    ( Id, Name, ParentId, Flags, Offset, Size, OffsetBounding, BoundingType, KGTR, KGRT, KGSC, Pos, Radius, Height, objRef )
+    ( Id, Name, ParentId, Pos, Radius, Height, objRef, Flags, Offset, Size, OffsetBounding, BoundingType, KGTR, KGRT, KGSC )
 
 struct Warcraft3_Reforged_TEXS
     ( Id, replacableId, fileNameOnly, path,  extension, flags )
@@ -127,7 +133,7 @@ struct Warcraft3_Reforged_PRE2
 
 GLOBAL mdxFileVersion = 0
 GLOBAL mdx = undefined   
-GLOBAL mdxConvertToSC2AnimationNames = true
+GLOBAL mdxConvertToSC2AnimationNames = false
 GLOBAL mdxFilterMode = #("none","transparent","blend","additive","add alpha","modulate","modulate 2x","fallback" )    
 GLOBAL mdxShadingFlag = # ("Unshaded","Sphere environment map","Wrap Width","Wrap Hieght","Two sided","Unfogged","No depth test","No depth set","Fallback" )
 
@@ -155,7 +161,12 @@ struct StarTools_Helpers
     ),
     function ConvertAttachmentPoints=
     (
-        try
+        try ( 
+            test = SC2_Standard_Material() 
+            STARCRAFT_II_ARTTOOLS_INSTALLED = true
+        ) catch()
+        
+        if ( STARCRAFT_II_ARTTOOLS_INSTALLED == true ) then
         (
             for obj in objects do 
             (
@@ -172,6 +183,7 @@ struct StarTools_Helpers
                     pt.Name = newName
                     pt.Pos = obj.pos
                     pt.Rotation = obj.rotation
+                    rotate pt ( eulerangles 0 0 90 )
                     pt.parent = obj.parent
                 )
             )
@@ -182,7 +194,11 @@ struct StarTools_Helpers
                     delete obj
             )
         )
-        catch ()
+        else
+        (
+            MessageBox "Starcraft II Art Tools not found"
+            
+        )
     ),
     function ConvertHitTestBoxes=
     (
@@ -1187,9 +1203,10 @@ struct Warcraft3_Reforged
             cl.Offset = ftell stream
             cl.Size = size - 80 - 16
             
-            GriffonStudios_Helpers.SkipBytes stream cl.Size
-            cl.OffsetBounding = ftell stream
-            GriffonStudios_Helpers.SkipBytes stream 28
+            GriffonStudios_Helpers.SkipBytes stream cl.Size --> read in the next part
+            cl.OffsetBounding = ftell stream 
+            
+            GriffonStudios_Helpers.SkipBytes stream 28 --> read in the next part
             
             append clid cl
             
@@ -1248,6 +1265,7 @@ struct Warcraft3_Reforged
             
             append bpos b
         )
+        
         return bpos
     ),
     function ReadGEOA stream tag=
@@ -1793,7 +1811,7 @@ struct Warcraft3_Reforged
         obj.name = modl.name
         
         freeze obj
-        
+        hide obj
         return obj
     ),
     function BuildGEOS=
@@ -2249,6 +2267,7 @@ struct Warcraft3_Reforged
                 local mtrx = bpos[obj.id].matrix
                 
                 b.pos = mtrx.translationpart
+                
             )
         )
         
@@ -2355,7 +2374,6 @@ struct Warcraft3_Reforged
         )
    
     ),
-    
     function BuildSKIN =
     (
         local geos = mdx.geos
@@ -2498,7 +2516,6 @@ struct Warcraft3_Reforged
     function BuildCLID=
     (
         local clid = mdx.clid
-        local boneList = mdx.bone
         local bpos = mdx.bpos
         
         if (clid == undefined ) then return undefined
@@ -2507,55 +2524,60 @@ struct Warcraft3_Reforged
         local layer = GriffonStudios_Helpers.CreateLayer "Collision Objects"
         for cl in clid do
         (
-            local cap = undefined
-            
-            if ( cl.BoundingType == 0 ) then 
-                cap = capsule name:cl.name radius:cl.radius height:cl.height heighttype:0
-            
-            if cap == undefined then 
-            (
-                format "[WARNING] This bounding type is not implemented (Bounding type = %)\n" cl.BoundingType
-                cap = capsule name:cl.name radius:cl.radius height:cl.height
-            )
-            
-            cl.objRef = cap
-            rotate cap (angleaxis 180 [0,1,0])
-            cap.boxmode = on
-            cap.castShadows = false
-            cap.renderable = off
-            cap.showFrozenInGray = off
-            cap.wirecolor = color 64 128 255
-            
-            if (cap.name == "B_KGS_Root" ) then cap.wirecolor = color 255 64 64 
-
-            freeze cap
-            resetXform cap
-            maxOps.CollapseNodeTo capp 1 off
-            
-            layer.AddNode cap
-            cap.assumeSkinPose()
-            
             local mtrx = bpos[cl.id].matrix
+        
+            local height = cl.height
+            local radius = cl.radius / 2.0
+            
+            
+            --format "BoundingType (%) : % \n" cl.name cl.boundingType
+            
+            local capsul = capsule name:cl.name length:height radius:radius boxmode:on
+            
+            if (cl.boundingType == 0 ) then
+            (
+                if (cl.name == "B_KGS_Root" ) then 
+                (
+                    capsul.height = height * 4.0 - ( radius * 2.0 )
+                    capsul.radius = radius * 2.0
+                    centerpivot capsul
+                    capsul.wirecolor = color 255 64 64 
+                )
+                else
+                (
+                    capsul.wirecolor = color 64 128 255
+                    rotate capsul (angleaxis 180 [0,1,0])
+                    resetXform capsul
+                    maxOps.CollapseNodeTo capsul 1 off
+                )
+            )
+            if (cl.boundingType == 2 ) then
+            (
+                capsul.wirecolor = color 64 128 255
+                centerpivot capsul
+                
+            )
+
+                
+            capsul.transform = mtrx
+            
             
             if ( cl.KGRT != undefined ) then 
             (
-                -- initial pose
-                 with animate on at time 0 in coordsys mtrx cap.rotation = cl.KGRT.KG[1].point
                 
                 for anim in cl.KGRT.KG do
                 (
                     local t = anim.time + 10
                     local q = anim.Point
                     
-                    with animate on at time t in coordsys mtrx cap.rotation = q
+                    with animate on at time t in coordsys mtrx capsul.rotation = q
                 )
                     
             )
             
             if ( cl.KGTR != undefined ) then 
             (
-                -- initial pose
-                with animate on at time 0 in coordsys mtrx cap.pos = cl.KGTR.KG[1].point
+
                 local prevTime = 0
                 for anim in cl.KGTR.KG do
                 (
@@ -2564,12 +2586,14 @@ struct Warcraft3_Reforged
                     
                     if ( prevTime == t ) then continue else prevTime = t
                     
-                    with animate on at time t in coordsys mtrx cap.pos = p
+                    with animate on at time t in coordsys mtrx capsul.pos = p
                 )
                     
             )
-
-        )          
+            
+            freeze capsul
+            layer.addnode capsul
+        )
     ),
     function BuildGEOA=
     (
@@ -3283,6 +3307,7 @@ struct Warcraft3_Reforged
     */
     function Import file=
     (
+        
         struct wc3_reforged_mdx ( TAGS, VERS, MODL, SEQS, MTLS, TEXS, GEOS, BONE, ATCH, CLID, BPOS, GEOA, EVTS, PIVT, FAFX, CAMS, CORN, LITE, GLBS, TXAN, RIBB, PRE2)
 
         mdx = wc3_reforged_mdx()
@@ -3388,23 +3413,25 @@ struct Warcraft3_Reforged
 --         print mdx.TXAN
 --         print mdx.RIBB
 --         print mdx.PRE2
-        
---Warcraft3_Reforged.BuildBONE()
-Warcraft3_Reforged.BuildBONE2()
-Warcraft3_Reforged.BuildGEOS()
 
-Warcraft3_Reforged.BuildSKIN()
+        gClid = mdx.CLID
+        gBpos = mdx.BPOS
+
+--Warcraft3_Reforged.BuildMODL()  --> build global bounding box
+Warcraft3_Reforged.BuildBONE2() --> build bones, bone structure and animation
+Warcraft3_Reforged.BuildGEOS()  --> build meshes
+Warcraft3_Reforged.BuildSKIN()  --> apply vertex weights
+Warcraft3_Reforged.BuildSEQS()  --> build animation sequences so we can select them in the animation selector
+Warcraft3_Reforged.BuildATCH()  --> build attachment points
+Warcraft3_Reforged.BuildCLID()  --> build collision objects
+
 /*
---Warcraft3_Reforged.FixAnimation()
-
---Warcraft3_Reforged.BuildMODL()
-*/
 Warcraft3_Reforged.BuildMTLS()
 Warcraft3_Reforged.AssignMTLS()
-Warcraft3_Reforged.BuildATCH()
-Warcraft3_Reforged.BuildCLID()
+
+
 Warcraft3_Reforged.BuildGEOA()
-Warcraft3_Reforged.BuildSEQS()
+
 Warcraft3_Reforged.BuildEVTS()
 Warcraft3_Reforged.BuildFAFX()
 Warcraft3_Reforged.BuildCAMS()
@@ -3413,8 +3440,15 @@ Warcraft3_Reforged.BuildPIVT()
 Warcraft3_Reforged.BuildRIBB()
 Warcraft3_Reforged.BuildPRE2()
 Warcraft3_Reforged.BuildCORN()
+*/
 
 
+
+/*
+--Warcraft3_Reforged.FixAnimation()
+
+
+*/
         fclose stream
 
         if (mdxConvertToSC2AnimationNames == true ) then
@@ -3433,8 +3467,28 @@ Warcraft3_Reforged.BuildCORN()
         setArrowCursor() 
         txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
         messagebox txt
+        
+        
+        
     )
 )
+
+/*
+
+*/
+UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+function ViewPortAttachmentPointDisplay=
+(
+            
+    gw.setTransform ( matrix3 1 )
+    for obj in objects where ( classof obj == WC3RefAttachment and obj.ishidden == false ) do
+    (
+        gw.text ( obj.pos + [0, 0, 10] ) ( obj.name as string ) color:Yellow
+    )
+    gw.updateScreen()
+    
+)
+RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 
 ClearListener()
 
