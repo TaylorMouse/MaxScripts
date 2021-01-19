@@ -270,6 +270,11 @@ struct StarTools_Helpers
             
             return theSphere
         )
+    ),
+    function ConvertMaterials=
+    (
+        print "TODO: Not implemented yet"
+        
     )
 )
 
@@ -1807,12 +1812,12 @@ struct Warcraft3_Reforged
     (
         local modl = mdx.modl
         --print modl
-        local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
-        obj.name = modl.name
+        --local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
+        --obj.name = modl.name
         
-        freeze obj
-        hide obj
-        return obj
+        --freeze obj
+        --hide obj
+        --return obj
     ),
     function BuildGEOS=
     (
@@ -2532,28 +2537,43 @@ struct Warcraft3_Reforged
             
             --format "BoundingType (%) : % \n" cl.name cl.boundingType
             
-            local capsul = capsule name:cl.name length:height radius:radius boxmode:on
-            
+            local capsul = capsule name:cl.name length:height radius:radius boxmode:on 
+            capsul.wirecolor = color 0 64 255
+            capsul.renderable = off
+            capsul.castShadows = off
+            capsul.receiveshadows = off
+            capsul.ApplyAtmospherics = off
+            capsul.inheritVisibility = off
+            capsul.primaryVisibility = off
+            capsul.secondaryVisibility = off
+
             if (cl.boundingType == 0 ) then
             (
-                if (cl.name == "B_KGS_Root" ) then 
+                local isDone = false
+                if (cl.name == "B_KGS_Root"  ) then 
                 (
                     capsul.height = height * 4.0 - ( radius * 2.0 )
                     capsul.radius = radius * 2.0
                     centerpivot capsul
-                    capsul.wirecolor = color 255 64 64 
+                    capsul.wirecolor = color 255 64 0
+                    isDone = true
                 )
-                else
+                if ( cl.name == "B_KGS_Head" ) then 
                 (
-                    capsul.wirecolor = color 64 128 255
+                    centerpivot capsul
+                    isDone = true
+                ) 
+                
+                if ( isDone == false ) then
+                (
                     rotate capsul (angleaxis 180 [0,1,0])
                     resetXform capsul
                     maxOps.CollapseNodeTo capsul 1 off
                 )
+            
             )
             if (cl.boundingType == 2 ) then
             (
-                capsul.wirecolor = color 64 128 255
                 centerpivot capsul
                 
             )
@@ -3298,7 +3318,10 @@ struct Warcraft3_Reforged
                 local m = item.meshRef
                 if m !=undefined then 
                     if mtls != undefined then 
+                    (
                         m.material = mtls[item.MATS.ID].MaterialRef
+                        showtexturemap m.material true
+                    )
             )  
         )catch()
     ),
@@ -3312,7 +3335,9 @@ struct Warcraft3_Reforged
 
         mdx = wc3_reforged_mdx()
         
-        local assetFolder = getinisetting "griffonstudios.config" "Warcraft3Reforged" "AssetFolder"
+        local workingDir = getdir #temp
+        local iniFile = workingDir + "\\griffonstudios.config"
+        local assetFolder = getinisetting iniFile "Warcraft3Reforged" "AssetFolder"
         Warcraft3_AssetFolder = assetFolder   
         
         
@@ -3417,39 +3442,26 @@ struct Warcraft3_Reforged
         gClid = mdx.CLID
         gBpos = mdx.BPOS
 
---Warcraft3_Reforged.BuildMODL()  --> build global bounding box
-Warcraft3_Reforged.BuildBONE2() --> build bones, bone structure and animation
-Warcraft3_Reforged.BuildGEOS()  --> build meshes
-Warcraft3_Reforged.BuildSKIN()  --> apply vertex weights
-Warcraft3_Reforged.BuildSEQS()  --> build animation sequences so we can select them in the animation selector
-Warcraft3_Reforged.BuildATCH()  --> build attachment points
-Warcraft3_Reforged.BuildCLID()  --> build collision objects
+        Warcraft3_Reforged.BuildMODL()  --> build global bounding box
+        Warcraft3_Reforged.BuildBONE2() --> build bones, bone structure and animation
+        Warcraft3_Reforged.BuildGEOS()  --> build meshes
+        Warcraft3_Reforged.BuildSKIN()  --> apply vertex weights
+        Warcraft3_Reforged.BuildSEQS()  --> build animation sequences so we can select them in the animation selector
+        Warcraft3_Reforged.BuildATCH()  --> build attachment points
+        Warcraft3_Reforged.BuildCLID()  --> build collision objects
+        Warcraft3_Reforged.BuildMTLS()  --> build the materials based on the textures
+        Warcraft3_Reforged.AssignMTLS() --> assign the materials to the correct meshes
+        Warcraft3_Reforged.BuildGEOA()  --> build alpha animation of the mesh
+        Warcraft3_Reforged.BuildEVTS()  --> build events
+        Warcraft3_Reforged.BuildFAFX()  --> build facial effects
+        Warcraft3_Reforged.BuildCAMS()  --> build cameras
+        Warcraft3_Reforged.BuildLITE()  --> build lites
+        --Warcraft3_Reforged.BuildPIVT()  --> build pivots
+        Warcraft3_Reforged.BuildRIBB()  --> build ribbon emitters
+        Warcraft3_Reforged.BuildPRE2()  --> build particle emitters
+        Warcraft3_Reforged.BuildCORN()  --> build popcorn emitters
 
-/*
-Warcraft3_Reforged.BuildMTLS()
-Warcraft3_Reforged.AssignMTLS()
-
-
-Warcraft3_Reforged.BuildGEOA()
-
-Warcraft3_Reforged.BuildEVTS()
-Warcraft3_Reforged.BuildFAFX()
-Warcraft3_Reforged.BuildCAMS()
-Warcraft3_Reforged.BuildLITE()
-Warcraft3_Reforged.BuildPIVT()
-Warcraft3_Reforged.BuildRIBB()
-Warcraft3_Reforged.BuildPRE2()
-Warcraft3_Reforged.BuildCORN()
-*/
-
-
-
-/*
---Warcraft3_Reforged.FixAnimation()
-
-
-*/
-        fclose stream
+    fclose stream
 
         if (mdxConvertToSC2AnimationNames == true ) then
         (
@@ -3468,7 +3480,7 @@ Warcraft3_Reforged.BuildCORN()
         txt = "DONE (import took " + (((endedAt - startedAt) / 1000.0 as integer ) as string ) + " seconds )" 
         messagebox txt
         
-        
+        clearSelection()
         
     )
 )
@@ -3481,7 +3493,8 @@ function ViewPortAttachmentPointDisplay=
 (
             
     gw.setTransform ( matrix3 1 )
-    for obj in objects where ( classof obj == WC3RefAttachment and obj.ishidden == false ) do
+    for obj in objects where 
+        ( classof obj == WC3RefAttachment and obj.ishidden == false and obj.isfrozen == false ) do
     (
         gw.text ( obj.pos + [0, 0, 10] ) ( obj.name as string ) color:Yellow
     )

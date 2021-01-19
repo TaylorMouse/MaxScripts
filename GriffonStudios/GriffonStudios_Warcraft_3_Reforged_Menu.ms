@@ -57,7 +57,7 @@ struct Warcraft3_Reforged_Menu
         wc3Action4.setUseCustomTitle true
         wc3Action11.setUseCustomTitle true
         
-
+        /* UTILITIES MENU*/
         
         local utilitiesMenu = menuMan.createMenu "Reforged Utilities"
         local utilitiesMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" utilitiesMenu
@@ -66,17 +66,53 @@ struct Warcraft3_Reforged_Menu
         
         local wc3Action12 = menuMan.createActionItem "Warcraft3Reforged_ResetAnimationTracks" subset
         local wc3Action13 = menuMan.createActionItem "Warcaft3Reforged_SC2AttachmentpointConvertor" subset
+        local wc3Action14 = menuMan.createActionItem "Warcaft3Reforged_SC2HittestBoxes" subset
+        local wc3Action15 = menuMan.createActionItem "Warcaft3Reforged_SC2MaterialConvertor" subset
         
         wc3Action12.SetTitle "Reset Animation Tracks"
         wc3Action13.SetTitle "Convert to SC2 Attachment Points"
+        wc3Action14.SetTitle "Convert to SC2 Hit Test Boxes"
+        wc3Action15.SetTitle "Convert to SC2 Materials"
         
         wc3Action12.setUseCustomTitle true
         wc3Action13.setUseCustomTitle true
+        wc3Action14.setUseCustomTitle true
+        wc3Action15.setUseCustomTitle true
         
         utilitiesMenu.addItem wc3Action12 -1
         utilitiesMenu.addItem wc3Action13 -1
+        utilitiesMenu.addItem wc3Action14 -1
+        utilitiesMenu.addItem wc3Action15 -1
+
+        /* DISPLAY MENU*/
+        
+        local displayMenu = menuMan.createMenu "Reforged Display"
+        local displayMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" displayMenu
+        displayMenuItems.SetTitle "Display"
+        displayMenuItems.setUseCustomTitle true
+        
+        local wc3Action21 = menuMan.createActionItem "Warcaft3Reforged_CollapseHitTests" subset
+        local wc3Action22 = menuMan.createActionItem "Warcaft3Reforged_ExpandHitTests" subset
+        local wc3Action23 = menuMan.createActionItem "Warcaft3Reforged_CollapseAttachments" subset
+        local wc3Action24 = menuMan.createActionItem "Warcaft3Reforged_ExpandAttachments" subset
+        
+        wc3Action21.SetTitle "Collapse Hit Tests"
+        wc3Action22.SetTitle "Expand Hit Tests"
+        wc3Action23.SetTitle "Collapse Attachment Points"
+        wc3Action24.SetTitle "Expand Attachment Points"
+        
+        wc3Action21.setUseCustomTitle true
+        wc3Action22.setUseCustomTitle true
+        wc3Action23.setUseCustomTitle true
+        wc3Action24.setUseCustomTitle true
+        
+        displayMenu.addItem wc3Action21 -1
+        displayMenu.addItem wc3Action22 -1
+        displayMenu.addItem wc3Action23 -1
+        displayMenu.addItem wc3Action24 -1
 
 
+        /* HELPER MENU */
 
         local helperMenu = menuMan.createMenu "Reforged Helpers"
         local helperMenuItems = menuMan.createSubMenuItem "ReforgedToolsSubMenu" helperMenu
@@ -111,12 +147,20 @@ struct Warcraft3_Reforged_Menu
         helperMenu.addItem wc3Action9 5
         helperMenu.addItem wc3Action10 6
 
+
+        /* MAIN MENU STRUCTURE*/ 
+
         wc3Menu.addItem wc3Action1 -1
         wc3Menu.addItem wc3Action2 -1
         wc3Menu.addItem wc3Action3 -1
+        
+        wc3Menu.addItem wc3Seperator -1
+
         wc3Menu.addItem helperMenuItems -1
         wc3Menu.addItem utilitiesMenuItems -1
+        wc3Menu.addItem displayMenuItems -1
         wc3Menu.addItem wc3Seperator -1
+        
         wc3Menu.addItem wc3Action11 -1
         wc3Menu.addItem wc3Action4 -1
         

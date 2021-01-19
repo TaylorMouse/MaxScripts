@@ -75,7 +75,8 @@ macroscript Warcraft3Reforged_ResetAnimationTracks category:"Warcraft 3 Reforged
 macroscript Warcaft3Reforged_Settings category:"Warcraft 3 Reforged Tools" tooltip:"Settings" 
 (
     fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
-
+    local workingDir = getdir #temp
+    
     rollout SettingsWindow "Warcraft 3 Reforged Settings"
     (
         group "Root asset folder"
@@ -100,7 +101,8 @@ macroscript Warcaft3Reforged_Settings category:"Warcraft 3 Reforged Tools" toolt
             local assetFolder = txtRootAssetFolder.text
             if ( assetFolder != undefined) then 
             (
-                setinisetting "griffonstudios.config" "Warcraft3Reforged" "AssetFolder" ( assetFolder   )
+                local iniFile = workingDir + "\\griffonstudios.config"
+                setinisetting iniFile "Warcraft3Reforged" "AssetFolder" assetFolder
                 Warcraft3_AssetFolder = assetFolder 
             )
             destroydialog SettingsWindow
@@ -108,7 +110,9 @@ macroscript Warcaft3Reforged_Settings category:"Warcraft 3 Reforged Tools" toolt
         
         on SettingsWindow open do
         (
-            local assetFolder = getinisetting "griffonstudios.config" "Warcraft3Reforged" "AssetFolder"
+            local iniFile = workingDir + "\\griffonstudios.config"
+            
+            local assetFolder = getinisetting iniFile "Warcraft3Reforged" "AssetFolder"
             if assetFolder == undefined then txtRootAssetFolder.text = "" else txtRootAssetFolder.text = assetFolder
             Warcraft3_AssetFolder = assetFolder   
             
@@ -194,3 +198,69 @@ macroscript Warcaft3Reforged_SC2AttachmentpointConvertor    category:"Warcraft 3
     fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
     StarTools_Helpers.ConvertAttachmentPoints()
 )
+
+macroscript Warcaft3Reforged_SC2MaterialConvertor    category:"Warcraft 3 Reforged Tools" tooltip:"Convert Materials" 
+(
+    fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
+    StarTools_Helpers.ConvertMaterials()
+)
+
+
+macroscript Warcaft3Reforged_SC2HitTestBoxes    category:"Warcraft 3 Reforged Tools" tooltip:"Convert HitTestBoxes" 
+(
+    fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
+    StarTools_Helpers.ConvertHitTestBoxes()
+    StarTools_Helpers.ConvertToBoundingSphere collBox "Vol_Shield"
+)
+
+macroscript Warcaft3Reforged_CollapseHitTests category:"Warcraft 3 Reforged Tools" tooltip:"Collapse Hit Tests" 
+(
+    for obj in objects do 
+    (
+        if ( findstring obj.name "B_KGS_" != undefined ) then
+        (
+            obj.wirecolor = color 0 64 255
+            
+            if ( obj.name == "B_KGS_Root") then obj.wirecolor = color 255 64 0
+        
+            freeze obj
+            obj.boxmode = on
+        )
+    )    
+)
+
+macroscript Warcaft3Reforged_ExpandHitTests category:"Warcraft 3 Reforged Tools" tooltip:"Expand Hit Tests" 
+(
+    for obj in objects do 
+    (
+        if ( findstring obj.name "B_KGS_" != undefined ) then
+        (
+            unfreeze obj
+            obj.boxmode = off
+        )
+    )    
+)
+
+macroscript Warcaft3Reforged_CollapseAttachments category:"Warcraft 3 Reforged Tools" tooltip:"Collapse Attachments" 
+(
+    for obj in objects do 
+    (
+        if( classof obj == WC3RefAttachment ) then 
+        (
+            freeze obj
+        )
+    )
+)
+
+macroscript Warcaft3Reforged_ExpandAttachments category:"Warcraft 3 Reforged Tools" tooltip:"Expand Attachments" 
+(
+    for obj in objects do 
+    (
+        if( classof obj == WC3RefAttachment ) then 
+        (
+            unfreeze obj
+        )
+    )
+)
+
+
