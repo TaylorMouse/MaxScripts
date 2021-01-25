@@ -1,6 +1,30 @@
 
 # Warcraft 3 Reforged mdx format
 
+## Float Animation
+
+This chunk contains animation based on a float.
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Number of Points|
+|4 byte int| Line Type|
+|4 byte int| Parent ID|
+
+For each Point:
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Keyframe, again based on 1000 FPS, converted this to 30 FPS|
+|4 byte float| Value at this keyframe|
+
+If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+
+|Chunk size| Description|
+|--|--|
+|4 byte float| Tangent transition for the In part|
+|4 byte float| Tangent transition for the Out part|
+
 ## TAGS
 
 Every tag is followed by its size in bytes, except the first 4 bytes, that holds the main tag being MDLX. The following explains the different tags and their build up.
@@ -60,7 +84,7 @@ In the MTLS tag, we will find different layers, each starting with the LAYS tag
 
 Settings for a layer:
 
-    /* Filter Mode
+    Filter Mode
       0x0: none
       0x1: transparent
       0x2: blend
@@ -69,9 +93,8 @@ Settings for a layer:
       0x5: modulate
       0x6: modulate 2x
       0x7: fallback
-    */
-        
-    /* Shading Flag
+            
+    Shading Flag
       0x1: unshaded
       0x2: sphere environment map
       0x4: Wrap Width
@@ -81,7 +104,6 @@ Settings for a layer:
       0x40: no depth test
       0x80: no depth set               
       0x100: Fallback
-    */
 
 |Chunk size| Description|
 |--|--|
@@ -97,26 +119,149 @@ If the Layer size exceeds 52 bytes, then it has texture floated animation define
 - KMTA: Alpha animation of the texture.
 - KMTE: Unused -> Emission maybe ?
 
-### Float Animation
+### TEXS
 
-This chunk contains animation based on a float.
-
-|Chunk size| Description|
-|--|--|
-|4 byte int| Number of Points|
-|4 byte int| Line Type|
-|4 byte int| Parent ID|
-
-For each Point:
+Each chunk is 268 bytes
 
 |Chunk size| Description|
 |--|--|
-|4 byte int| Keyframe, again based on 1000 FPS, converted this to 30 FPS|
-|4 byte float| Value at this keyframe|
+|4 byte int| Replaceable Id|
+|260 byte characters| Full pathname of the texture|
+|4 byte int| Flags usually 3|
 
-If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+    Replaceable Id
+    0: a texture
+    1: presumably a color of some kind, no texture name found
 
-|Chunk size| Description|
-|--|--|
-|4 byte float| Tangent transition for the In part|
-|4 byte float| Tangent transition for the Out part|
+### GEOS
+
+This chunk contains the geometry sets.
+
+The 4 first bytes contain the size of the chunk and each chunk is split into 11 different subchunks.
+
+#### 1. VRTX
+
+Vertices
+
+nVerts: 4 byte int; indicating the nbr of vertices
+
+Vertex Coordinates: nVerts times 3 floats ( 4 bytes each )
+
+#### 2. NRMS
+
+Normals
+
+nNormals: 4 byte int; indicating the nbr of normals
+
+Normal Coordinates: nNormals times 3 floats ( 4 bytes each )
+
+#### 3. PTYP
+
+Types
+
+nTypes: 4 byte int; indicating the nbr of types, usually only 1
+
+Types: nTypes int ( 4 bytes each ) usually type = 4
+
+      0: points
+      1: lines
+      2: line loop
+      3: line strip
+      4: triangles
+      5: triangle strip
+      6: triangle fan
+      7: quads
+      8: quad strip
+      9: polygons
+
+#### 4. PCNT
+
+Primitive Corners: probably the number of submeshes, usually 1, with n being the number of faces ( not indices )
+
+nPrimitiveCorners: 4 byte int; indicating the nbr of Primitives
+
+PrimitiveCorners: nPrimitives times int ( 4 bytes each )
+
+#### 5. PVTX
+
+Indices
+
+nIndices: 4 byte int; indicating the nbr of Indices
+
+Indices: nIndices / 3 times 3 shorts ( 2 bytes each )
+
+#### 6. GNDX
+
+Groups, usually 0
+
+nGroups: 4 byte int; indicating the nbr of Groups
+
+Groups: nGroups times a byte
+
+#### 7. MTGC
+
+Bone groups: nbr of bones in each group
+
+nMatrixGroups: 4 byte int; indicating the nbr of Matrix groups
+
+MatrixGroups: nMatrixGroups time int (4 bytes each) usually always a 1 for each
+
+#### 8. MATS
+
+Material references
+
+nMaterials: 4 byte int; indicating the nbr of Material references
+
+material reference: nMaterials times int (4 bytes each)
+
+Material Reference Id : 4 byte int; referencing the Material ID in MTLS
+
+Unkown: 8 bytes all zero
+
+LOD level: 4 bytes int; pointing to the LOD (starting by ZERO)
+
+Material Name: 80 bytes character
+
+Unknown: 7 floats usually zero
+
+Unkown: 4 byte int
+
+**NOTE: This is gonna be a pain to write out :(!**
+
+#### 9. TANG
+
+Tangents
+
+nTangents: 4 byte int; indicating the nbr of Tangents
+Tangents: nTangents times 4 floats ( 4 bytes each )
+
+#### 10. SKIN
+
+Bone and vertex weights
+
+For each vertex there are 4 bone indices and 4 vertex weights, where the vertex weights are compressed.
+
+nBoneWeights: 4 byte int; indicating the size of the chunk
+
+Bone & Weights: nBoneWeights / 8 times 8 unassigned bytes where the 4 first bytes indicate the bone indices and the next 4 bytes the weights ( that you need to devide by 255.0 to get to the weight alue )
+
+**NOTE The devision by 255.0 may result in total sum not equal to 1.0, this has to be corrected to 1.0 to prevent weird vertex weighting!**
+
+#### 11. UVAS
+
+UV Coordinate Sets
+
+A mesh can have multiple coordination sets, for example for decals. Each set has a header being UVBS
+
+nUVSets: 4 byte int; indicating the nbr of UV Coordinate Sets
+
+UV subset: nUVSets times a UVBS chunk
+
+##### UVBS chunk
+
+UVBS: 4 byte chars containing this chunk name
+nUVBS: 4 byte int; indicating the number of UV texture coordinates
+
+UV Texture Coordinates: nUVBS times 2 floats ( 4 bytes each)
+
+**NOTE: There is no W coordinate, which is required in some programs, set it to 0.0!**
