@@ -477,6 +477,34 @@ struct GriffonStudios_Helpers
 
 struct Warcraft3_Reforged
 (
+
+    /*
+        FLAGS ( from prev documentation)
+        // 0x0: helper
+        // 0x1: dont inherit translation
+        // 0x2: dont inherit rotation
+        // 0x4: dont inherit scaling
+        // 0x8: billboarded
+        // 0x10: billboarded lock x
+        // 0x20: billboarded lock y
+        // 0x40: billboarded lock z
+        // 0x80: camera anchored
+        // 0x100: bone
+        // 0x200: light
+        // 0x400 event object
+        // 0x800: attachment
+        // 0x1000 particle emitter
+        // 0x2000: collision shape
+        // 0x4000: ribbon emitter
+        // 0x8000: if particle emitter: emitter uses mdl, if particle emitter 2: unshaded
+        // 0x10000: if particle emitter: emitter uses tga, if particle emitter 2: sort primitives far z
+        // 0x20000: line emitter
+        // 0x40000: unfogged
+        // 0x80000: model space
+        // 0x100000: xy quad
+    
+    */
+
     /* Warcraft 3 Reforged READ
     */
     function ReadTAGS stream streamLen=
@@ -1236,6 +1264,12 @@ struct Warcraft3_Reforged
             fseek stream cl.OffsetBounding #seek_set
             
             cl.BoundingType = readLong stream
+            /*
+              0: cube
+              1: plane
+              2: sphere
+              3: cylinder
+            */
             cl.pos = [readFloat stream, readFloat stream, readFloat stream]
             cl.radius = readFloat stream
             cl.height = readFloat stream
@@ -1587,7 +1621,7 @@ struct Warcraft3_Reforged
             
             local size = readLong stream
             totalSize -=size
-            local unk readLong stream
+            local unk = readLong stream
             ribb.name = GriffonStudios_Helpers.ReadFixedString stream 80
             ribb.id = readLong stream + 1
             ribb.parentBoneId = readLong stream + 1
