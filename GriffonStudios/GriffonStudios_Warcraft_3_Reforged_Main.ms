@@ -28,7 +28,7 @@ struct Warcraft3_Reforged_MATS
     ( ID, LOD, Name, Matrices )
 
 struct Warcraft3_Reforged_BONE
-    ( Id, Name, ParentBoneId, Flags, boneRef, KGTR, KGRT, KGSC, offset )
+    ( Id, Name, ParentBoneId, Flags, boneRef, KGTR, KGRT, KGSC, offset, geosetId, geosetAnimationId )
 
 struct Warcraft3_Reforged_ATCH
     ( Id, Name, ParentBoneId, Flags, Offset, Size, KGTR, KGRT, KGSC, KATV)
@@ -724,7 +724,7 @@ struct Warcraft3_Reforged
             t.extension = getFilenameType name 
             t.flags = readLong stream
             
-            format "Texture: % %\n" i name
+            --format "Texture: % %\n" i name
             
             append texs t
         )
@@ -975,10 +975,13 @@ struct Warcraft3_Reforged
             b.Flags = readLong stream
             b.offset = ftell stream
             
-            GriffonStudios_Helpers.SkipBytes stream ( size - 80 - 12 )
+            GriffonStudios_Helpers.SkipBytes stream ( size - 80 - 16 )
             
-            local ffff =  readlong stream
+            b.geosetId =  readlong stream
+            b.geosetAnimationId =  readlong stream
 
+            if ( b.geosetId != -1 ) then format "Strange geoset id % \n" b.geosetId
+            if ( b.geosetAnimationId != -1 ) then format "Strange geoset Animation Id id % \n" b.geosetAnimationId
             append boneList b
         )
         /* read the animation frames */
@@ -1048,6 +1051,9 @@ struct Warcraft3_Reforged
             for i=1 to 2 do
             (
                 local km = GriffonStudios_Helpers.ReadFixedString stream 4
+                
+                if ( km != "KMTA" and km.count == 4  ) then print km
+                
                 if ( km == "KMTA" ) then layer.KMTA = Warcraft3_Reforged.ReadFloatAnim stream
                 if ( km == "KMTE" ) then layer.KMTE = Warcraft3_Reforged.ReadFloatAnim stream
             )
@@ -1089,10 +1095,10 @@ struct Warcraft3_Reforged
             readLong stream
             
             local shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
-            format "Shader: %\n" shaderName
+            --format "Shader: %\n" shaderName
             local lays = GriffonStudios_Helpers.ReadFixedString stream 4
             local nLays = readLong stream
-            format "Layers: %\n" nLays
+            --format "Layers: %\n" nLays
             
             mtl.LAYS = #()
             
@@ -1131,7 +1137,7 @@ struct Warcraft3_Reforged
             att.ParentBoneId = readLong stream + 1
             att.flags = readLong stream
             
-            format "Flag Value %\n" att.flags
+            --format "Flag Value %\n" att.flags
             
             att.Offset = ftell stream
             att.Size = size - 4 - 4 - 80 - 8 - 4
@@ -1486,6 +1492,8 @@ struct Warcraft3_Reforged
             cor.parentId = readLong stream + 1
             cor.flags = readLong stream
 
+            --format "Corn flag %\n" cor.flags
+            
             for i=1 to 3 do
             (
                 local kg = GriffonStudios_Helpers.ReadFixedString stream 4
@@ -3467,7 +3475,7 @@ struct Warcraft3_Reforged
 --             print mdx.MTLS
 --             print mdx.TEXS
 --             print mdx.GEOS
---             print mdx.BONE
+--              print mdx.BONE
 --             print mdx.ATCH
 --             print mdx.CLID
 --             print mdx.BPOS
@@ -3549,11 +3557,11 @@ function ViewPortAttachmentPointDisplay=
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 
 ClearListener()
-/*
-wc3_debug = true
-wc3_debug_build = false
 
-file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\critters\frog\frog.mdx"
+--wc3_debug = true
+--wc3_debug_build = false
 
-Warcraft3_Reforged.Import file
-*/
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\critters\frog\frog.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\_teen.w3mod\units\creeps\seagiantgreen\seagiantgreen.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\human\arthas\arthas.mdx"
+--Warcraft3_Reforged.Import file

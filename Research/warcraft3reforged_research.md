@@ -16,7 +16,6 @@ Code for importing these models in 3D Studio Max 2011 and above, can be found in
       CollisionShape   8192
       RibbonEmitter   16384
 
-
 ## Float Animation
 
 This chunk contains animation based on a float.
@@ -175,7 +174,7 @@ Settings for a layer:
 |4 byte int| Filter Mode (see previous list)|
 |4 byte int| Shading Flag (see previous list)|
 |4 byte int| Texture ID pointing to the texture in the textures list|
-|4 byte int| Parent ID|
+|4 byte int| Texture Animation ID|
 |32 bytes  | Unknown|
 
 If the Layer size exceeds 52 bytes, then it has texture floated animation defined on it, both KMTA and KMTE chunks. See **Float Animation** on how to read this data chunk.
@@ -530,3 +529,71 @@ Animation block consists of 3 possible animation types, possible that this is no
 |KPPE|Keys for popcorn particle emission|Float Animation Type
 |KPPA|Keys for popcorn particle alpha attenuation|Float Animation Type
 |KPPV|Keys for popcorn particle visibility or speed|Float Animation Type
+
+### LITE
+
+Contains data about lights.
+
+    Light Types
+      0x0: Omni
+      0x1: Directional
+      0x2: Ambient
+      0x3: Default
+
+|Name|Size|
+|--|--|
+|Total Size|int
+|Header Size|int
+|Name|80 bytes characters
+|Id|int
+|Parent Id|int
+|Flag|int = 4096
+|Animation block||
+|Light Type|int|
+|Far Attenuation|float
+|Near Attenuation|float
+|Color|3 floats
+|RGB Intensity|float
+|Ambient Color|3 floats
+|Ambient Intensity|float
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+
+### GLBS
+
+Global frames ?
+
+Number of globals = Chunk Size / 4 ( each global bein an int)
+
+A global represent a frame in a 1000FPS rate
+
+### TXAN
+
+Contains texture animation, this is being referenced by the LAYS Texture Animation ID
+
+|Name|Size|
+|--|--|
+|Size|int
+|Animation block|
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KTAT|Key Texture Animation Transformation|Vector 3 Animation Type
+|KTAR|Key Texture Animation Rotation|Quaternian Animation Type
+|KTAS|Key Texture Animation Scale|Vector 3 Animation Type
+
+### RIBB
+
+    TODO
+
+### PRE2
+
+    TODO
