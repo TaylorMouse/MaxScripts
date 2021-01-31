@@ -1,6 +1,22 @@
 
 # Warcraft 3 Reforged mdx format
 
+This document describes mdx structure of the 3D models of Blizzards Warcraft III Reforged files. To keep it software agnostic, no code will be used during the explanation. 
+
+Code for importing these models in 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
+
+
+    FLAG Values
+      Bone              256
+      Light             512
+      Event            1024
+      Attachment       2048
+      ParticleEmitter  4096
+      PopCornEffect    4096 
+      CollisionShape   8192
+      RibbonEmitter   16384
+
+
 ## Float Animation
 
 This chunk contains animation based on a float.
@@ -15,8 +31,56 @@ For each Point:
 
 |Chunk size| Description|
 |--|--|
-|4 byte int| Keyframe, again based on 1000 FPS, converted this to 30 FPS|
+|4 byte int| Keyframe, based on 1000 FPS, convert this to 30 FPS|
 |4 byte float| Value at this keyframe|
+
+If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+
+|Chunk size| Description|
+|--|--|
+|4 byte float| Tangent transition for the In part|
+|4 byte float| Tangent transition for the Out part|
+
+## Vector 3 Animation
+
+This chunk contains animation based on a 3 floats, representing a Vector 3.
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Number of Points|
+|4 byte int| Line Type|
+|4 byte int| Parent ID|
+
+For each Point:
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Keyframe, based on 1000 FPS, convert this to 30 FPS|
+|vector 3| 3 floats as vector 3 for the value at this keyframe|
+
+If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+
+|Chunk size| Description|
+|--|--|
+|4 byte float| Tangent transition for the In part|
+|4 byte float| Tangent transition for the Out part|
+
+## Quaternian Animation
+
+This chunk contains animation based on a 4 floats, representing a quaternian.
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Number of Points|
+|4 byte int| Line Type|
+|4 byte int| Parent ID|
+
+For each Point:
+
+|Chunk size| Description|
+|--|--|
+|4 byte int| Keyframe, based on 1000 FPS, convert this to 30 FPS|
+|Quaternian| 4 floats as quat for the value at this keyframe|
 
 If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
 
@@ -226,7 +290,7 @@ Unknown: 7 floats usually zero
 
 Unkown: 4 byte int
 
-**NOTE: This is gonna be a pain to write out :(!**
+    NOTE: This is gonna be a pain to write out :(!
 
 #### 9. TANG
 
@@ -245,7 +309,7 @@ nBoneWeights: 4 byte int; indicating the size of the chunk
 
 Bone & Weights: nBoneWeights / 8 times 8 unassigned bytes where the 4 first bytes indicate the bone indices and the next 4 bytes the weights ( that you need to devide by 255.0 to get to the weight alue )
 
-**NOTE The devision by 255.0 may result in total sum not equal to 1.0, this has to be corrected to 1.0 to prevent weird vertex weighting!**
+    NOTE The devision by 255.0 may result in total sum not equal to 1.0, this has to be corrected to 1.0 to prevent weird vertex weighting!
 
 #### 11. UVAS
 
@@ -264,4 +328,205 @@ nUVBS: 4 byte int; indicating the number of UV texture coordinates
 
 UV Texture Coordinates: nUVBS times 2 floats ( 4 bytes each)
 
-**NOTE: There is no W coordinate, which is required in some programs, set it to 0.0!**
+    NOTE: There is no W coordinate, which is required in some programs, set it to 0.0!
+
+### BONE
+
+|Name|Size|
+|--|--|
+|Size|4 byte int|
+|Name|80 bytes characters|
+|Id|4 byte int|
+|Parent Bone Id|4 byte int ( -1 indicates no parent )|
+|Flag |4 byte int (= 256)|
+|Animation block|Size - 80 - 12 bytes |
+|FFFF|4 byte int (always FFFF)|
+
+    Animation block If the animation block reads 4 bytes being FFFF, no animation is available furter available.
+
+Animation block consists of 3 possible animation types:
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+
+When building the bones in 3D Studio Max, first build the bones, then build the hierarchy, then apply the rotation, then the translation.
+
+### ATCH
+
+Attachment or hardpoints, for a full list of attachment points, refer to the offical [Warcraft II Art Tools Documentation]().
+
+|Name|Size|
+|--|--|
+|Total Size|4 byte int (including these 4 bytes)|
+|Header Size|4 byte int  value 96 |
+|Name|80 bytes characters|
+|Id|4 byte int|
+|Parent Bone Id|4 byte int ( -1 indicates no parent )|
+|Flag|4 byte int (= 2048)|
+|Animation block|Size - 80 - 20 bytes |
+
+Animation block consists of 4 possible animation types:
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+|KGTV|Visibility|Float Animation Type
+
+### CLID
+
+Collision Identifiers or Collision objects
+
+|Name|Size|
+|--|--|
+|Size|4 byte int |
+|Header Size|4 byte int value 96 |
+|Name|80 bytes characters|
+|Id|4 byte int|
+|Parent Bone Id|4 byte int ( -1 indicates no parent )|
+|Flag|4 byte int (= 8192)|
+|Animation block|x size|
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+
+|Name|Size|
+|--|--|
+|Collision Type|4 byte int |
+|Position| 3 x 4 byte floats|
+|Radius| 4 byte float|
+|Height| 4 byte float|
+|Unknown| 4 byte float (always zero ?) |
+
+### BPOS
+
+Binding position or initial object transformation
+
+|Name|Size|
+|--|--|
+|Nbr of binding positions|4 byte int |
+|Transformation Matrix|A 3 x 4 matrix containing 4 rows and 3 items per row, each item is 1 float -> 12 floats in total|
+
+### GEOA
+
+Visibility or alpha animation of the geometry meshes
+
+|Name|Size|
+|--|--|
+|Size|4 byte int |
+|Unknown| 5 x 4 byte float|
+|Mesh Reference Id|4 byte int referncing the mesh in the GEO chunk|
+
+Animation block consists of 1 possible animation types:
+
+|Name| description| Type|
+|--|--|--|
+|KGAO|Alpha Object animation|Float Animation Type
+
+### EVTS
+
+For a full understanding of this block, please refer to the official [Warcraft III Art Tools Documentation]() see the Event Objects documentation.
+
+|Name|Size|
+|--|--|
+|Size|4 byte int |
+|Name|80 bytes characters|
+|Id|4 byte int|
+|Parent Bone Id|4 byte int ( -1 indicates no parent )|
+|Flag|4 byte int (= 1024)|
+|KEVT| 4 bytes characters Keyed events, frames on which the event takes place|
+
+#### KEVT
+
+|Name|Size|
+|--|--|
+|Number of Keys|4 byte int |
+|Parent ID|4 byte int|
+|Keys| Nbr of Keys x 4 byte int representing the fema where the event takes place|
+
+### PIVT
+
+Weird chunk that holds pivot points, referencing an id that points to all previous id's read in the file.
+
+Number of points = this chunk size / 12
+
+|Name|Size|
+|--|--|
+|Points| nbr of points x 3 x 4 byte floats representing a position of the pivot point|
+
+### FAFX
+
+Facial Effects, referencing an external file
+
+Number of effects = this chunk size / 340
+
+|Name|Size|
+|--|--|
+|Name| 80 byte characters|
+|External File reference| 260 byte characters|
+
+### CAMS
+
+|Name|Size|
+|--|--|
+|Size|4 byte int |
+|Name|80 bytes characters|
+|Camera Position| 3 x 4 byte floats
+|FOV| 4 byte float in radians
+|Far Clipping| 4 byte float 
+|Near Clipping| 4 byte float
+|Camera Target position|3 x 4 byte floats
+|Animation block||
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KCTR|Keys for Camera Transformation|Vector 3 Animation Type
+|KTTR|Keys for Target Transformation|Vector 3 Animation Type
+|KCRL|Keys for Camera Rotation|Quaternian Animation Type
+
+### CORN
+
+Popcorn effect, weird naming for referencing an external effect. Usually only available in hero models, like a hero glow effect.
+
+|Name|Size|
+|--|--|
+|Total Size|int
+|Header Size|int
+|Name|80 bytes characters
+|Id|int
+|Parent Id|int
+|Flag|int = 4096
+|Animation block|
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Keys for Tranlation in world space|Vector 3 Animation Type
+|KGRT|Keys for Rotation in world space|Quaternian Animation Type
+|KGSC|Keys for Scale in world space|Vector 3 Animation Type
+
+|Name|Size|
+|--|--|
+|External file name|260 byte characters
+|Properties|260 byte characters, these are comma seperated properties
+|Animation block|
+
+Animation block consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KPPE|Keys for popcorn particle emission|Float Animation Type
+|KPPA|Keys for popcorn particle alpha attenuation|Float Animation Type
+|KPPV|Keys for popcorn particle visibility or speed|Float Animation Type

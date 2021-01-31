@@ -12,6 +12,8 @@
 */
 global gClid
 global gBpos
+global wc3_debug = false
+global wc3_debug_build = true
 
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
@@ -1120,12 +1122,16 @@ struct Warcraft3_Reforged
             local att = Warcraft3_Reforged_ATCH()
             
             local size = readLong stream
-            local unk1 = readLong stream
+            local headerSize = readLong stream --> 96 bytes consisting of name, id, parentId and flagid and headerSize
+
             
+
             att.name = GriffonStudios_Helpers.ReadFixedString stream 80
             att.Id = readLong stream + 1
             att.ParentBoneId = readLong stream + 1
             att.flags = readLong stream
+            
+            format "Flag Value %\n" att.flags
             
             att.Offset = ftell stream
             att.Size = size - 4 - 4 - 80 - 8 - 4
@@ -2864,7 +2870,10 @@ struct Warcraft3_Reforged
                 for anim in c.KCRL.KG do
                 (
                     with animate on at time ( anim.Time + 10 ) 
+                    (
                         target.rotation = anim.Point
+                        cam.rotation = anim.point
+                    )
                 )
 
                 
@@ -3449,52 +3458,54 @@ struct Warcraft3_Reforged
             
         )
 
-        
---         print mdx.TAGS
---         print mdx.VERS
---         print mdx.MODL
---         print mdx.SEQS
---         print mdx.MTLS
---         print mdx.TEXS
---         print mdx.GEOS
---         print mdx.BONE
---         print mdx.ATCH
---         print mdx.CLID
---         print mdx.BPOS
---         print mdx.GEOA
---         print mdx.EVTS
---         print mdx.PIVT
---         print mdx.FAFX
---         print mdx.CAMS
---         print mdx.CORN
---         print mdx.LITE
---         print mdx.GLBS
---         print mdx.TXAN
---         print mdx.RIBB
---         print mdx.PRE2
+        if ( wc3_debug ) then (
+                
+            print mdx.TAGS
+--             print mdx.VERS
+--             print mdx.MODL
+--             print mdx.SEQS
+--             print mdx.MTLS
+--             print mdx.TEXS
+--             print mdx.GEOS
+--             print mdx.BONE
+--             print mdx.ATCH
+--             print mdx.CLID
+--             print mdx.BPOS
+--             print mdx.GEOA
+--             print mdx.EVTS
+--             print mdx.PIVT
+--             print mdx.FAFX
+--             print mdx.CAMS
+--             print mdx.CORN
+--             print mdx.LITE
+--             print mdx.GLBS
+--             print mdx.TXAN
+--             print mdx.RIBB
+--             print mdx.PRE2
+        )
 
-        gClid = mdx.CLID
-        gBpos = mdx.BPOS
+        if ( wc3_debug_build ) then
+        (
+            Warcraft3_Reforged.BuildMODL()  --> build global bounding box
+            Warcraft3_Reforged.BuildBONE2() --> build bones, bone structure and animation
+            Warcraft3_Reforged.BuildGEOS()  --> build meshes
+            Warcraft3_Reforged.BuildSKIN()  --> apply vertex weights
+            Warcraft3_Reforged.BuildSEQS()  --> build animation sequences so we can select them in the animation selector
+            Warcraft3_Reforged.BuildATCH()  --> build attachment points
+            Warcraft3_Reforged.BuildCLID()  --> build collision objects
+            Warcraft3_Reforged.BuildMTLS()  --> build the materials based on the textures
+            Warcraft3_Reforged.AssignMTLS() --> assign the materials to the correct meshes
+            Warcraft3_Reforged.BuildGEOA()  --> build alpha animation of the mesh
+            Warcraft3_Reforged.BuildEVTS()  --> build events
+            Warcraft3_Reforged.BuildFAFX()  --> build facial effects
+            Warcraft3_Reforged.BuildCAMS()  --> build cameras
+            Warcraft3_Reforged.BuildLITE()  --> build lites
+            --Warcraft3_Reforged.BuildPIVT()  --> build pivots
+            Warcraft3_Reforged.BuildRIBB()  --> build ribbon emitters
+            Warcraft3_Reforged.BuildPRE2()  --> build particle emitters
+            Warcraft3_Reforged.BuildCORN()  --> build popcorn emitters
 
-        Warcraft3_Reforged.BuildMODL()  --> build global bounding box
-        Warcraft3_Reforged.BuildBONE2() --> build bones, bone structure and animation
-        Warcraft3_Reforged.BuildGEOS()  --> build meshes
-        Warcraft3_Reforged.BuildSKIN()  --> apply vertex weights
-        Warcraft3_Reforged.BuildSEQS()  --> build animation sequences so we can select them in the animation selector
-        Warcraft3_Reforged.BuildATCH()  --> build attachment points
-        Warcraft3_Reforged.BuildCLID()  --> build collision objects
-        Warcraft3_Reforged.BuildMTLS()  --> build the materials based on the textures
-        Warcraft3_Reforged.AssignMTLS() --> assign the materials to the correct meshes
-        Warcraft3_Reforged.BuildGEOA()  --> build alpha animation of the mesh
-        Warcraft3_Reforged.BuildEVTS()  --> build events
-        Warcraft3_Reforged.BuildFAFX()  --> build facial effects
-        Warcraft3_Reforged.BuildCAMS()  --> build cameras
-        Warcraft3_Reforged.BuildLITE()  --> build lites
-        --Warcraft3_Reforged.BuildPIVT()  --> build pivots
-        Warcraft3_Reforged.BuildRIBB()  --> build ribbon emitters
-        Warcraft3_Reforged.BuildPRE2()  --> build particle emitters
-        Warcraft3_Reforged.BuildCORN()  --> build popcorn emitters
-
+        )
     fclose stream
 
         if (mdxConvertToSC2AnimationNames == true ) then
@@ -3538,15 +3549,11 @@ function ViewPortAttachmentPointDisplay=
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 
 ClearListener()
+/*
+wc3_debug = true
+wc3_debug_build = false
 
--- Warcraft3_AssetFolder = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\"
--- Warcraft3_ImportAllLOD = false
+file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\critters\frog\frog.mdx"
 
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\meatwagonmissile.mdx"
-
---file = @"G:\Game Dev\Griffon Studios\My 3D Models\Starcraft II\Requests\Nightmare Doors\WC3Ref Zergling\zergling.mdx"
--- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\silvermoon_tulips_test.mdx"
--- file= @"G:\Game Dev\Griffon Studios\My Max Scripts\Blizzard Stuff\pumpkin.mdx"
--- file = @"F:\Blizzard\Warcraft - Reforged\Exported\assets\units\nightelf\ent\ent.mdx"
--- Warcraft3_Reforged.Import file
-
+Warcraft3_Reforged.Import file
+*/
