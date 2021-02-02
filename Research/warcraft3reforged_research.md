@@ -5,7 +5,6 @@ This document describes mdx structure of the 3D models of Blizzards Warcraft III
 
 Code for importing these models in 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
 
-
     FLAG Values
       Bone              256
       Light             512
@@ -15,6 +14,56 @@ Code for importing these models in 3D Studio Max 2011 and above, can be found in
       PopCornEffect    4096 
       CollisionShape   8192
       RibbonEmitter   16384
+
+## Color Animation
+
+This chunk contains animation based on a color.
+
+|Chunk size| Description|
+|--|--|
+|int| Number of Points|
+|int| Line Type|
+|int| Parent ID|
+
+For each Point:
+
+|Chunk size| Description|
+|--|--|
+|int| Keyframe, based on 1000 FPS, convert this to 30 FPS|
+|3 x float | Value at this keyframe|
+
+            NOTE: the values for the color need to be multiplied by 255 to have an actual rbg value
+
+If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+
+|Chunk size| Description|
+|--|--|
+|4 byte float| Tangent transition for the In part|
+|4 byte float| Tangent transition for the Out part|
+
+## Int Animation
+
+his chunk contains animation based on a integer.
+
+|Chunk size| Description|
+|--|--|
+|int| Number of Points|
+|int| Line Type|
+|int| Parent ID|
+
+For each Point:
+
+|Chunk size| Description|
+|--|--|
+|int| Keyframe, based on 1000 FPS, convert this to 30 FPS|
+|int | Value at this keyframe|
+
+If the **Line Type** is higher then 1, it also contines a tangent transition specifier (rarely used in the mdx files)
+
+|Chunk size| Description|
+|--|--|
+|4 byte float| Tangent transition for the In part|
+|4 byte float| Tangent transition for the Out part|
 
 ## Float Animation
 
@@ -592,8 +641,157 @@ Animation block consists of 3 possible animation types, possible that this is no
 
 ### RIBB
 
-    TODO
+Contains the data for the ribbon emitter.
+
+|Name|Size|
+|--|--|
+|Total Size|int
+|Header Size|int
+|Name|80 bytes characters
+|Id|int
+|Parent Bone Id|int
+|Flag|int (=16384)
+|Animation Block| see Animation block
+|Height Above|float
+|Height Below|float
+|Alpha|float
+|Color|3 float
+|Life Span|float
+|Texture Id|int
+|Emission Rate|int
+|Flipbook Rows|int
+|Flipbook Columns|int
+|Material Id|int
+|Gravity|float
+|Additional Animation block| see additional ribbon animations
+
+Animation block: consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+
+Ribbon animations: consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KRHA|Key Ribbon Height Above|Float Animation Type
+|KRHB|Key Ribbon Height Below|Float Animation Type
+|KRAL|Key Ribbon Alpha|Float Animation Type
+|KRCO|Key Ribbon Color|Color Animation Type
+|KRTX|Key Ribbon Texture|Int Animation Type
+|KRVS|Key Ribbon Visibility|Float Animation Type
 
 ### PRE2
 
-    TODO
+Contains the definition of a particle emmitter version 2 ( Reforged )
+
+|Name|Size|
+|--|--|
+|Total Size|int
+|Header Size|int
+|Name|80 bytes characters
+|Id|int
+|Parent Bone Id|int
+|Flag Settings   | see bit wise settings descriptions
+|Animation block | see animation block
+|Speed        |float
+|Variation    |float
+|ConeAngle    |float
+|Gravity      |float
+|Lifespan     |float
+|Emissionrate |float
+|Length       |float
+|Width        |float
+|EmitterType  |int
+|RowCount     |int
+|ColCount     |int
+|ParticleType |int
+|TailLength   |float
+|MidTime      |float
+|StartColor   |3 x float * 255
+|MidColor     |3 x float * 255
+|EndColor     |3 x float * 255
+|StartAlpha   |byte
+|MidAlpha     |byte
+|EndAlpha     |byte
+|StartSize    |float
+|MidSize      |float
+|EndSize      |float
+|StartLifespanUVAnim  |int
+|MidLifespanUVAnim    |int
+|EndLifespanUVAnim    |int
+|StartDecayUVAnim     |int
+|MidDecayUVAnim       |int
+|EndDecayUVAnim       |int
+|StartTailUVAnim      |int
+|MidTailUVAnim        |int
+|EndTailUVAnim        |int
+|StartTailDecayUVAnim |int
+|MidTailDecayUVAnim   |int
+|EndTailDecayUVAnim   |int
+|BlendMode            |int
+|TextureId            |int
+|ReplacableTextureId  |int 
+|PriorityPlane        |int
+|Particle Emitter Animation Block| See Particle Emitter Animation block
+
+        Priority Plane
+            BASE   = 0x0
+            PLANE  = 0x1
+            SPHERE = 0x2
+            SPLINE = 0x3
+
+Animation block: consists of 3 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KGTR|Transformation|Vector 3 Animation Type
+|KGRT|Rotation|Quaternian Animation Type
+|KGSC|Scale|Vector 3 Animation Type
+
+Particla Emitter Animation block: consists of 2 possible animation types, possible that this is not even present
+
+|Name| description| Type|
+|--|--|--|
+|KP2V|Key Particle Emitter v2 Visibility|Float Animation Type
+|KP2E|Key Particle Emitter v2 Emission|Float Animation Type
+
+#### Bit Wise Flag description
+
+When the bit is availble the following setting are true
+
+    0x00000001	DONT_INHERIT_TRANSLATION
+    0x00000002	DONT_INHERIT_SCALING
+    0x00000004	DONT_INHERIT_ROTATION
+    0x00000008	BILLBOARDED
+    0x00000010	BILLBOARD_LOCK_X
+    0x00000020	BILLBOARD_LOCK_Y
+    0x00000040	BILLBOARD_LOCK_Z
+    0x00000080	GENOBJECT_MDLBONESECTION
+    0x00000100	GENOBJECT_MDLLIGHTSECTION
+    0x00000200	GENOBJECT_MDLEVENTSECTION
+    0x00000400	GENOBJECT_MDLATTACHMENTSECTION
+    0x00000800	GENOBJECT_MDLPARTICLEEMITTER2
+    0x00001000	GENOBJECT_MDLHITTESTSHAPE
+    0x00002000	GENOBJECT_MDLRIBBONEMITTER
+    0x00004000	PROJECT
+    0x00008000	UNSHADED
+    0x00010000	SORT_PRIMITIVES_FAR_Z
+    0x00020000	LINE_EMITTER
+    0x00040000	PARTICLE_UNFOGGED
+    0x00080000	PARTICLE_USE_MODEL_SPACE
+    0x00100000	PARTICLE_INHERIT_SCALE
+    0x00200000	PARTICLE_INSTANT_VELOCITY_LIN
+    0x00400000	PARTICLE_0XKILL
+    0x00800000	PARTICLE_Z_VELOCITY_ONLY
+    0x01000000	PARTICLE_TUMBLER
+    0x02000000	PARTICLE_TAIL_GROWS
+    0x04000000	PARTICLE_EXTRUDE
+    0x08000000	PARTICLE_XYQUADS
+    0x10000000	PARTICLE_PROJECT
+    0x20000000	PARTICLE_FOLLOW
+
+The remaining bytes of this chunk are skipped ( for now)
