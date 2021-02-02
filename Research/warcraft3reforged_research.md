@@ -143,20 +143,19 @@ Every tag is followed by its size in bytes, except the first 4 bytes, that holds
 
 ### VERS
 
-Version of the file, this script handles version 900 & 1000
-
-- 4 bytes
+Always size 4 bytes containing the version of the mdx file, this script handles version 900 (beta version) & 1000 (retail)
 
 ### MODL
 
-Basic info of the model.
+Always 372 bytes ( no other size encountered so far ) containing the basic info of the model.
 
-- 372 bytes ( no other size encountered so far )
-- First 344 bytes:
-  - 80 bytes containing the name of the file without extension
-  - skip the rest containing zeroes ( skipped these when reading)
-- 24 bytes ( 2x 3 floats) that contain the max and min points of the bounding box
-- 4 bytes containing the integer 150 ( Always 150 up till now )
+|Name | Size
+|--|--|
+|File Name|80 bytes characters
+|External Animation File reference|260 bytes ( not used imho)
+|Unk| 4 bytes
+|Bounding box| 24 bytes ( 2x 3 floats) that contain the max and min points of the bounding box
+|150| 4 bytes containing the integer 150 ( Always 150 up till now )
 
 ### SEQS
 
@@ -437,7 +436,18 @@ Collision Identifiers or Collision objects
 |Id|4 byte int|
 |Parent Bone Id|4 byte int ( -1 indicates no parent )|
 |Flag|4 byte int (= 8192)|
-|Animation block|x size|
+|Animation block| See animation block for info
+|Collision Type|4 byte int |
+|Position| 3 x 4 byte floats|
+|Radius| 4 byte float|
+|Height| 4 byte float|
+|Unknown| 4 byte float (always zero ?) |
+
+    Collision Type
+        0x0 Cube
+        0x1 Plane
+        0x2 Sphere
+        0x3 Cylinder
 
 Animation block consists of 3 possible animation types, possible that this is not even present
 
@@ -446,14 +456,6 @@ Animation block consists of 3 possible animation types, possible that this is no
 |KGTR|Transformation|Vector 3 Animation Type
 |KGRT|Rotation|Quaternian Animation Type
 |KGSC|Scale|Vector 3 Animation Type
-
-|Name|Size|
-|--|--|
-|Collision Type|4 byte int |
-|Position| 3 x 4 byte floats|
-|Radius| 4 byte float|
-|Height| 4 byte float|
-|Unknown| 4 byte float (always zero ?) |
 
 ### BPOS
 
@@ -571,13 +573,16 @@ Animation block consists of 3 possible animation types, possible that this is no
 |Properties|260 byte characters, these are comma seperated properties
 |Animation block|
 
-Animation block consists of 3 possible animation types, possible that this is not even present
+Animation block consists of 6 possible animation types, possible that this is not even present
 
 |Name| description| Type|
 |--|--|--|
-|KPPE|Keys for popcorn particle emission|Float Animation Type
-|KPPA|Keys for popcorn particle alpha attenuation|Float Animation Type
-|KPPV|Keys for popcorn particle visibility or speed|Float Animation Type
+|KPPE|Keys for popcorn particle Emission|Float Animation Type
+|KPPA|Keys for popcorn particle Alpha|Float Animation Type
+|KPPV|Keys for popcorn particle Visibility|Float Animation Type
+|KPPC|Keys for Popcorn Particle Color|Color Animation Type
+|KPPL|Keys for Popcorn Particle Lifespan |Float Animation Type
+|KPPS|Keys for Popcorn Speed|Float Animation Type
 
 ### LITE
 
