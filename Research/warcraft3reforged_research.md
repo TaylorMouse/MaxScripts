@@ -184,10 +184,10 @@ In the MTLS tag, we will find different layers, each starting with the LAYS tag
 
 |Chunk size| Description|
 |--|--|
-|4 byte int| Shader Size|
-|4 byte int| Priority Plane (no idea what to do with this)|
-|4 byte int| unknown|
-|80 bytes| conaining the name of the shader ( usually *Shader_HD_DefaultUnit*)|
+|Size|int
+|Priority plane|int
+|Unknown|int
+|Shader Name|80 bytes characters ( usually *Shader_HD_DefaultUnit*)|
 |4 bytes| containing the name LAYS|
 |4 byte int| Number of layers available|
 
@@ -227,8 +227,10 @@ Settings for a layer:
 
 If the Layer size exceeds 52 bytes, then it has texture floated animation defined on it, both KMTA and KMTE chunks. See **Float Animation** on how to read this data chunk.
 
-- KMTA: Alpha animation of the texture.
-- KMTE: Unused -> Emission maybe ?
+|Name|Description|Type
+|--|--|--
+|KMTA|Key Matrial Texture Alpha|Float Animation
+|KMTE|Key Material Texture Emission|Float Animation
 
 ### TEXS
 
@@ -236,9 +238,9 @@ Each chunk is 268 bytes
 
 |Chunk size| Description|
 |--|--|
-|4 byte int| Replaceable Id|
+|Replaceable Id|int
 |260 byte characters| Full pathname of the texture|
-|4 byte int| Flags usually 3|
+|4 byte int| Replaceable Id Flags usually 3|
 
     Replaceable Id
     0: a texture
@@ -343,8 +345,10 @@ Unkown: 4 byte int
 
 Tangents
 
-nTangents: 4 byte int; indicating the nbr of Tangents
-Tangents: nTangents times 4 floats ( 4 bytes each )
+|Name|type|desc
+|--|--|--
+|nTangents|int| indicating the nbr of Tangents
+|Tangents|nTangents times 4 floats ( 4 bytes each )
 
 #### 10. SKIN
 
