@@ -1,10 +1,18 @@
 /*
-    (c) 2020 Griffon Studios
+    .COPYRIGHT 
+    | (c) 2021 Griffon Studios
     
-    by Taylor Mouse
+    .AUTHOR
+    | by Taylor Mouse
     
-    Warcraft III Reforged exporter 
-    0.01
+    .DESCRIPTION
+    | Warcraft III Reforged mdx exporter 
+    
+    .RELEASE NOTES
+    | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
+    | 0.01 - Main setup
+    
+    
     
 */
 GLOBAL WC3_DEBUG = true
@@ -31,7 +39,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
     function WriteMODLBoundingBox stream=
     (
         local bbox = GriffonStudios_Helper_Functions.GetMODLBoundingBox()
-        local writer = GriffonStudios_Writer_Functions()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
         if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
         
@@ -70,12 +78,92 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         )
 
         
+    ),
+    function WriteMTLS stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        local mtls = GriffonStudios_Helper_Functions.GetMTLS()
+        
+        if (WC3_DEBUG) then 
+        (
+            for i=1 to mtls.TEXSList.Count do
+                format " - %\n" mtls.TEXSList[i]
+        )
+        
+        writeLong stream mtls.TotalSize
+        
+        for s in mtls.ShaderList do
+        (
+            writeLong stream s.shaderSizeIncluded
+            writeLong stream s.priorityPlane
+            writeLong stream s.flag
+            writer.WriteFixedString stream s.shaderName 80
+            
+            writer.WriteFixedString stream "LAYS" 4
+            writeLong stream s.Layers.Count --> usually 6
+            
+            for l=1 to s.Layers.Count do
+            (
+                local lay = s.Layers[l]
+                writeLong stream lay.layerSizeIncluded
+                writeLong stream lay.filterMode
+                writeLong stream lay.shadingFlag
+                writeLong stream ( lay.TextureId - 1 )
+                writeLong stream lay.textureAnimationId
+                
+                writeLong stream 0 -- CoordId
+                writeFloat stream 1 -- Alpha
+                writeFloat stream 1 -- Emissive
+                
+                writeFloat stream 1 -- Fresnel Color R
+                writeFloat stream 1 -- Fresnel Color G
+                writeFloat stream 1 -- Fresnel Color B
+                writeFloat stream 0 -- Fresnel Opacity
+                writeFloat stream 0 -- Fresnel Team Color
+                
+                if ( l==1) then 
+                (
+                    if ( lay.KMTA != undefined ) then
+                    (
+                        writer.WriteFixedString stream "KMTA" 4
+                        writeLong stream lay.KMTA.timeList.count
+                        writeLong stream 1 --> line type
+                        writeLong stream -1 --> parentId
+                        
+                        for k=1 to lay.KMTA.timeList.count do
+                        (
+                            writeLong stream lay.KMTA.timeList[k]
+                            writeLong stream lay.KMTA.valueList[k]
+                        )
+                        
+                    )
+                )
+            )
+
+        )
+        
+        GriffonStudios_Warcraft_3_Writer_Functions.WriteTEXS stream mtls.TEXSList
+    ),
+    function WriteTEXS stream texsList =
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        writer.WriteFixedString stream "TEXS" 4
+        
+        writeLong stream ( texslist.count * 268 )
+        for tex in texsList do
+        (
+            writeLong stream tex.replaceableId
+            writer.WriteFixedString stream tex.fileName 260
+            writeLong stream tex.flag
+        )            
+        
     )
-    
 )
 
 STRUCT GriffonStudios_Helper_Functions
 (
+    /* Get the bounding box of a specific object */
     function GetBoundingBox =
     (
         local bbPoints = #()
@@ -101,6 +189,7 @@ STRUCT GriffonStudios_Helper_Functions
         append bbPoints bbMax
         return bbPoints
     ),
+    /* Calculate the volume of a bounding box in order to see which one is the biggest */
     function GetBoundingBoxVolume bbox=
     (
         local p1 = bbox[1]
@@ -114,6 +203,7 @@ STRUCT GriffonStudios_Helper_Functions
         
         return volume
     ),
+    /* Get the last key on the animation track for one object */
     function FindLastKeyFrameByObject obj last_frame = 
     (
         for i=1 to obj.numSubs do -- number of possible animation controllers
@@ -140,6 +230,7 @@ STRUCT GriffonStudios_Helper_Functions
         return last_frame
         
     ),
+    /* Get the last key on the animation track from ALL objects */
     function FindLastKeyFrame =
     (
         local last_frame = 0
@@ -149,16 +240,7 @@ STRUCT GriffonStudios_Helper_Functions
         )
         return last_frame
     ),
-    function GetMODLBoundingBox =
-    (
-        local help = GriffonStudios_Helper_Functions()
-        local lastFrame = help.FindLastKeyFrame()
-
-        help.GetMODLBoundingBoxBetweenFrames 1 lastFrame
-        
-        return bboxVolumeList[biggestId].bbox
-        
-    ),
+    /* Get the biggest bounding box from all models between 2 frame, as animation changes these bounding boxes */
     function GetMODLBoundingBoxBetweenFrames startFrame endFrame=
     (
         local help = GriffonStudios_Helper_Functions()
@@ -189,6 +271,18 @@ STRUCT GriffonStudios_Helper_Functions
         
         return bboxVolumeList[biggestId].bbox  
     ),
+    /* Get the biggest bounding box for the whole set of animations keys, specifically needed for the MODL chunk */
+    function GetMODLBoundingBox =
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local lastFrame = help.FindLastKeyFrame()
+
+        bbox = help.GetMODLBoundingBoxBetweenFrames 1 lastFrame
+        
+        return bbox
+        
+    ),
+    /* get the list of animation sequences from the animation track */
     function GetSEQS =
     (
         struct WC3RefAnimSequence ( Name, StartFrame, EndFrame, MovementSpeed=0.0, NoLoop=0, Rarity=0, Priority=0, Default=0, BBox )
@@ -264,7 +358,194 @@ STRUCT GriffonStudios_Helper_Functions
         
         --print seqs
         return seqs
+    ),
+    /* Get the list of materials and their properties and the list of associated textures */
+    function GetMTLS=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local default_shader_name = "Shader_HD_DefaultUnit"
+        
+        struct _mtls ( TotalSize = 0, ShaderList = #(), TEXSList = #() )
+        
+        struct _shaders ( shaderSizeIncluded, priorityPlane, shaderName = default_shader_name, flag = 0, Layers = #() )
+        struct _lays ( layerSizeIncluded,  filterMode, shadingFlag, textureId, textureAnimationId, KMTA )
+        struct _kmta ( timeList = #(), valueList = #() )
+        local mtls = _mtls()
+        
+        local uniqueMaterials = #()
+        
+        for obj in objects do
+        (
+            if ( obj.material != undefined and ( classof obj.material == WC3RefMaterial ) ) then
+                appendIfUnique uniqueMaterials obj.material
+        )
+        /* get the textures, their ID is important in writing the MTLS */
+        mtls.TEXSList = help.GetUniqueTextures uniqueMaterials
+        
+        for mat in uniqueMaterials do
+        (
+            mtls.TotalSize = mtls.TotalSize + 92 --> 92 bytes -> priority plane, shadername, flag
+            
+            local s = _shaders()
+            
+            s.shaderSizeIncluded = 92 --> starter header size 
+            s.priorityPlane = mat.priorityplane
+            if ( mat.twosided ) then s.flag = 0x2
+            
+            
+            s.shaderSizeIncluded = s.shaderSizeIncluded + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
+            mtls.TotalSize = mtls.TotalSize + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
+
+            -- LAYS
+            for i=1 to 6 do
+            (
+                local lay = _lays()
+                
+                lay.layerSizeIncluded = 52
+                s.shaderSizeIncluded = s.shaderSizeIncluded + 52
+                mtls.TotalSize = mtls.TotalSize + 52
+                lay.filterMode = mat.filterMode - 1
+                lay.shadingFlag = 0
+                if( mat.twosided ) then lay.shadingFlag = 0x10
+                
+                if (i==1) then 
+                (
+                    lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.diffuse_map
+                    
+                    if ( mat.material_alpha.controller != undefined ) then 
+                    (
+                        --> KMTA, nbr Key Values, Linetype, parent Id -> extra 16 bytes
+                        s.shaderSizeIncluded  = s.shaderSizeIncluded + 16
+                        mtls.TotalSize        = mtls.TotalSize + 16
+                        lay.layerSizeIncluded = lay.layerSizeIncluded + 16
+                        
+                        local kmta = _kmta()
+                        
+                        for key in ctrl.keys do
+                        (
+                            s.shaderSizeIncluded  = s.shaderSizeIncluded + 8
+                            mtls.TotalSize        = mtls.TotalSize + 8
+                            lay.layerSizeIncluded = lay.layerSizeIncluded + 8
+                            
+                            local theTime = help.TimeToInt key.time
+                            theTime = theTime * 1000 / 30
+                            append kmta.timeList theTime
+                            append kmta.valueList key.value
+                        )
+                        
+                        lay.KMTA = kmta
+                    )
+                    
+                )
+                if (i==2) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.normal_map
+                if (i==3) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.orm_map
+                if (i==4) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.emissive_map
+                if (i==5) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.replacable_map
+                if (i==6) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.reflection_map
+                
+                lay.textureAnimationId = -1
+                
+                
+                append s.Layers lay
+            )
+            
+            
+            append mtls.shaderlist s
+        )
+        
+        
+        
+        
+        return mtls
+    ),
+    /* Get the unique list of textures so that a reference can be made when writing the mtls block */
+    function GetTEXS bitmap=
+    (
+        
+        if( bitmap==undefined ) then 
+            tex = ""
+        else
+        (
+            local fileName = filenameFromPath bitmap.fileName
+            
+            if( fileName == "" or fileName.count <=4 ) then 
+                tex = ""
+            else
+                tex = "Textures/" + fileName 
+        )
+        return tex
+    ),
+    /* helper function to list only the unique texs based on the reference to texture files */
+    function GetUniqueTextures uniqueMaterials=
+    (
+        struct _texs ( id, replaceableId, fileName, flag = 3 )
+        
+        /* get the list of textures */
+        local texsList = #()
+        for mat in uniqueMaterials do
+        (
+            local tex  = undefined
+            
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.diffuse_map
+            appendIfUnique texsList tex
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.normal_map
+            appendIfUnique texsList tex
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.orm_map
+            appendIfUnique texsList tex
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.emissive_map
+            appendIfUnique texsList tex
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.replacable_map
+            appendIfUnique texsList tex
+            tex = GriffonStudios_Helper_Functions.GetTEXS mat.reflection_map
+            appendIfUnique texsList tex
+            
+        )
+        
+        local mtlsTextures = #()
+        for i=1 to texsList.count do
+        (
+            textureFile = texsList[i]
+            local t = _texs id:i replaceableId:1 fileName:""
+            
+            if ( textureFile != "" ) then t = _texs id:i replaceableId:0 fileName:textureFile
+            
+            append mtlsTextures t
+        )
+        
+        return mtlsTextures
+    ),
+    function GetLayerTextureId textureList map=
+    (
+        if ( map == undefined ) then textureToFind = ""
+        if ( map != undefined ) then 
+        (
+            textureToFind = (filenameFromPath map.fileName)
+            if ( textureToFind.count <= 4 ) then textureToFind = ""
+            if ( textureToFind.count > 4) then textureToFind = "Textures/" +  (filenameFromPath map.fileName)
+            
+        )
+        
+        local textureId = 0
+        for t in textureList do
+        (
+            if ( t.fileName == textureToFind ) then 
+            (
+                textureId = t.id
+                exit
+            )
+        )
+        if textureId ==0 then throw "Texture ID not found !!"
+        --format "Texture ID : %\n" textureId
+        return textureId
+        
+    ),
+    function TimeToInt theTime=
+    (
+        local strTime = theTime as string
+        local intTime = ( substring strTime 1 (strTime.count - 1) ) as integer
+        return intTime
     )
+    
 )
 
 
@@ -277,7 +558,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         
         local stream = fopen file "wb"
         
-        try (
+        --try (
             /* MDLX */
             writer.WriteFixedString stream "MDLX" 4
             
@@ -300,25 +581,23 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             writer.WriteFixedString stream "SEQS" 4
             writer.WriteSEQS stream
             
-            /* MTLS */
+            /* MTLS & TEXS */
             writer.WriteFixedString stream "MTLS" 4
-            
+            writer.WriteMTLS stream
         
-            print "DONE!"
-        ) catch ( print ( getCurrentException() ) )
+
+            Format "DONE!\n"
+        --) catch ( print ( getCurrentException() ) )
 
         fFlush stream
         fClose stream
-        gc()
+        gc()        
     )
-    
-    
 )
 
 clearlistener()
 
-
 file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip.mdx"
 
-GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+--GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 

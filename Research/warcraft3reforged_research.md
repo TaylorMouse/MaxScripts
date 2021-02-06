@@ -189,7 +189,7 @@ In the MTLS tag, we will find different layers, each starting with the LAYS tag
 |Flags|int
 |Shader Name|80 bytes characters ( usually *Shader_HD_DefaultUnit*)|
 |4 bytes| containing the name LAYS|
-|4 byte int| Number of layers available|
+|int| Number of layers available|
 
     Flags
         0x00 None
@@ -225,12 +225,18 @@ Settings for a layer:
 
 |Chunk size| Description|
 |--|--|
-|int| Layer Size|
-|int| Filter Mode (see previous list)|
-|int| Shading Flag (see previous list)|
-|int| Texture ID pointing to the texture in the textures list|
-|int| Texture Animation ID|
-|32 bytes  | Unknown|
+|int| Number of layers
+|int| Layer Size ( without animation this block is 52 bytes)
+|int| Filter Mode (see previous list)
+|int| Shading Flag (see previous list)
+|int| Texture ID pointing to the texture in the textures list
+|int| Texture Animation ID ( -1 if no animated texture )
+|int| CoordID ( usually 0 )
+|float| Alpha ( usually 1 )
+|float| Emissive Strength ( usually 1 )
+|3 x float| Fresnel Color ( usually 1,1,1 )
+|float| Fresnel Opacity ( usually 0 )
+|float| Fresnel TeamColor ( usually 0 )
 
 If the Layer size exceeds 52 bytes, then it has texture floated animation defined on it, both KMTA and KMTE chunks. See **Float Animation** on how to read this data chunk.
 
