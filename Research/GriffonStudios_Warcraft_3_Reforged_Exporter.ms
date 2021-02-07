@@ -9,6 +9,8 @@
     | Warcraft III Reforged mdx exporter 
     
     .RELEASE NOTES
+    | 0.04 - Writing out the GEOS with LOD's
+    | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
     | 0.01 - Main setup
     
@@ -30,11 +32,36 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         for i=1 to (len - str.count) do
             writeByte stream 0
     ),
+    function WriteTris stream tris=
+    (
+        writeShort stream tris[1]
+        writeShort stream tris[2]
+        writeShort stream tris[3]
+    ),
     function WriteVector3 stream vector3=
     (
         writeFloat stream vector3.X
         writeFloat stream vector3.Y
         writeFloat stream vector3.Z
+    ),
+    function WriteVector4 stream vector4=
+    (
+        writeFloat stream vector4[1]
+        writeFloat stream vector4[2]
+        writeFloat stream vector4[3]
+        writeFloat stream vector4[4]
+
+    ),
+    function WriteVertexWeights stream vertexWeights=
+    (
+        for i=1 to 4 do writeByte stream vertexWeights.boneIndices[i]
+        for i=1 to 4 do writeByte stream vertexWeights.weights[i]
+        
+    ),
+    function WriteTextureCoordinates stream uv=
+    (
+        writeFloat stream uv[1]
+        writeFloat stream uv[2]
     ),
     function WriteMODLBoundingBox stream=
     (
@@ -172,14 +199,118 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         local geos = GriffonStudios_Helper_Functions.GetGEOS()
         
-    
+        writeLong stream geos.TotalSize
         
+        for geo in geos.geos do
+        (
+            writeLong stream geo.size
+
+            writer.WriteFixedString stream "VRTX" 4
+            writeLong stream geo.VRTX.count
+            for v in geo.VRTX do writer.WriteVector3 stream v
+
+            writer.WriteFixedString stream "NRMS" 4
+            writeLong stream geo.NRMS.count
+            for n in geo.NRMS do writer.WriteVector3 stream n
+
+            writer.WriteFixedString stream "PTYP" 4
+            writeLong stream geo.PTYP.count
+            for p in geo.PTYP do writeLong stream p
+                
+            writer.WriteFixedString stream "PCNT" 4
+            writeLong stream geo.PCNT.count
+            for p in geo.PCNT do writeLong stream p
+            
+            writer.WriteFixedString stream "PVTX" 4
+            writeLong stream ( geo.PVTX.count * 3 )
+            for p in geo.PVTX do writer.WriteTris stream p
+            
+            writer.WriteFixedString stream "GNDX" 4
+            writeLong stream 0
+            
+            writer.WriteFixedString stream "MTGC" 4
+            writeLong stream geo.MTGC.count
+            for m in geo.MTGC do writeLong stream m
+                
+            writer.WriteFixedString stream "MATS" 4
+            writeLong stream geo.MATS.boneIdList.count
+            for b in geo.MATS.boneIdList do writeLong stream b
+            writeLong stream geo.MATS.MaterialReferenceId
+            writeLong stream geo.MATS.sectionGroupId 
+            writeLong stream geo.MATS.sectionGroupType 
+            writeLong stream geo.MATS.LodId
+            writer.WriteFixedString stream geo.MATS.LodName 80 
+            for f in geo.MATS.sevenFloats do writeFloat stream f
+            writeLong stream geo.MATS.oneLong
+            
+            writer.WriteFixedString stream "TANG" 4
+            writeLong stream geo.TANG.count
+            for t in geo.TANG do writer.WriteVector4 stream t
+                
+            writer.WriteFixedString stream "SKIN" 4
+            writeLong stream ( geo.SKINS.count * 8 )
+            for s in geo.SKINS do writer.WriteVertexWeights stream s
+            
+            writer.WriteFixedString stream "UVAS" 4
+            writeLong stream geo.UVAS
+            for uvbs in geo.UVBS do
+            (
+                writer.WriteFixedString stream "UVBS" 4
+                writeLong stream uvbs.count
+                for uv in uvbs do writer.WriteTextureCoordinates stream uv
+            )
+            
+        )
+    ),
+    function WriteGEOA stream=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local geoas = help.GetGEOA()
+        
+        local totalSize = 0
+        for geoa in geoas do totalSize += geoa.size
+            
+        writeLong stream totalSize
+        
+        for geoa in geoas do
+        (
+            writeLong stream geoa.size
+            writeFloat stream geoa.alpha
+            writeLong  stream geoa.flag
+            writeFloat stream geoa.color[1]
+            writeFloat stream geoa.color[2]
+            writeFloat stream geoa.color[3]
+            writeLong  stream geoa.id
+        )
         
     )
 )
 
 STRUCT GriffonStudios_Helper_Functions
 (
+    function GetGEOA =
+    (
+        struct WC3RefGEOA ( size, id, alpha, flag, color, KGAO )
+        
+        local meshes = #()
+        
+        for obj in objects do if (classof obj == Editable_Mesh ) then append meshes obj
+        
+        local geoas = #()
+        for i=1 to meshes.count do
+        (
+            local g = WC3RefGEOA()
+            g.size = 28 --> alter this when there is a KGAO block
+            g.id = i - 1
+            g.alpha = 1.0
+            g.flag = 0
+            g.color = [1.0, 1.0, 1.0]
+            
+            append geoas g
+        )
+        
+        return geoas
+    ),
     /* Get the bounding box of a specific object */
     function GetBoundingBox =
     (
@@ -567,13 +698,15 @@ STRUCT GriffonStudios_Helper_Functions
     /* Get the Geometry data */
     function GetGEOS=
     (
+        format "Getting GEOS information ...\n"
+        
         local help = GriffonStudios_Helper_Functions()
         
         struct WC3RefGeometry 
             ( TotalSize = 0, Geos = #() )
         
         struct WC3RefGeo
-            ( size, vrtx = #(), nrms = #(), ptyp = #(), pcnt = #(), pvtx = #(), gndx = #(), mtgc = #(), mats, tang = #(), skins = #(), uvas, uvbs = #() )
+            ( size, vrtx = #(), nrms = #(), ptyp = #(), pcnt = #(), pvtx = #(), gndx , mtgc = #(), mats, tang = #(), skins = #(), uvas, uvbs = #() )
 
         struct WC3RefMATS
             ( nbrBones, boneIdList = #(), MaterialReferenceId, sectionGroupId = 0, sectionGroupType = 0, LodId, LodName, sevenFloats = #(), oneLong = 0 )
@@ -595,41 +728,54 @@ STRUCT GriffonStudios_Helper_Functions
             
             local geo = WC3RefGeo()
             
+            geo.Size = 4 
             -- VRTX
+            geo.Size += 8
             for v=1 to m.numverts do append geo.vrtx ( getvert m v )
+            geo.Size +=  m.numverts * 12
             
             -- NRMS
+            geo.Size += 8
             for v=1 to m.numverts do append geo.nrms ( getnormal m v )
+            geo.Size +=  m.numverts * 12
             
             -- PTYP
+            geo.Size += 12
             append geo.ptyp 0x4 --> export triangles only
             
             -- PCNT
+            geo.Size += 12
             append geo.pcnt ( m.numFaces * 3 ) --> number of corners or indices in the group
             
             -- PVTX
+            geo.Size += 8
             for f=1 to m.numFaces do
             (
                 local face = getface m f
                 append geo.pvtx [face.x - 1, face.y - 1, face.z - 1]
             )
+            geo.Size += m.numFaces * 6
             
             -- GNDX
-            append geo.gndx 0
+            geo.Size += 8 --> only GNDX and nbr of gndx's which is zero
+            geo.gndx = 0
             
             -- MTGC
+            geo.Size += 8
             local nBones = help.GetNumberOfBones m
             
             for n=1 to nBones do append geo.mtgc 1
             
+            geo.Size += nBones * 4
+            
             -- MATS
+            geo.Size += 8
+            
             geo.mats = WC3RefMATS()
+            
             geo.mats.nbrBones = nBones
             for n=1 to nBones do append geo.mats.boneIdList (n-1)
-            geo.mats.LodId = lod_id
-            geo.mats.LodName = m.name
-
-            for i= 1 to 7 do append geo.mats.sevenFloats 0.0
+            geo.Size += nBones * 4
             
             local uniqueMaterials = #()
             for obj in objects do
@@ -643,26 +789,53 @@ STRUCT GriffonStudios_Helper_Functions
                 local mat = uniqueMaterials[matId]
                 if ( mat == m.material ) then geo.mats.MaterialReferenceId = matId - 1
             )
+            geo.Size += 4 --> texture ID
+            geo.Size += 8 --> section group id, section group type
+            
+            geo.mats.LodId = lod_id
+            geo.Size += 4
+            geo.mats.LodName = m.name
+            geo.Size += 80
+            
+            for i= 1 to 7 do append geo.mats.sevenFloats 0.0
+            geo.Size += 7 * 4
 
+             geo.Size += 4 --> one long
+            
             -- TANG
+            geo.Size += 8
             geo.tang = help.CalculateTangents m
-
+            geo.Size +=  m.numverts * 16
+            
             -- SKIN
+            geo.Size += 8
             geo.skins = help.GetWeights m
+            geo.Size += m.numverts * 8
             
             -- UVAS / UVBS
+            geo.Size += 8
+
             geo.uvas = help.GetNumUVMaps m
             for u=1 to geo.uvas do
-                  append geo.uvbs ( help.GetUVCoordinates m u )
-                        
+            (
+                geo.Size += 8
+                append geo.uvbs ( help.GetUVCoordinates m u )
+                geo.Size += m.numverts * 8
+            )
+            
             if ( WC3_DEBUG ) then format " - %\n" geo
             append geos.geos geo
         )
+        
+        for geo in geos.geos do geos.totalSize += geo.Size
+        
+        if ( WC3_DEBUG ) then format " - Total Size: %\n" geos.totalSize
+        
+        return geos
     ),
     /* Get the number of bones in the skin modifier */
     function GetNumberOfBones theMesh=
     (
-        
         select theMesh
         max modify mode
         local sk = modPanel.getCurrentObject()
@@ -862,6 +1035,10 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             writer.WriteFixedString stream "GEOS" 4
             writer.WriteGEOS stream
 
+            /* GEOA */
+            writer.WriteFixedString stream "GEOA" 4
+            writer.WriteGEOA stream
+
             Format "DONE!\n"
         --) catch ( print ( getCurrentException() ) )
 
@@ -875,5 +1052,6 @@ clearlistener()
 
 file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip.mdx"
 
-GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+--GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+
 

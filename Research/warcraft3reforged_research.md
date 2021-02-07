@@ -482,11 +482,15 @@ Binding position or initial object transformation
 
 Visibility or alpha animation of the geometry meshes
 
+Total Size = 28 bytes * the number of meshes ( if there is no additional KGOA animation)
+
 |Name|Size|
 |--|--|
-|Size|4 byte int |
-|Unknown| 5 x 4 byte float|
-|Mesh Reference Id|4 byte int referncing the mesh in the GEO chunk|
+|Size|4 byte int -> 28 if there is no KGAO animation|
+|Alpha|float|usually 1.0
+|Flags|int|usually 0
+|Color|3 x float|usually 1.0, 1.0, 1.0
+|Mesh Reference Id|4 byte int referencing the mesh in the GEO chunk|
 
 Animation block consists of 1 possible animation types:
 
