@@ -326,7 +326,7 @@ Groups: nGroups times a byte
 
 #### 7. MTGC
 
-Bone groups: nbr of bones in each group
+Bone groups: nbr of bones in this group
 
 nMatrixGroups: 4 byte int; indicating the nbr of Matrix groups
 
@@ -336,23 +336,18 @@ MatrixGroups: nMatrixGroups time int (4 bytes each) usually always a 1 for each
 
 Material references
 
-nMaterials: 4 byte int; indicating the nbr of Material references
-
-material reference: nMaterials times int (4 bytes each)
-
-Material Reference Id : 4 byte int; referencing the Material ID in MTLS
-
-Unkown: 8 bytes all zero
-
-LOD level: 4 bytes int; pointing to the LOD (starting by ZERO)
-
-Material Name: 80 bytes character
-
-Unknown: 7 floats usually zero
-
-Unkown: 4 byte int
-
-    NOTE: This is gonna be a pain to write out :(!
+|Name|Size|Desc|
+|--|--|--|
+|nMaterials             |int| indicating the nbr of Material references, looks more like the number of bones in this mesh
+|material reference     |nMaterials x int| is an ascending numbering going up to the nbr of nMaterials
+|Material Reference Id  |int|referencing the Material ID in MTLS
+|Section Group Id       |int|usually ZERO
+|sectionGroupType       |int|usually ZERO
+|LOD ID                 |int| Level Of Detail (starting by ZERO)
+|LOD Name               |80 bytes| Name of the mesh/material
+|Bounds Radius          |float|usually ZERO
+|Bounding Box ?         | 6 x float|usually ZERO
+|Extents ?              |int| usually ZERO
 
 #### 9. TANG
 

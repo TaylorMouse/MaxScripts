@@ -56,8 +56,6 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         writeLong stream ( 132 * seqs.count)
         
-        -- ( Name, StartFrame, EndFrame, MovementSpeed=0.0, NoLoop=0, Rarity=0, Priority=0, Default=0, BBox )
-        
         for seq in seqs do
         (
             
@@ -157,6 +155,25 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writer.WriteFixedString stream tex.fileName 260
             writeLong stream tex.flag
         )            
+        
+    ),
+    function WriteMODL stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        writeLong stream 372
+        writer.WriteFixedString stream ( getFileNameFile file ) 80
+        writer.WriteFixedString stream "" 260
+        writeLong stream 0
+        writer.WriteMODLBoundingBox stream
+        writeLong stream 150
+    ),
+    function WriteGEOS stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        local geos = GriffonStudios_Helper_Functions.GetGEOS()
+        
+    
+        
         
     )
 )
@@ -319,14 +336,14 @@ STRUCT GriffonStudios_Helper_Functions
                 
                 s.BBox = GriffonStudios_Helper_Functions.GetMODLBoundingBoxBetweenFrames startFrame endFrame
                     
-                seqLength = ( EndFrame - startFrame ) * 1000 / 30 
+--                 seqLength = ( EndFrame - startFrame ) * 1000 / 30 
+--                 
+--                 wc3EndFrame = wc3startFrame + seqLength
                 
-                wc3EndFrame = wc3startFrame + seqLength
+                s.StartFrame =  startFrame * 1000 / 30 --wc3startFrame
+                s.EndFrame =  EndFrame * 1000 / 30 -- wc3EndFrame
                 
-                s.StartFrame = wc3startFrame --startFrame * 1000 / 30
-                s.EndFrame = wc3EndFrame -- EndFrame * 1000 / 30
-                
-                wc3startFrame = wc3EndFrame + 34
+                --wc3startFrame = wc3EndFrame + 34
                 s.Default = 0
                     
                 for i=2 to parts.count do
@@ -421,7 +438,7 @@ STRUCT GriffonStudios_Helper_Functions
                         
                         local kmta = _kmta()
                         
-                        for key in ctrl.keys do
+                        for key in mat.material_alpha.controller.keys do
                         (
                             s.shaderSizeIncluded  = s.shaderSizeIncluded + 8
                             mtls.TotalSize        = mtls.TotalSize + 8
@@ -514,6 +531,7 @@ STRUCT GriffonStudios_Helper_Functions
         
         return mtlsTextures
     ),
+    /* depending on the map to export, get the matching ID from the TEXS */
     function GetLayerTextureId textureList map=
     (
         if ( map == undefined ) then textureToFind = ""
@@ -539,13 +557,274 @@ STRUCT GriffonStudios_Helper_Functions
         return textureId
         
     ),
+    /* Keys in a controller return a weird uint64 this is converted here */
     function TimeToInt theTime=
     (
         local strTime = theTime as string
         local intTime = ( substring strTime 1 (strTime.count - 1) ) as integer
         return intTime
+    ),
+    /* Get the Geometry data */
+    function GetGEOS=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        
+        struct WC3RefGeometry 
+            ( TotalSize = 0, Geos = #() )
+        
+        struct WC3RefGeo
+            ( size, vrtx = #(), nrms = #(), ptyp = #(), pcnt = #(), pvtx = #(), gndx = #(), mtgc = #(), mats, tang = #(), skins = #(), uvas, uvbs = #() )
+
+        struct WC3RefMATS
+            ( nbrBones, boneIdList = #(), MaterialReferenceId, sectionGroupId = 0, sectionGroupType = 0, LodId, LodName, sevenFloats = #(), oneLong = 0 )
+        
+        local geos = WC3RefGeometry()
+        
+        local meshes = #()
+        for obj in objects do
+            if (classof obj == Editable_mesh ) then append meshes obj
+        
+        for m in meshes do
+        (
+            local lod_name = substring m.name (m.name.count - 3) -1
+            
+            local lod_id = 0
+            if ( lod_name == "LOD1" ) then lod_id = 1
+            if ( lod_name == "LOD2" ) then lod_id = 2
+            if ( lod_name == "LOD3" ) then lod_id = 3
+            
+            local geo = WC3RefGeo()
+            
+            -- VRTX
+            for v=1 to m.numverts do append geo.vrtx ( getvert m v )
+            
+            -- NRMS
+            for v=1 to m.numverts do append geo.nrms ( getnormal m v )
+            
+            -- PTYP
+            append geo.ptyp 0x4 --> export triangles only
+            
+            -- PCNT
+            append geo.pcnt ( m.numFaces * 3 ) --> number of corners or indices in the group
+            
+            -- PVTX
+            for f=1 to m.numFaces do
+            (
+                local face = getface m f
+                append geo.pvtx [face.x - 1, face.y - 1, face.z - 1]
+            )
+            
+            -- GNDX
+            append geo.gndx 0
+            
+            -- MTGC
+            local nBones = help.GetNumberOfBones m
+            
+            for n=1 to nBones do append geo.mtgc 1
+            
+            -- MATS
+            geo.mats = WC3RefMATS()
+            geo.mats.nbrBones = nBones
+            for n=1 to nBones do append geo.mats.boneIdList (n-1)
+            geo.mats.LodId = lod_id
+            geo.mats.LodName = m.name
+
+            for i= 1 to 7 do append geo.mats.sevenFloats 0.0
+            
+            local uniqueMaterials = #()
+            for obj in objects do
+            (
+                if ( obj.material != undefined and ( classof obj.material == WC3RefMaterial ) ) then
+                    appendIfUnique uniqueMaterials obj.material
+            )
+
+            for matId = 1 to uniqueMaterials.count do
+            (
+                local mat = uniqueMaterials[matId]
+                if ( mat == m.material ) then geo.mats.MaterialReferenceId = matId - 1
+            )
+
+            -- TANG
+            geo.tang = help.CalculateTangents m
+
+            -- SKIN
+            geo.skins = help.GetWeights m
+            
+            -- UVAS / UVBS
+            geo.uvas = help.GetNumUVMaps m
+            for u=1 to geo.uvas do
+                  append geo.uvbs ( help.GetUVCoordinates m u )
+                        
+            if ( WC3_DEBUG ) then format " - %\n" geo
+            append geos.geos geo
+        )
+    ),
+    /* Get the number of bones in the skin modifier */
+    function GetNumberOfBones theMesh=
+    (
+        
+        select theMesh
+        max modify mode
+        local sk = modPanel.getCurrentObject()
+        local nbrBones = 0
+        if (classof sk == Skin ) then nbrBones = skinOps.GetNumberBones sk
+           
+        /*
+            It should not be possible that there is no bone !!
+            If that is the case, simulate one and have ever vertex have a weight of 1.0
+        */
+        deselect theMesh
+        return nbrBones
+    ),
+    /* Calculate tangent, since Max does not support TANGENTS we need to calculate then however, Reforged and this method does not seem to be aligned */
+    function CalculateTangents theMesh=
+    (
+        local tan1 = #()
+        local tan2 = #()
+        local tangent = #()
+        for i=1 to theMesh.numFaces do
+        (
+
+            local f = getFace theMesh i
+
+            local v1 = getVert theMesh f[1]
+            local v2 = getVert theMesh f[2]
+            local v3 = getVert theMesh f[3]
+
+            local w1 = getTVert theMesh f[1]
+            local w2 = getTVert theMesh f[2]
+            local w3 = getTVert theMesh f[3]
+
+
+            local x1 = v2.x - v1.x
+            local x2 = v3.x - v1.x
+            local y1 = v2.y - v1.y
+            local y2 = v3.y - v1.y
+            local z1 = v2.z - v1.z
+            local z2 = v3.z - v1.z
+
+            local s1 = w2.x - w1.x
+            local s2 = w3.x - w1.x
+            local t1 = w2.y - w1.y
+            local t2 = w3.y - w1.y
+
+            local r = 1.0 / ( s1 * t2 - s2 * t1)
+
+            local sdir = [ ( t2 * x1 - t1 * x2) * r , ( t2 * y1 - t1 * y2 ) * r, ( t2 * z1 - t1 * z2 ) * r ]
+            local tdir = [ ( s1 * x2 - s2 * x1) * r , ( s1 * y2 - s2 * y1 ) * r, ( s1 * z2 - s2 * z1 ) * r ]
+
+            tan1[f[1]] = sdir
+            tan1[f[2]] = sdir
+            tan1[f[3]] = sdir
+
+            tan2[f[1]] = tdir
+            tan2[f[2]] = tdir
+            tan2[f[3]] = tdir
+
+        )
+
+        for i=1 to theMesh.numVerts do
+        (
+            local n = getnormal theMesh i
+            local t = tan1[i]
+            
+            local v = normalize ( ( t - n ) * ( dot n t ) )
+            local w = dot ( cross n t ) tan2[i]
+            
+            if ( w < 0.0 ) then w = -1.0 else w = 1.0
+            tangent[i] = [v.x, v.y, v.z, w]
+        )
+        return tangent
+    ),
+    /* get the bones in the scene */
+    function GetBones=
+    (
+        local boneList = #()
+        for obj in objects do 
+            if ( classof obj == BoneGeometry ) then 
+                append boneList obj
+        
+        return boneList
+    ),
+    /* get the vertex weights and vertec bone indices */
+    function GetWeights theMesh=
+    (
+        local boneList = GriffonStudios_Helper_Functions.GetBones()
+        select theMesh
+        max modify mode
+        local sk = modPanel.getCurrentObject()
+        
+        struct vertexWeights ( vertexId, boneIndices, weights )
+        local vertices = #()
+        
+        if (classof sk == Skin ) then
+        (
+            for v=1 to skinOps.getnumbervertices sk do
+            (
+                local count = skinops.getvertexweightcount sk v
+                local boneIndices = #(0,0,0,0)
+                local weights = #(0,0,0,0)
+                
+                if count > 4 then count = 4
+                for k=1 to count do
+                (
+                    local weight = skinOps.getvertexweight sk v k
+                    local boneId = skinOps.getvertexweightboneid sk v k
+                    local boneName = skinOps.getBonename sk boneId 0
+                    
+                    for b=1 to boneList.count do
+                    (
+                        if ( boneList[b].name == boneName ) then 
+                        (
+                            boneId = b - 1
+                            exit
+                        )
+                    )
+                    
+                    boneIndices[k] = boneId
+                    weights[k] = ( weight * 255 ) as integer
+                )
+                
+                if count > 4 then 
+                    weights[4] = 1.0 - weights[3] - weights[2] - weights[1]
+                
+                local vertex = vertexWeights vertexId:v boneIndices:boneIndices weights:weights
+                
+                append vertices vertex
+            )
+            
+        )
+        deselect theMesh
+        return vertices
+    ),
+    /* get the number of uv maps */
+    function GetNumUVMaps m=
+    (
+        local n = meshop.getnummaps m
+        
+        local availableUVMaps = 0
+        
+        for i=1 to n do
+        (
+            if( ( meshop.getMapSupport m i ) == true ) then availableUVMaps +=1 
+        )
+        
+        return availableUVMaps
+        
+    ),
+    /* get the texture coordinates of the mesh of that mapchannel */
+    function GetUVCoordinates theMesh mapChannel=
+    (
+        local uvs = #()
+        
+        for v=1 to theMesh.NumVerts do
+        (
+            local uv = meshop.getMapVert theMesh mapChannel v
+            
+            append uvs [ uv.x, ( 1.0 - uv.y ) ]
+        )
+        return uvs
     )
-    
 )
 
 
@@ -569,13 +848,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             
             /* MODL */
             writer.WriteFixedString stream "MODL" 4
-            writeLong stream 372
-            
-            writer.WriteFixedString stream ( getFileNameFile file ) 80
-            writer.WriteFixedString stream "" 260
-            writeLong stream 0
-            writer.WriteMODLBoundingBox stream
-            writeLong stream 150
+            writer.WriteMODL stream
             
             /* SEQS */
             writer.WriteFixedString stream "SEQS" 4
@@ -585,6 +858,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             writer.WriteFixedString stream "MTLS" 4
             writer.WriteMTLS stream
         
+            /* GEOS */
+            writer.WriteFixedString stream "GEOS" 4
+            writer.WriteGEOS stream
 
             Format "DONE!\n"
         --) catch ( print ( getCurrentException() ) )
@@ -599,5 +875,5 @@ clearlistener()
 
 file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip.mdx"
 
---GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 
