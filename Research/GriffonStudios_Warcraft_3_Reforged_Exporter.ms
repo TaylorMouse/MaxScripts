@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .RELEASE NOTES
+    | 0.05 - Getting the bones and the KGTR, KGRT and KGSC animations
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
@@ -19,275 +20,147 @@
 */
 GLOBAL WC3_DEBUG = true
 
-STRUCT GriffonStudios_Warcraft_3_Writer_Functions
-(
-    function WriteFixedString stream str len=
-    (
-        if ( WC3_DEBUG ) then  Format "Writing %\n" str
-        for i=1 to str.count do
-        (
-            local byte = bit.charasint str[i]
-            writeByte stream byte
-        )
-        for i=1 to (len - str.count) do
-            writeByte stream 0
-    ),
-    function WriteTris stream tris=
-    (
-        writeShort stream tris[1]
-        writeShort stream tris[2]
-        writeShort stream tris[3]
-    ),
-    function WriteVector3 stream vector3=
-    (
-        writeFloat stream vector3.X
-        writeFloat stream vector3.Y
-        writeFloat stream vector3.Z
-    ),
-    function WriteVector4 stream vector4=
-    (
-        writeFloat stream vector4[1]
-        writeFloat stream vector4[2]
-        writeFloat stream vector4[3]
-        writeFloat stream vector4[4]
-
-    ),
-    function WriteVertexWeights stream vertexWeights=
-    (
-        for i=1 to 4 do writeByte stream vertexWeights.boneIndices[i]
-        for i=1 to 4 do writeByte stream vertexWeights.weights[i]
-        
-    ),
-    function WriteTextureCoordinates stream uv=
-    (
-        writeFloat stream uv[1]
-        writeFloat stream uv[2]
-    ),
-    function WriteMODLBoundingBox stream=
-    (
-        local bbox = GriffonStudios_Helper_Functions.GetMODLBoundingBox()
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        
-        if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
-        
-        writer.WriteVector3 stream bbox[1]
-        writer.WriteVector3 stream bbox[2]
-        
-    ),
-    function WriteSEQS stream=
-    (
-        local help = GriffonStudios_Helper_Functions()
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        
-        local seqs = help.GetSEQS()
-        
-        writeLong stream ( 132 * seqs.count)
-        
-        for seq in seqs do
-        (
-            
-            
-            writer.WriteFixedString stream seq.Name 80
-            WriteLong  stream seq.StartFrame
-            WriteLong  stream seq.EndFrame
-            WriteFloat stream seq.MovementSpeed
-            WriteLong  stream seq.NoLoop
-            WriteFloat stream seq.Rarity
-            WriteLong  stream seq.Default
-            WriteFloat stream seq.Priority
-            
-            writer.WriteVector3 stream seq.BBox[1]
-            writer.WriteVector3 stream seq.BBox[2]
-            
-            if ( WC3_DEBUG ) then  Format " - %\n" seq
-        )
-
-        
-    ),
-    function WriteMTLS stream=
-    (
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        local mtls = GriffonStudios_Helper_Functions.GetMTLS()
-        
-        if (WC3_DEBUG) then 
-        (
-            for i=1 to mtls.TEXSList.Count do
-                format " - %\n" mtls.TEXSList[i]
-        )
-        
-        writeLong stream mtls.TotalSize
-        
-        for s in mtls.ShaderList do
-        (
-            writeLong stream s.shaderSizeIncluded
-            writeLong stream s.priorityPlane
-            writeLong stream s.flag
-            writer.WriteFixedString stream s.shaderName 80
-            
-            writer.WriteFixedString stream "LAYS" 4
-            writeLong stream s.Layers.Count --> usually 6
-            
-            for l=1 to s.Layers.Count do
-            (
-                local lay = s.Layers[l]
-                writeLong stream lay.layerSizeIncluded
-                writeLong stream lay.filterMode
-                writeLong stream lay.shadingFlag
-                writeLong stream ( lay.TextureId - 1 )
-                writeLong stream lay.textureAnimationId
-                
-                writeLong stream 0 -- CoordId
-                writeFloat stream 1 -- Alpha
-                writeFloat stream 1 -- Emissive
-                
-                writeFloat stream 1 -- Fresnel Color R
-                writeFloat stream 1 -- Fresnel Color G
-                writeFloat stream 1 -- Fresnel Color B
-                writeFloat stream 0 -- Fresnel Opacity
-                writeFloat stream 0 -- Fresnel Team Color
-                
-                if ( l==1) then 
-                (
-                    if ( lay.KMTA != undefined ) then
-                    (
-                        writer.WriteFixedString stream "KMTA" 4
-                        writeLong stream lay.KMTA.timeList.count
-                        writeLong stream 1 --> line type
-                        writeLong stream -1 --> parentId
-                        
-                        for k=1 to lay.KMTA.timeList.count do
-                        (
-                            writeLong stream lay.KMTA.timeList[k]
-                            writeLong stream lay.KMTA.valueList[k]
-                        )
-                        
-                    )
-                )
-            )
-
-        )
-        
-        GriffonStudios_Warcraft_3_Writer_Functions.WriteTEXS stream mtls.TEXSList
-    ),
-    function WriteTEXS stream texsList =
-    (
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        
-        writer.WriteFixedString stream "TEXS" 4
-        
-        writeLong stream ( texslist.count * 268 )
-        for tex in texsList do
-        (
-            writeLong stream tex.replaceableId
-            writer.WriteFixedString stream tex.fileName 260
-            writeLong stream tex.flag
-        )            
-        
-    ),
-    function WriteMODL stream=
-    (
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        writeLong stream 372
-        writer.WriteFixedString stream ( getFileNameFile file ) 80
-        writer.WriteFixedString stream "" 260
-        writeLong stream 0
-        writer.WriteMODLBoundingBox stream
-        writeLong stream 150
-    ),
-    function WriteGEOS stream=
-    (
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        local geos = GriffonStudios_Helper_Functions.GetGEOS()
-        
-        writeLong stream geos.TotalSize
-        
-        for geo in geos.geos do
-        (
-            writeLong stream geo.size
-
-            writer.WriteFixedString stream "VRTX" 4
-            writeLong stream geo.VRTX.count
-            for v in geo.VRTX do writer.WriteVector3 stream v
-
-            writer.WriteFixedString stream "NRMS" 4
-            writeLong stream geo.NRMS.count
-            for n in geo.NRMS do writer.WriteVector3 stream n
-
-            writer.WriteFixedString stream "PTYP" 4
-            writeLong stream geo.PTYP.count
-            for p in geo.PTYP do writeLong stream p
-                
-            writer.WriteFixedString stream "PCNT" 4
-            writeLong stream geo.PCNT.count
-            for p in geo.PCNT do writeLong stream p
-            
-            writer.WriteFixedString stream "PVTX" 4
-            writeLong stream ( geo.PVTX.count * 3 )
-            for p in geo.PVTX do writer.WriteTris stream p
-            
-            writer.WriteFixedString stream "GNDX" 4
-            writeLong stream 0
-            
-            writer.WriteFixedString stream "MTGC" 4
-            writeLong stream geo.MTGC.count
-            for m in geo.MTGC do writeLong stream m
-                
-            writer.WriteFixedString stream "MATS" 4
-            writeLong stream geo.MATS.boneIdList.count
-            for b in geo.MATS.boneIdList do writeLong stream b
-            writeLong stream geo.MATS.MaterialReferenceId
-            writeLong stream geo.MATS.sectionGroupId 
-            writeLong stream geo.MATS.sectionGroupType 
-            writeLong stream geo.MATS.LodId
-            writer.WriteFixedString stream geo.MATS.LodName 80 
-            for f in geo.MATS.sevenFloats do writeFloat stream f
-            writeLong stream geo.MATS.oneLong
-            
-            writer.WriteFixedString stream "TANG" 4
-            writeLong stream geo.TANG.count
-            for t in geo.TANG do writer.WriteVector4 stream t
-                
-            writer.WriteFixedString stream "SKIN" 4
-            writeLong stream ( geo.SKINS.count * 8 )
-            for s in geo.SKINS do writer.WriteVertexWeights stream s
-            
-            writer.WriteFixedString stream "UVAS" 4
-            writeLong stream geo.UVAS
-            for uvbs in geo.UVBS do
-            (
-                writer.WriteFixedString stream "UVBS" 4
-                writeLong stream uvbs.count
-                for uv in uvbs do writer.WriteTextureCoordinates stream uv
-            )
-            
-        )
-    ),
-    function WriteGEOA stream=
-    (
-        local help = GriffonStudios_Helper_Functions()
-        local geoas = help.GetGEOA()
-        
-        local totalSize = 0
-        for geoa in geoas do totalSize += geoa.size
-            
-        writeLong stream totalSize
-        
-        for geoa in geoas do
-        (
-            writeLong stream geoa.size
-            writeFloat stream geoa.alpha
-            writeLong  stream geoa.flag
-            writeFloat stream geoa.color[1]
-            writeFloat stream geoa.color[2]
-            writeFloat stream geoa.color[3]
-            writeLong  stream geoa.id
-        )
-        
-    )
-)
 
 STRUCT GriffonStudios_Helper_Functions
 (
+    function GetBONE = 
+    (
+        struct WC3Bones ( totalSize = 0, WC3RefBoneList = #())
+        struct WC3RefBone ( Size = 96, Name, Id, ParentId = -1, Flag = 0x100, Animations = #(), BoneRef, geosetId = -1, geosetAnimationId = -1 )
+        -- without animation, this block is always 96 bytes
+        
+        
+        local help = GriffonStudios_Helper_Functions()
+        local boneList = help.GetBones()
+
+        /* get a list of all the bones */
+        local allBones = WC3Bones()
+            
+        for i=1 to boneList.count do
+        (
+            local b = WC3RefBone Id:(i-1) Name:boneList[i].Name boneRef:boneList[i]
+            append allBones.WC3RefBoneList b
+        )
+        
+        /* build the hierarchy */
+        for i=1 to allBones.WC3RefBoneList.Count do
+        (
+            local b = allBones.WC3RefBoneList[i]
+            
+            if( b.boneRef.Parent != undefined ) then
+            (
+                for x=1 to allBones.WC3RefBoneList.Count do
+                (
+                    if( x != i ) then 
+                    (
+                        if ( allBones.WC3RefBoneList[x].BoneRef.Name == b.boneRef.Parent.Name ) then 
+                        (
+                            b.ParentId = x-1
+                            exit
+                        )
+                    )
+                )
+            )
+        )
+
+        /* get the animations */
+        help.GetKGTR allBones.WC3RefBoneList
+        help.GetKGRT allBones.WC3RefBoneList
+        help.GetKGSC allBones.WC3RefBoneList
+        
+        /* calculate total size */
+        for b in allBones.WC3RefBoneList do
+        (
+            allBones.totalSize += b.size
+            
+            for anim in b.Animations do
+                if ( anim.AnimBlock.count > 0 ) then allBones.totalSize += anim.size
+        )
+        
+        return allBones
+    ),
+    /* Get the KGTR ( Key Global Transformation ) of the bones */
+    function GetKGTR wc3Bones=
+    (
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGTR", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct AnimKeyValues ( Key, Val )
+
+        for i=1 to wc3Bones.Count do
+        (
+            local kg = WC3Anim()
+            
+            local b = wc3Bones[i].BoneRef
+            
+            kg.nbrKeys = numkeys b.pos.controller 
+            kg.Size += kg.nbrKeys * 16
+            for k=1 to kg.nbrKeys do
+            (
+                local kv = AnimKeyValues()
+                kv.key =  help.TimeToInt ( getKeyTime b.pos.controller k )
+                at time kv.key 
+                    kv.val = b.pos
+                append kg.AnimBlock kv
+            )
+            
+            append wc3Bones[i].Animations kg
+        )
+        
+    ),
+    /* Get the KGRT ( Key Global Rotation ) of the bones */
+    function GetKGRT wc3Bones=
+    (
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct AnimKeyValues ( Key, Val )
+
+        for i=1 to wc3Bones.Count do
+        (
+            local kg = WC3Anim()
+            
+            local b = wc3Bones[i].BoneRef
+            
+            kg.nbrKeys = numkeys b.rotation.controller 
+            kg.Size += kg.nbrKeys * 20
+            for k=1 to kg.nbrKeys do
+            (
+                local kv = AnimKeyValues()
+                kv.key =  help.TimeToInt ( getKeyTime b.rotation.controller k )
+                at time kv.key 
+                    kv.val = b.rotation
+                append kg.AnimBlock kv
+            )
+            
+            append wc3Bones[i].Animations kg
+        )
+        
+    ),
+        /* Get the KGSC ( Key Global Scale ) of the bones */
+    function GetKGSC wc3Bones=
+    (
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGSC", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct AnimKeyValues ( Key, Val )
+
+        for i=1 to wc3Bones.Count do
+        (
+            local kg = WC3Anim()
+            
+            local b = wc3Bones[i].BoneRef
+            
+            kg.nbrKeys = numkeys b.scale.controller 
+            kg.Size += kg.nbrKeys * 16
+            for k=1 to kg.nbrKeys do
+            (
+                local kv = AnimKeyValues()
+                kv.key =  help.TimeToInt ( getKeyTime b.scale.controller k )
+                at time kv.key 
+                    kv.val = b.scale
+                append kg.AnimBlock kv
+            )
+            
+            append wc3Bones[i].Animations kg
+        )
+        
+    ),
+    /* Get mesh alpha animation  */
     function GetGEOA =
     (
         struct WC3RefGEOA ( size, id, alpha, flag, color, KGAO )
@@ -1000,6 +873,287 @@ STRUCT GriffonStudios_Helper_Functions
     )
 )
 
+STRUCT GriffonStudios_Warcraft_3_Writer_Functions
+(
+    function WriteFixedString stream str len=
+    (
+        if ( WC3_DEBUG ) then  Format "Writing %\n" str
+        for i=1 to str.count do
+        (
+            local byte = bit.charasint str[i]
+            writeByte stream byte
+        )
+        for i=1 to (len - str.count) do
+            writeByte stream 0
+    ),
+    function WriteTris stream tris=
+    (
+        writeShort stream tris[1]
+        writeShort stream tris[2]
+        writeShort stream tris[3]
+    ),
+    function WriteVector3 stream vector3=
+    (
+        writeFloat stream vector3.X
+        writeFloat stream vector3.Y
+        writeFloat stream vector3.Z
+    ),
+    function WriteVector4 stream vector4=
+    (
+        writeFloat stream vector4[1]
+        writeFloat stream vector4[2]
+        writeFloat stream vector4[3]
+        writeFloat stream vector4[4]
+
+    ),
+    function WriteVertexWeights stream vertexWeights=
+    (
+        for i=1 to 4 do writeByte stream vertexWeights.boneIndices[i]
+        for i=1 to 4 do writeByte stream vertexWeights.weights[i]
+        
+    ),
+    function WriteTextureCoordinates stream uv=
+    (
+        writeFloat stream uv[1]
+        writeFloat stream uv[2]
+    ),
+    function WriteMODLBoundingBox stream=
+    (
+        local bbox = GriffonStudios_Helper_Functions.GetMODLBoundingBox()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
+        
+        writer.WriteVector3 stream bbox[1]
+        writer.WriteVector3 stream bbox[2]
+        
+    ),
+    function WriteSEQS stream=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        local seqs = help.GetSEQS()
+        
+        writeLong stream ( 132 * seqs.count)
+        
+        for seq in seqs do
+        (
+            
+            
+            writer.WriteFixedString stream seq.Name 80
+            WriteLong  stream seq.StartFrame
+            WriteLong  stream seq.EndFrame
+            WriteFloat stream seq.MovementSpeed
+            WriteLong  stream seq.NoLoop
+            WriteFloat stream seq.Rarity
+            WriteLong  stream seq.Default
+            WriteFloat stream seq.Priority
+            
+            writer.WriteVector3 stream seq.BBox[1]
+            writer.WriteVector3 stream seq.BBox[2]
+            
+            if ( WC3_DEBUG ) then  Format " - %\n" seq
+        )
+
+        
+    ),
+    function WriteMTLS stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        local mtls = GriffonStudios_Helper_Functions.GetMTLS()
+        
+        if (WC3_DEBUG) then 
+        (
+            for i=1 to mtls.TEXSList.Count do
+                format " - %\n" mtls.TEXSList[i]
+        )
+        
+        writeLong stream mtls.TotalSize
+        
+        for s in mtls.ShaderList do
+        (
+            writeLong stream s.shaderSizeIncluded
+            writeLong stream s.priorityPlane
+            writeLong stream s.flag
+            writer.WriteFixedString stream s.shaderName 80
+            
+            writer.WriteFixedString stream "LAYS" 4
+            writeLong stream s.Layers.Count --> usually 6
+            
+            for l=1 to s.Layers.Count do
+            (
+                local lay = s.Layers[l]
+                writeLong stream lay.layerSizeIncluded
+                writeLong stream lay.filterMode
+                writeLong stream lay.shadingFlag
+                writeLong stream ( lay.TextureId - 1 )
+                writeLong stream lay.textureAnimationId
+                
+                writeLong stream 0 -- CoordId
+                writeFloat stream 1 -- Alpha
+                writeFloat stream 1 -- Emissive
+                
+                writeFloat stream 1 -- Fresnel Color R
+                writeFloat stream 1 -- Fresnel Color G
+                writeFloat stream 1 -- Fresnel Color B
+                writeFloat stream 0 -- Fresnel Opacity
+                writeFloat stream 0 -- Fresnel Team Color
+                
+                if ( l==1) then 
+                (
+                    if ( lay.KMTA != undefined ) then
+                    (
+                        writer.WriteFixedString stream "KMTA" 4
+                        writeLong stream lay.KMTA.timeList.count
+                        writeLong stream 1 --> line type
+                        writeLong stream -1 --> parentId
+                        
+                        for k=1 to lay.KMTA.timeList.count do
+                        (
+                            writeLong stream lay.KMTA.timeList[k]
+                            writeLong stream lay.KMTA.valueList[k]
+                        )
+                        
+                    )
+                )
+            )
+
+        )
+        
+        GriffonStudios_Warcraft_3_Writer_Functions.WriteTEXS stream mtls.TEXSList
+    ),
+    function WriteTEXS stream texsList =
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        writer.WriteFixedString stream "TEXS" 4
+        
+        writeLong stream ( texslist.count * 268 )
+        for tex in texsList do
+        (
+            writeLong stream tex.replaceableId
+            writer.WriteFixedString stream tex.fileName 260
+            writeLong stream tex.flag
+        )            
+        
+    ),
+    function WriteMODL stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        writeLong stream 372
+        writer.WriteFixedString stream ( getFileNameFile file ) 80
+        writer.WriteFixedString stream "" 260
+        writeLong stream 0
+        writer.WriteMODLBoundingBox stream
+        writeLong stream 150
+    ),
+    function WriteGEOS stream=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        local geos = GriffonStudios_Helper_Functions.GetGEOS()
+        
+        writeLong stream geos.TotalSize
+        
+        for geo in geos.geos do
+        (
+            writeLong stream geo.size
+
+            writer.WriteFixedString stream "VRTX" 4
+            writeLong stream geo.VRTX.count
+            for v in geo.VRTX do writer.WriteVector3 stream v
+
+            writer.WriteFixedString stream "NRMS" 4
+            writeLong stream geo.NRMS.count
+            for n in geo.NRMS do writer.WriteVector3 stream n
+
+            writer.WriteFixedString stream "PTYP" 4
+            writeLong stream geo.PTYP.count
+            for p in geo.PTYP do writeLong stream p
+                
+            writer.WriteFixedString stream "PCNT" 4
+            writeLong stream geo.PCNT.count
+            for p in geo.PCNT do writeLong stream p
+            
+            writer.WriteFixedString stream "PVTX" 4
+            writeLong stream ( geo.PVTX.count * 3 )
+            for p in geo.PVTX do writer.WriteTris stream p
+            
+            writer.WriteFixedString stream "GNDX" 4
+            writeLong stream 0
+            
+            writer.WriteFixedString stream "MTGC" 4
+            writeLong stream geo.MTGC.count
+            for m in geo.MTGC do writeLong stream m
+                
+            writer.WriteFixedString stream "MATS" 4
+            writeLong stream geo.MATS.boneIdList.count
+            for b in geo.MATS.boneIdList do writeLong stream b
+            writeLong stream geo.MATS.MaterialReferenceId
+            writeLong stream geo.MATS.sectionGroupId 
+            writeLong stream geo.MATS.sectionGroupType 
+            writeLong stream geo.MATS.LodId
+            writer.WriteFixedString stream geo.MATS.LodName 80 
+            for f in geo.MATS.sevenFloats do writeFloat stream f
+            writeLong stream geo.MATS.oneLong
+            
+            writer.WriteFixedString stream "TANG" 4
+            writeLong stream geo.TANG.count
+            for t in geo.TANG do writer.WriteVector4 stream t
+                
+            writer.WriteFixedString stream "SKIN" 4
+            writeLong stream ( geo.SKINS.count * 8 )
+            for s in geo.SKINS do writer.WriteVertexWeights stream s
+            
+            writer.WriteFixedString stream "UVAS" 4
+            writeLong stream geo.UVAS
+            for uvbs in geo.UVBS do
+            (
+                writer.WriteFixedString stream "UVBS" 4
+                writeLong stream uvbs.count
+                for uv in uvbs do writer.WriteTextureCoordinates stream uv
+            )
+            
+        )
+    ),
+    function WriteGEOA stream=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local geoas = help.GetGEOA()
+        
+        local totalSize = 0
+        for geoa in geoas do totalSize += geoa.size
+            
+        writeLong stream totalSize
+        
+        for geoa in geoas do
+        (
+            writeLong stream geoa.size
+            writeFloat stream geoa.alpha
+            writeLong  stream geoa.flag
+            writeFloat stream geoa.color[1]
+            writeFloat stream geoa.color[2]
+            writeFloat stream geoa.color[3]
+            writeLong  stream geoa.id
+        )
+        
+    ),
+    function WriteBONE stream=
+    (
+        local help = GriffonStudios_Helper_Functions()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        -- ( Id, Name, ParentBoneId, Flags, boneRef, KGTR, KGRT, KGSC, offset, geosetId, geosetAnimationId )
+        local wc3Bones = help.GetBONE()
+        
+        
+        if (WC3_DEBUG) then 
+        (
+            format "Total Size: % \n" wc3Bones.totalSize
+            for b in wc3Bones.WC3RefBoneList do format " - % \n" b
+        )
+    )
+)
 
 STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 (
@@ -1038,6 +1192,12 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             /* GEOA */
             writer.WriteFixedString stream "GEOA" 4
             writer.WriteGEOA stream
+
+            /* BONE */
+            writer.WriteFixedString stream "BONE" 4
+            writer.WriteBONE stream
+
+
 
             Format "DONE!\n"
         --) catch ( print ( getCurrentException() ) )

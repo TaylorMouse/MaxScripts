@@ -399,7 +399,8 @@ UV Texture Coordinates: nUVBS times 2 floats ( 4 bytes each)
 |Parent Bone Id|4 byte int ( -1 indicates no parent )|
 |Flag |4 byte int (= 256)|
 |Animation block|Size - 80 - 12 bytes |
-|FFFF|4 byte int (always FFFF)|
+|Geoset ID|4 byte int (always FFFF)|
+|Geoset Animation ID|4 byte int (always FFFF)|
 
     Animation block If the animation block reads 4 bytes being FFFF, no animation is available furter available.
 
@@ -639,7 +640,7 @@ Animation block consists of 3 possible animation types, possible that this is no
 
 Global frames ?
 
-Number of globals = Chunk Size / 4 ( each global bein an int)
+Number of globals = Chunk Size / 4 ( each global being an int)
 
 A global represent a frame in a 1000FPS rate
 
