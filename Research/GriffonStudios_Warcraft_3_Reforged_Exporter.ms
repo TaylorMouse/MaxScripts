@@ -19,10 +19,17 @@
     
 */
 GLOBAL WC3_DEBUG = true
-
+GLOBAL TEXTURE_PATH = "war3mapImported\\"
 
 STRUCT GriffonStudios_Helper_Functions
 (
+    /* Keys in a controller return a weird uint64 this is converted here */
+    function TimeToInt theTime=
+    (
+        local strTime = theTime as string
+        local intTime = ( substring strTime 1 (strTime.count - 1) ) as integer
+        return intTime
+    ),
     function GetBONE = 
     (
         struct WC3Bones ( totalSize = 0, WC3RefBoneList = #())
@@ -71,10 +78,14 @@ STRUCT GriffonStudios_Helper_Functions
         /* calculate total size */
         for b in allBones.WC3RefBoneList do
         (
-            allBones.totalSize += b.size
+            allBones.totalSize += b.size + 8
             
             for anim in b.Animations do
-                if ( anim.AnimBlock.count > 0 ) then allBones.totalSize += anim.size
+                if ( anim.AnimBlock.count > 0 ) then 
+                (
+                    b.Size += anim.size
+                    allBones.totalSize += anim.size
+                )
         )
         
         return allBones
@@ -82,6 +93,7 @@ STRUCT GriffonStudios_Helper_Functions
     /* Get the KGTR ( Key Global Transformation ) of the bones */
     function GetKGTR wc3Bones=
     (
+        local help = GriffonStudios_Helper_Functions()
         struct WC3Anim ( Size = 16, nbrKeys, Type = "KGTR", LineType=0, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
@@ -109,6 +121,7 @@ STRUCT GriffonStudios_Helper_Functions
     /* Get the KGRT ( Key Global Rotation ) of the bones */
     function GetKGRT wc3Bones=
     (
+        local help = GriffonStudios_Helper_Functions()
         struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=0, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
@@ -136,6 +149,7 @@ STRUCT GriffonStudios_Helper_Functions
         /* Get the KGSC ( Key Global Scale ) of the bones */
     function GetKGSC wc3Bones=
     (
+        local help = GriffonStudios_Helper_Functions()
         struct WC3Anim ( Size = 16, nbrKeys, Type = "KGSC", LineType=0, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
@@ -298,6 +312,7 @@ STRUCT GriffonStudios_Helper_Functions
         local help = GriffonStudios_Helper_Functions()
         local lastFrame = help.FindLastKeyFrame()
 
+        if ( lastFrame <= 1 ) then lastFrame = 10
         bbox = help.GetMODLBoundingBoxBetweenFrames 1 lastFrame
         
         return bbox
@@ -327,7 +342,7 @@ STRUCT GriffonStudios_Helper_Functions
                 local s = WC3RefAnimSequence()
                 
                 s.name = parts[1]
-                
+                if ( WC3_DEBUG ) then format " %\n" s.name
                 local StartFrameStr = (getnotekeytime track i) as string 
                 local EndFrameStr = (getnotekeytime track (i+1)) as string 
                 
@@ -355,10 +370,19 @@ STRUCT GriffonStudios_Helper_Functions
                     local split = filterString parts[i] " = "
                     local key = split[1]
                     local value = split[2]
-                     
+                    
+                    if ( WC3_DEBUG ) then format " -  %: '%' \n" key value
+                    
                     if ( key == "rarity" ) then s.rarity = (value  as float ) / 100.0
                     if ( key == "moveSpeed" ) then s.movementSpeed = value as float
-                    if ( key == "nonLoop" ) then s.noLoop = value as float
+                    if ( key == "nonLoop" ) then 
+                    (
+                        s.noLoop = value as float
+                        if ( value == "true" ) then s.noLoop = 1
+                        if ( value == "false" ) then s.noLoop = 0
+                            
+                        print s.noLoop
+                    )       
                     if ( key == "defaultPriority" ) then s.Priority = value as float
 
                 )
@@ -487,12 +511,13 @@ STRUCT GriffonStudios_Helper_Functions
             tex = ""
         else
         (
-            local fileName = filenameFromPath bitmap.fileName
+            --local fileName = filenameFromPath bitmap.fileName
+            local fileName = (getFilenameFile  bitmap.fileName ) + ".dds"
             
             if( fileName == "" or fileName.count <=4 ) then 
                 tex = ""
             else
-                tex = "Textures/" + fileName 
+                tex = TEXTURE_PATH + fileName 
         )
         return tex
     ),
@@ -538,12 +563,13 @@ STRUCT GriffonStudios_Helper_Functions
     /* depending on the map to export, get the matching ID from the TEXS */
     function GetLayerTextureId textureList map=
     (
+        local textureToFind = ""
         if ( map == undefined ) then textureToFind = ""
         if ( map != undefined ) then 
         (
-            textureToFind = (filenameFromPath map.fileName)
+            textureToFind = (getFilenameFile map.fileName) + ".dds"
             if ( textureToFind.count <= 4 ) then textureToFind = ""
-            if ( textureToFind.count > 4) then textureToFind = "Textures/" +  (filenameFromPath map.fileName)
+            if ( textureToFind.count > 4) then textureToFind = TEXTURE_PATH +  (getFilenameFile map.fileName) + ".dds" 
             
         )
         
@@ -556,22 +582,14 @@ STRUCT GriffonStudios_Helper_Functions
                 exit
             )
         )
-        if textureId ==0 then throw "Texture ID not found !!"
+        if textureId == 0 then throw "Texture ID not found !!"
         --format "Texture ID : %\n" textureId
         return textureId
         
     ),
-    /* Keys in a controller return a weird uint64 this is converted here */
-    function TimeToInt theTime=
-    (
-        local strTime = theTime as string
-        local intTime = ( substring strTime 1 (strTime.count - 1) ) as integer
-        return intTime
-    ),
     /* Get the Geometry data */
     function GetGEOS=
     (
-        format "Getting GEOS information ...\n"
         
         local help = GriffonStudios_Helper_Functions()
         
@@ -875,6 +893,43 @@ STRUCT GriffonStudios_Helper_Functions
 
 STRUCT GriffonStudios_Warcraft_3_Writer_Functions
 (
+    function WriteMatrix stream someBone=
+    (
+        local matrix = someBone.Transform
+        if ( WC3_DEBUG ) then format " - % \n" matrix
+        for r=1 to 4 do
+        (
+            for i=1 to 3 do
+                writeFloat stream matrix[r][i]
+        )
+        
+    ),
+    function WriteKGAnimations stream animations=
+    (
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        for i=1 to animations.count do
+        (
+            if ( animations[i].AnimBlock.count > 0 ) then
+            (
+                writer.WriteFixedString stream animations[i].Type 4
+                writeLong stream animations[i].AnimBlock.Count
+                writeLong stream animations[i].LineType
+                writeLong stream animations[i].ParentId
+                
+                for anim in animations[i].AnimBlock do
+                (
+                    if ( WC3_DEBUG ) then format " - % \n" anim
+                    writeLong stream anim.Key
+                    
+                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream anim.Val
+                    if ( animations[i].Type == "KGRT" ) then writer.WriteQuat stream anim.Val
+                    if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
+                
+                )
+            )
+        )
+    ),
     function WriteFixedString stream str len=
     (
         if ( WC3_DEBUG ) then  Format "Writing %\n" str
@@ -897,6 +952,14 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         writeFloat stream vector3.X
         writeFloat stream vector3.Y
         writeFloat stream vector3.Z
+    ),
+    function WriteQuat stream quaternian=
+    (
+        writeFloat stream quaternian.x
+        writeFloat stream quaternian.y
+        writeFloat stream quaternian.z
+        writeFloat stream quaternian.w
+
     ),
     function WriteVector4 stream vector4=
     (
@@ -934,6 +997,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
         local seqs = help.GetSEQS()
+        
+        if ( WC3_DEBUG ) then for s in seqs do format " - %\n" s
         
         writeLong stream ( 132 * seqs.count)
         
@@ -1152,6 +1217,48 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             format "Total Size: % \n" wc3Bones.totalSize
             for b in wc3Bones.WC3RefBoneList do format " - % \n" b
         )
+        
+        writeLong stream wc3Bones.totalSize
+        
+        for b in wc3Bones.WC3RefBoneList do
+        (
+            writeLong stream b.Size -- 96 when there is no animation
+            writer.WriteFixedString stream b.name 80
+            writeLong stream b.Id
+            writeLong stream b.ParentId
+            writeLong stream b.Flag --> 0x100 or 256
+            
+            writer.WriteKGAnimations stream b.Animations
+            
+            writeLong stream b.geosetId
+            writeLong stream b.geosetAnimationId
+        )
+        
+        
+    ),
+    function WritePIVT stream=
+    (
+        local boneList = GriffonStudios_Helper_Functions.GetBones()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        WriteLong stream ( boneList.count * 12 )
+        
+        for b in boneList do
+            writer.WriteVector3 stream b.pos
+        
+    )
+    ,
+    function WriteBPOS stream=
+    (
+        local boneList = GriffonStudios_Helper_Functions.GetBones()
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        WriteLong stream ( boneList.count * 48 + 4 )
+        WriteLong stream boneList.count
+        
+        for b in boneList do
+            writer.WriteMatrix stream b
+        
     )
 )
 
@@ -1166,37 +1273,55 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         
         --try (
             /* MDLX */
+            format "Writing MDLX\n"
             writer.WriteFixedString stream "MDLX" 4
             
             /* VERS */
+            format "Writing VERS\n"
             writer.WriteFixedString stream "VERS" 4
             writeLong stream 4
             writeLong stream 1000
             
             /* MODL */
+            format "Writing MODL\n"
             writer.WriteFixedString stream "MODL" 4
             writer.WriteMODL stream
             
             /* SEQS */
+            format "Writing SEQS\n"
             writer.WriteFixedString stream "SEQS" 4
             writer.WriteSEQS stream
             
             /* MTLS & TEXS */
+            format "Writing MTLS\n"
+            format "Writing TEXS\n"
             writer.WriteFixedString stream "MTLS" 4
             writer.WriteMTLS stream
         
             /* GEOS */
+            format "Writing GEOS\n"
             writer.WriteFixedString stream "GEOS" 4
             writer.WriteGEOS stream
 
             /* GEOA */
+            format "Writing GEOA\n"
             writer.WriteFixedString stream "GEOA" 4
             writer.WriteGEOA stream
 
             /* BONE */
+            format "Writing BONE\n"
             writer.WriteFixedString stream "BONE" 4
             writer.WriteBONE stream
 
+            /* PIVT */
+            format "Writing PIVT\n"
+            writer.WriteFixedString stream "PIVT" 4
+            writer.WritePIVT stream
+
+            /* BPOS */
+            format "Writing BPOS\n"
+            writer.WriteFixedString stream "BPOS" 4
+            writer.WriteBPOS stream
 
 
             Format "DONE!\n"
@@ -1210,8 +1335,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 clearlistener()
 
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip.mdx"
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box.mdx"
 
---GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+WC3_DEBUG = true
+GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 
 

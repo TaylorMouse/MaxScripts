@@ -472,12 +472,13 @@ Animation block consists of 3 possible animation types, possible that this is no
 
 ### BPOS
 
-Binding position or initial object transformation
+Initial transformation matrix of the bones
 
-|Name|Size|
-|--|--|
-|Nbr of binding positions|4 byte int |
-|Transformation Matrix|A 3 x 4 matrix containing 4 rows and 3 items per row, each item is 1 float -> 12 floats in total|
+|Name|Size|Desc|
+|--|--|--|
+|Size|int|total size of the chunk|
+|Nbr Bones|int |Nbr of binding transformation of tha bones|
+|Transformation Matrix|12x floats|A 3 x 4 matrix containing 4 rows and 3 items per row, each item is 1 float -> 12 floats in total|
 
 ### GEOA
 
@@ -523,6 +524,7 @@ For a full understanding of this block, please refer to the official [Warcraft I
 ### PIVT
 
 Weird chunk that holds pivot points, referencing an id that points to all previous id's read in the file.
+These points are based on the number of bones present in the scene.
 
 Number of points = this chunk size / 12
 
