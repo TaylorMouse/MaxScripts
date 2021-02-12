@@ -3,23 +3,26 @@
     | (c) 2021 Griffon Studios
     
     .AUTHOR
-    | by Taylor Mouse
+    | Taylor Mouse
     
     .DESCRIPTION
     | Warcraft III Reforged mdx exporter 
     
-    .RELEASE NOTES
+    .PROGRESS
+    | 0.10 - Scale, position and rotation seem to animate, however wrong weird initial rotation, needs to be fixed
+    | 0.09 - Linetype was wrong, fixed that, now it animates in the world editor :D
+    | 0.08 - Animation seqs problems, they require ( always ) to have a number at the end of the name
+    | 0.07 - Completely redid the GEOS block issues with mesh vertice and teture vertices
+    | 0.06 - Writing bones and its animatons
     | 0.05 - Getting the bones and the KGTR, KGRT and KGSC animations
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
     | 0.01 - Main setup
     
-    
-    
 */
 GLOBAL WC3_DEBUG = true
-GLOBAL TEXTURE_PATH = "war3mapImported\\"
+GLOBAL TEXTURE_PATH = "war3mapImported\\" --> leave this as is if you don't want to change it in the world editor
 
 STRUCT GriffonStudios_Helper_Functions
 (
@@ -94,7 +97,7 @@ STRUCT GriffonStudios_Helper_Functions
     function GetKGTR wc3Bones=
     (
         local help = GriffonStudios_Helper_Functions()
-        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGTR", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGTR", LineType=1, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
         for i=1 to wc3Bones.Count do
@@ -116,13 +119,13 @@ STRUCT GriffonStudios_Helper_Functions
             
             append wc3Bones[i].Animations kg
         )
-        
+
     ),
     /* Get the KGRT ( Key Global Rotation ) of the bones */
     function GetKGRT wc3Bones=
     (
         local help = GriffonStudios_Helper_Functions()
-        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
         for i=1 to wc3Bones.Count do
@@ -150,7 +153,7 @@ STRUCT GriffonStudios_Helper_Functions
     function GetKGSC wc3Bones=
     (
         local help = GriffonStudios_Helper_Functions()
-        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGSC", LineType=0, ParentId = -1, AnimBlock = #() )
+        struct WC3Anim ( Size = 16, nbrKeys, Type = "KGSC", LineType=1, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
         for i=1 to wc3Bones.Count do
@@ -394,7 +397,7 @@ STRUCT GriffonStudios_Helper_Functions
         (
             local startFrame = 1000 / 30
             local endFrame = 50 * 1000 / 30
-            local seq = WC3RefAnimSequence Name:"Stand" StartFrame:startFrame EndFrame:endFrame
+            local seq = WC3RefAnimSequence Name:"Stand 1" StartFrame:startFrame EndFrame:endFrame
             
             seq.BBox = GriffonStudios_Helper_Functions.GetMODLBoundingBoxBetweenFrames 10 60
             
@@ -587,8 +590,7 @@ STRUCT GriffonStudios_Helper_Functions
         return textureId
         
     ),
-    /* Get the Geometry data */
-    function GetGEOS=
+     function GetGEOS=
     (
         
         local help = GriffonStudios_Helper_Functions()
@@ -619,16 +621,58 @@ STRUCT GriffonStudios_Helper_Functions
             
             local geo = WC3RefGeo()
             
+            local original_vertices = #()
+            local original_normals  = #()
+            local original_tangents = help.CalculateTangents m
+            local original_weights  = help.GetWeights m
+            for v=1 to m.numVerts do
+            (
+                original_vertices[v] = getVert m v
+                original_normals[v] = getNormal m v
+            )
+            
+
+            local tvVertices = #()
+            local faces = #()
+            for i=1 to m.numFaces do
+            (
+                local f = getFace m i
+                local u = getTvFace m i
+
+                faces[i] = u
+                tvVertices[u.x] = f.x
+                tvVertices[u.y] = f.y
+                tvVertices[u.z] = f.z
+                
+            )
+            --print tvVertices
+            local vertices = #()
+            local normals = #()
+            local uvs = #()
+            local tangents = #()
+            local weights = #()
+            for i=1 to tvVertices.count do
+            (
+                local uv = getTvert m i
+                
+                uvs[i] = [uv.x, 1.0 - uv.y]
+                vertices[i] = original_vertices[tvVertices[i]]
+                normals[i]  = original_normals[tvVertices[i]]
+                tangents[i] = original_tangents[tvVertices[i]]
+                weights[i]  = original_weights[tvVertices[i]]
+            )
+            
+            
             geo.Size = 4 
             -- VRTX
             geo.Size += 8
-            for v=1 to m.numverts do append geo.vrtx ( getvert m v )
-            geo.Size +=  m.numverts * 12
+            geo.vrtx = vertices
+            geo.Size +=  vertices.count * 12
             
             -- NRMS
             geo.Size += 8
-            for v=1 to m.numverts do append geo.nrms ( getnormal m v )
-            geo.Size +=  m.numverts * 12
+            geo.nrms = normals
+            geo.Size +=  normals.count * 12
             
             -- PTYP
             geo.Size += 12
@@ -640,12 +684,12 @@ STRUCT GriffonStudios_Helper_Functions
             
             -- PVTX
             geo.Size += 8
-            for f=1 to m.numFaces do
+            for f=1 to faces.count do
             (
-                local face = getface m f
+                local face = faces[f]
                 append geo.pvtx [face.x - 1, face.y - 1, face.z - 1]
             )
-            geo.Size += m.numFaces * 6
+            geo.Size += faces.count * 6
             
             -- GNDX
             geo.Size += 8 --> only GNDX and nbr of gndx's which is zero
@@ -691,27 +735,28 @@ STRUCT GriffonStudios_Helper_Functions
             for i= 1 to 7 do append geo.mats.sevenFloats 0.0
             geo.Size += 7 * 4
 
-             geo.Size += 4 --> one long
+            geo.Size += 4 --> one long
             
             -- TANG
             geo.Size += 8
-            geo.tang = help.CalculateTangents m
-            geo.Size +=  m.numverts * 16
+            geo.tang = tangents
+            geo.Size +=  tangents.count * 16
             
             -- SKIN
             geo.Size += 8
-            geo.skins = help.GetWeights m
-            geo.Size += m.numverts * 8
+            geo.skins = weights
+            geo.Size += weights.count * 8
             
             -- UVAS / UVBS
             geo.Size += 8
 
-            geo.uvas = help.GetNumUVMaps m
+            geo.uvas = 1 --help.GetNumUVMaps m
             for u=1 to geo.uvas do
             (
                 geo.Size += 8
-                append geo.uvbs ( help.GetUVCoordinates m u )
-                geo.Size += m.numverts * 8
+                geo.uvbs = uvs
+                geo.Size += uvs.count * 8
+                if ( WC3_DEBUG ) then format " - UVBS: %\n" uvs
             )
             
             if ( WC3_DEBUG ) then format " - %\n" geo
@@ -920,7 +965,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 for anim in animations[i].AnimBlock do
                 (
                     if ( WC3_DEBUG ) then format " - % \n" anim
-                    writeLong stream anim.Key
+                    local wc3key = anim.Key * 1000 / 30
+                    writeLong stream wc3key
                     
                     if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream anim.Val
                     if ( animations[i].Type == "KGRT" ) then writer.WriteQuat stream anim.Val
@@ -1172,13 +1218,15 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             
             writer.WriteFixedString stream "UVAS" 4
             writeLong stream geo.UVAS
+            
+            writer.WriteFixedString stream "UVBS" 4
+            writeLong stream geo.UVBS.count
             for uvbs in geo.UVBS do
             (
-                writer.WriteFixedString stream "UVBS" 4
-                writeLong stream uvbs.count
-                for uv in uvbs do writer.WriteTextureCoordinates stream uv
+                
+                writer.WriteTextureCoordinates stream uvbs
             )
-            
+
         )
     ),
     function WriteGEOA stream=
@@ -1335,9 +1383,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 clearlistener()
 
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box.mdx"
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_3.mdx"
 
 WC3_DEBUG = true
-GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+--GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 
 

@@ -402,8 +402,6 @@ UV Texture Coordinates: nUVBS times 2 floats ( 4 bytes each)
 |Geoset ID|4 byte int (always FFFF)|
 |Geoset Animation ID|4 byte int (always FFFF)|
 
-    Animation block If the animation block reads 4 bytes being FFFF, no animation is available furter available.
-
 Animation block consists of 3 possible animation types:
 
 |Name| description| Type|
