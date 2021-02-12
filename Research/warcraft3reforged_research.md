@@ -1,7 +1,7 @@
 
 # Warcraft 3 Reforged mdx format
 
-This document describes mdx structure of the 3D models of Blizzards Warcraft III Reforged files. To keep it software agnostic, no code will be used during the explanation. 
+This document describes mdx structure of the 3D models of Blizzards Warcraft III Reforged files. To keep it software agnostic, no code will be used during the explanation.
 
 Code for importing these models in 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
 
@@ -414,7 +414,7 @@ When building the bones in 3D Studio Max, first build the bones, then build the 
 
 ### ATCH
 
-Attachment or hardpoints, for a full list of attachment points, refer to the offical [Warcraft II Art Tools Documentation]().
+Attachment or hardpoints, for a full list of attachment points, refer to the offical [Warcraft II Art Tools Documentation](https://github.com/TaylorMouse/MaxScripts/blob/master/Research/Warcraft%20III%20Art%20Tools%20Documentation.pdf).
 
 |Name|Size|
 |--|--|
@@ -500,7 +500,7 @@ Animation block consists of 1 possible animation types:
 
 ### EVTS
 
-For a full understanding of this block, please refer to the official [Warcraft III Art Tools Documentation]() see the Event Objects documentation.
+For a full understanding of this block, please refer to the official [Warcraft III Art Tools Documentation](https://github.com/TaylorMouse/MaxScripts/blob/master/Research/Warcraft%20III%20Art%20Tools%20Documentation.pdf) see the Event Objects documentation.
 
 |Name|Size|
 |--|--|
@@ -549,7 +549,7 @@ Number of effects = this chunk size / 340
 |Name|80 bytes characters|
 |Camera Position| 3 x 4 byte floats
 |FOV| 4 byte float in radians
-|Far Clipping| 4 byte float 
+|Far Clipping| 4 byte float
 |Near Clipping| 4 byte float
 |Camera Target position|3 x 4 byte floats
 |Animation block||
@@ -756,7 +756,7 @@ Contains the definition of a particle emmitter version 2 ( Reforged )
 |EndTailDecayUVAnim   |int
 |BlendMode            |int
 |TextureId            |int
-|ReplacableTextureId  |int 
+|ReplacableTextureId  |int
 |PriorityPlane        |int
 |Particle Emitter Animation Block| See Particle Emitter Animation block
 
@@ -785,35 +785,35 @@ Particla Emitter Animation block: consists of 2 possible animation types, possib
 
 When the bit is availble the following setting are true
 
-    0x00000001	DONT_INHERIT_TRANSLATION
-    0x00000002	DONT_INHERIT_SCALING
-    0x00000004	DONT_INHERIT_ROTATION
-    0x00000008	BILLBOARDED
-    0x00000010	BILLBOARD_LOCK_X
-    0x00000020	BILLBOARD_LOCK_Y
-    0x00000040	BILLBOARD_LOCK_Z
-    0x00000080	GENOBJECT_MDLBONESECTION
-    0x00000100	GENOBJECT_MDLLIGHTSECTION
-    0x00000200	GENOBJECT_MDLEVENTSECTION
-    0x00000400	GENOBJECT_MDLATTACHMENTSECTION
-    0x00000800	GENOBJECT_MDLPARTICLEEMITTER2
-    0x00001000	GENOBJECT_MDLHITTESTSHAPE
-    0x00002000	GENOBJECT_MDLRIBBONEMITTER
-    0x00004000	PROJECT
-    0x00008000	UNSHADED
-    0x00010000	SORT_PRIMITIVES_FAR_Z
-    0x00020000	LINE_EMITTER
-    0x00040000	PARTICLE_UNFOGGED
-    0x00080000	PARTICLE_USE_MODEL_SPACE
-    0x00100000	PARTICLE_INHERIT_SCALE
-    0x00200000	PARTICLE_INSTANT_VELOCITY_LIN
-    0x00400000	PARTICLE_0XKILL
-    0x00800000	PARTICLE_Z_VELOCITY_ONLY
-    0x01000000	PARTICLE_TUMBLER
-    0x02000000	PARTICLE_TAIL_GROWS
-    0x04000000	PARTICLE_EXTRUDE
-    0x08000000	PARTICLE_XYQUADS
-    0x10000000	PARTICLE_PROJECT
-    0x20000000	PARTICLE_FOLLOW
+    0x00000001 DONT_INHERIT_TRANSLATION
+    0x00000002 DONT_INHERIT_SCALING
+    0x00000004 DONT_INHERIT_ROTATION
+    0x00000008 BILLBOARDED
+    0x00000010 BILLBOARD_LOCK_X
+    0x00000020 BILLBOARD_LOCK_Y
+    0x00000040 BILLBOARD_LOCK_Z
+    0x00000080 GENOBJECT_MDLBONESECTION
+    0x00000100 GENOBJECT_MDLLIGHTSECTION
+    0x00000200 GENOBJECT_MDLEVENTSECTION
+    0x00000400 GENOBJECT_MDLATTACHMENTSECTION
+    0x00000800 GENOBJECT_MDLPARTICLEEMITTER2
+    0x00001000 GENOBJECT_MDLHITTESTSHAPE
+    0x00002000 GENOBJECT_MDLRIBBONEMITTER
+    0x00004000 PROJECT
+    0x00008000 UNSHADED
+    0x00010000 SORT_PRIMITIVES_FAR_Z
+    0x00020000 LINE_EMITTER
+    0x00040000 PARTICLE_UNFOGGED
+    0x00080000 PARTICLE_USE_MODEL_SPACE
+    0x00100000 PARTICLE_INHERIT_SCALE
+    0x00200000 PARTICLE_INSTANT_VELOCITY_LIN
+    0x00400000 PARTICLE_0XKILL
+    0x00800000 PARTICLE_Z_VELOCITY_ONLY
+    0x01000000 PARTICLE_TUMBLER
+    0x02000000 PARTICLE_TAIL_GROWS
+    0x04000000 PARTICLE_EXTRUDE
+    0x08000000 PARTICLE_XYQUADS
+    0x10000000 PARTICLE_PROJECT
+    0x20000000 PARTICLE_FOLLOW
 
 The remaining bytes of this chunk are skipped ( for now)

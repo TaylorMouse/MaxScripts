@@ -1294,8 +1294,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         for b in boneList do
             writer.WriteVector3 stream b.pos
         
-    )
-    ,
+    ),
     function WriteBPOS stream=
     (
         local boneList = GriffonStudios_Helper_Functions.GetBones()
