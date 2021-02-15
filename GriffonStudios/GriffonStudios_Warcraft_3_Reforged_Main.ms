@@ -46,10 +46,10 @@ struct Warcraft3_Reforged_TEXS
     ( Id, replacableId, fileNameOnly, path,  extension, flags )
 
 struct Warcraft3_Reforged_MTLS
-    ( Id, materialRef, ShaderName,  LAYS, priorityPlane )
+    ( Id, ShaderName, priorityPlane, flags, ConstantColor=false , TwoSided=false,  SortPrimsFarZ=false, FullResolution=false, materialRef, LAYS )
 
 struct Warcraft3_Reforged_LAYS
-    ( Id, ParentId, filterMode, shadingFlags, TextureId, KMTA, KMTE, alpha )
+    ( Id, ParentId, TextureId, filterMode, shadingFlags,  KMTA, KMTE, alpha )
 
 struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
@@ -980,6 +980,8 @@ struct Warcraft3_Reforged
             b.geosetId =  readlong stream
             b.geosetAnimationId =  readlong stream
 
+            --format "geosetId: % geosetAnimationId: %\n" b.geosetId b.geosetAnimationId
+            
             if ( b.geosetId != -1 ) then format "Strange geoset id % \n" b.geosetId
             if ( b.geosetAnimationId != -1 ) then format "Strange geoset Animation Id id % \n" b.geosetAnimationId
             append boneList b
@@ -1092,10 +1094,22 @@ struct Warcraft3_Reforged
             mtl.Id = mtlsId
             
             mtl.priorityPlane = readLong stream
-            readLong stream
+            mtl.flags = readLong stream
             
-            local shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
-            --format "Shader: %\n" shaderName
+            /*
+                0x1 ConstantColor -> unlit
+                0x10 SortPrimsFarZ -> Sort in Far Z 
+                0x20 FullResolution -> no mipmaps
+                0x02 TwoSided 
+            */
+
+            if ( bit.and mtl.flags 0x01 > 0 ) then mtl.ConstantColor = true
+            if ( bit.and mtl.flags 0x02 > 0 ) then mtl.TwoSided  = true
+            if ( bit.and mtl.flags 0x10 > 0 ) then mtl.SortPrimsFarZ = true
+            if ( bit.and mtl.flags 0x20 > 0 ) then mtl.FullResolution = true
+            
+            mtl.shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
+            
             local lays = GriffonStudios_Helpers.ReadFixedString stream 4
             local nLays = readLong stream
             --format "Layers: %\n" nLays
@@ -1321,6 +1335,9 @@ struct Warcraft3_Reforged
     ),
     function ReadGEOA stream tag=
     (
+        
+        ---> CHECK THE SPECS, REDO THIS PART !!
+        
         fseek stream tag.offset #seek_set
         
         local totalSize = tag.Size
@@ -1705,7 +1722,7 @@ struct Warcraft3_Reforged
                 size -=4
                 
                 local pe = Warcraft3_Reforged_PRE2()
-                local unk    = readLong stream -- always 96
+                local headerSize    = readLong stream -- always 96
                 pe.name      = GriffonStudios_Helpers.ReadFixedString stream 80
                 pe.id        = readLong stream + 1
                 pe.parentId  = readLong stream + 1
@@ -1860,12 +1877,12 @@ struct Warcraft3_Reforged
     (
         local modl = mdx.modl
         --print modl
-        --local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
-        --obj.name = modl.name
+        local obj = GriffonStudios_Helpers.BuildBoundingBox modl.bbBox
+        obj.name = modl.name
         
-        --freeze obj
+        freeze obj
         --hide obj
-        --return obj
+        return obj
     ),
     function BuildGEOS=
     (
@@ -2290,6 +2307,7 @@ struct Warcraft3_Reforged
     ),
     function BuildBONE2=
     (
+        if( mdx.bone == undefined ) then return undefined
         local boneList = mdx.bone
         local bpos = mdx.bpos
         local boneLayer = GriffonStudios_Helpers.CreateLayer "Bones"
@@ -2556,7 +2574,7 @@ struct Warcraft3_Reforged
                   val += "rarity = " 	 + (seq.Rarity as string)    + "\r\n"
                   val += "moveSpeed = "  + (seq.MovementSpeed as string) + "\r\n"
                   val += "nonLoop = " 	 + (seq.Noloop as string)    + "\r\n"
-                  val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = 0"
+                  val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = " + (seq.Priority as string)
 
            
             startNote.Value = val
@@ -3469,27 +3487,27 @@ struct Warcraft3_Reforged
         if ( wc3_debug ) then (
                 
             print mdx.TAGS
---             print mdx.VERS
---             print mdx.MODL
---             print mdx.SEQS
---             print mdx.MTLS
---             print mdx.TEXS
---             print mdx.GEOS
---              print mdx.BONE
---             print mdx.ATCH
---             print mdx.CLID
---             print mdx.BPOS
---             print mdx.GEOA
---             print mdx.EVTS
---             print mdx.PIVT
---             print mdx.FAFX
---             print mdx.CAMS
---             print mdx.CORN
---             print mdx.LITE
---             print mdx.GLBS
---             print mdx.TXAN
---             print mdx.RIBB
---             print mdx.PRE2
+            print mdx.VERS
+            print mdx.MODL
+            print mdx.SEQS
+            print mdx.MTLS
+            print mdx.TEXS
+            print mdx.GEOS
+            print mdx.BONE
+            print mdx.ATCH
+            print mdx.CLID
+            print mdx.BPOS
+            print mdx.GEOA
+            print mdx.EVTS
+            print mdx.PIVT
+            print mdx.FAFX
+            print mdx.CAMS
+            print mdx.CORN
+            print mdx.LITE
+            print mdx.GLBS
+            print mdx.TXAN
+            print mdx.RIBB
+            print mdx.PRE2
         )
 
         if ( wc3_debug_build ) then
@@ -3538,9 +3556,6 @@ struct Warcraft3_Reforged
     )
 )
 
-/*
-
-*/
 UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 function ViewPortAttachmentPointDisplay=
 (
@@ -3555,13 +3570,3 @@ function ViewPortAttachmentPointDisplay=
     
 )
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
-
-ClearListener()
-
---wc3_debug = true
---wc3_debug_build = false
-
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\critters\frog\frog.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\_teen.w3mod\units\creeps\seagiantgreen\seagiantgreen.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\human\arthas\arthas.mdx"
---Warcraft3_Reforged.Import file

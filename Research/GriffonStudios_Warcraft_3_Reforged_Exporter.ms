@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.11 - One bone seems to animate ok, bone hierarchy and animation is still off.
     | 0.10 - Scale, position and rotation seem to animate, however wrong weird initial rotation, needs to be fixed
     | 0.09 - Linetype was wrong, fixed that, now it animates in the world editor :D
     | 0.08 - Animation seqs problems, they require ( always ) to have a number at the end of the name
@@ -18,7 +19,7 @@
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
-    | 0.01 - Main setup
+    | 0.01  - Main setup
     
 */
 GLOBAL WC3_DEBUG = true
@@ -37,8 +38,6 @@ STRUCT GriffonStudios_Helper_Functions
     (
         struct WC3Bones ( totalSize = 0, WC3RefBoneList = #())
         struct WC3RefBone ( Size = 96, Name, Id, ParentId = -1, Flag = 0x100, Animations = #(), BoneRef, geosetId = -1, geosetAnimationId = -1 )
-        -- without animation, this block is always 96 bytes
-        
         
         local help = GriffonStudios_Helper_Functions()
         local boneList = help.GetBones()
@@ -90,7 +89,7 @@ STRUCT GriffonStudios_Helper_Functions
                     allBones.totalSize += anim.size
                 )
         )
-        
+x
         return allBones
     ),
     /* Get the KGTR ( Key Global Transformation ) of the bones */
@@ -105,13 +104,14 @@ STRUCT GriffonStudios_Helper_Functions
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
-            
+           -- kg.ParentId = wc3Bones[i].parentID
             kg.nbrKeys = numkeys b.pos.controller 
             kg.Size += kg.nbrKeys * 16
             for k=1 to kg.nbrKeys do
             (
                 local kv = AnimKeyValues()
                 kv.key =  help.TimeToInt ( getKeyTime b.pos.controller k )
+                
                 at time kv.key 
                     kv.val = b.pos
                 append kg.AnimBlock kv
@@ -133,7 +133,7 @@ STRUCT GriffonStudios_Helper_Functions
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
-            
+          --  kg.ParentId = wc3Bones[i].parentID
             kg.nbrKeys = numkeys b.rotation.controller 
             kg.Size += kg.nbrKeys * 20
             for k=1 to kg.nbrKeys do
@@ -161,7 +161,7 @@ STRUCT GriffonStudios_Helper_Functions
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
-            
+          --  kg.ParentId = wc3Bones[i].parentID
             kg.nbrKeys = numkeys b.scale.controller 
             kg.Size += kg.nbrKeys * 16
             for k=1 to kg.nbrKeys do
@@ -357,11 +357,6 @@ STRUCT GriffonStudios_Helper_Functions
                 
                 
                 s.BBox = GriffonStudios_Helper_Functions.GetMODLBoundingBoxBetweenFrames startFrame endFrame
-                    
---                 seqLength = ( EndFrame - startFrame ) * 1000 / 30 
---                 
---                 wc3EndFrame = wc3startFrame + seqLength
-                
                 s.StartFrame =  startFrame * 1000 / 30 --wc3startFrame
                 s.EndFrame =  EndFrame * 1000 / 30 -- wc3EndFrame
                 
@@ -416,8 +411,9 @@ STRUCT GriffonStudios_Helper_Functions
         struct _mtls ( TotalSize = 0, ShaderList = #(), TEXSList = #() )
         
         struct _shaders ( shaderSizeIncluded, priorityPlane, shaderName = default_shader_name, flag = 0, Layers = #() )
-        struct _lays ( layerSizeIncluded,  filterMode, shadingFlag, textureId, textureAnimationId, KMTA )
+        struct _lays ( layerSizeIncluded,  filterMode, shadingFlag, textureId, textureAnimationId, KMTA, KMTE )
         struct _kmta ( timeList = #(), valueList = #() )
+        struct _kmte ( timeList = #(), valueList = #() )
         local mtls = _mtls()
         
         local uniqueMaterials = #()
@@ -949,8 +945,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         )
         
     ),
-    function WriteKGAnimations stream animations=
+    function WriteKGAnimations stream wc3Bone=
     (
+        
+        local animations= wc3Bone.Animations
+        local theBone = wc3Bone.BoneRef
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
         for i=1 to animations.count do
@@ -962,14 +961,38 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeLong stream animations[i].LineType
                 writeLong stream animations[i].ParentId
                 
+                local brot = quat 0 0 0 1
+                local bpos = [0,0,0]
+                local bparent = [0,0,0]
+
+                at time 0 
+                (
+                    bpos = theBone.pos
+                    brot = theBone.rotation
+                    if ( theBone.parent != undefined ) then
+                        bparent = theBone.parent.pos
+                    
+                )
                 for anim in animations[i].AnimBlock do
                 (
-                    if ( WC3_DEBUG ) then format " - % \n" anim
                     local wc3key = anim.Key * 1000 / 30
                     writeLong stream wc3key
+                    if ( WC3_DEBUG ) then format " - Frame: % \n" anim.Key
+                    if ( animations[i].Type == "KGTR" ) then 
+                    (
+                        writer.WriteVector3 stream ( anim.Val - bpos - bparent )
+                    )
                     
-                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream anim.Val
-                    if ( animations[i].Type == "KGRT" ) then writer.WriteQuat stream anim.Val
+                    if ( animations[i].Type == "KGRT" ) then 
+                    (
+                        local rot = anim.val - brot
+                        
+                        rot = quat rot.z rot.y rot.x rot.w
+                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
+                        writer.WriteQuat stream  rot --(quat 0 0 0 1) --quaternian --anim.Val
+                        
+                        --brot = rot
+                    )
                     if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
                 
                 )
@@ -1101,15 +1124,15 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeLong stream ( lay.TextureId - 1 )
                 writeLong stream lay.textureAnimationId
                 
-                writeLong stream 0 -- CoordId
-                writeFloat stream 1 -- Alpha
-                writeFloat stream 1 -- Emissive
+                writeLong  stream 0 -- CoordId
+                writeFloat stream 1 -- Alpha --> animatable
+                writeFloat stream 1 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
                 
-                writeFloat stream 1 -- Fresnel Color R
-                writeFloat stream 1 -- Fresnel Color G
-                writeFloat stream 1 -- Fresnel Color B
-                writeFloat stream 0 -- Fresnel Opacity
-                writeFloat stream 0 -- Fresnel Team Color
+                writeFloat stream 1 -- Fresnel Color R --> works 
+                writeFloat stream 1 -- Fresnel Color G --> works 
+                writeFloat stream 1 -- Fresnel Color B --> works 
+                writeFloat stream 0 -- Fresnel Opacity --> works 
+                writeFloat stream 0 -- Fresnel Team Color --> does not work
                 
                 if ( l==1) then 
                 (
@@ -1276,7 +1299,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream b.ParentId
             writeLong stream b.Flag --> 0x100 or 256
             
-            writer.WriteKGAnimations stream b.Animations
+            writer.WriteKGAnimations stream b
             
             writeLong stream b.geosetId
             writeLong stream b.geosetAnimationId
@@ -1381,10 +1404,11 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 )
 
 clearlistener()
-
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_3.mdx"
-
-WC3_DEBUG = true
---GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+--i=1
+-- file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_" + ( i as string ) +".mdx"
+-- i +=1
+-- WC3_DEBUG = true
+-- GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+-- format "Written file % \n" (getfilenamefile file)
 
 
