@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.12 - multiple bones export work but the rotation is not correct yet, and fixed an export issue when the timetracker is not at frame 0
     | 0.11 - One bone seems to animate ok, bone hierarchy and animation is still off.
     | 0.10 - Scale, position and rotation seem to animate, however wrong weird initial rotation, needs to be fixed
     | 0.09 - Linetype was wrong, fixed that, now it animates in the world editor :D
@@ -140,8 +141,8 @@ x
             (
                 local kv = AnimKeyValues()
                 kv.key =  help.TimeToInt ( getKeyTime b.rotation.controller k )
-                at time kv.key 
-                    kv.val = b.rotation
+                at time kv.key --in coordsys gimbal
+                        kv.val = b.rotation as quat
                 append kg.AnimBlock kv
             )
             
@@ -945,6 +946,79 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         )
         
     ),
+    function WriteKGAnimations2 stream wc3Bone=
+    (
+        
+        local animations= wc3Bone.Animations
+        local theBone = wc3Bone.BoneRef
+        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        for i=1 to animations.count do
+        (
+            if ( animations[i].AnimBlock.count > 0 ) then
+            (
+                writer.WriteFixedString stream animations[i].Type 4
+                writeLong stream animations[i].AnimBlock.Count
+                writeLong stream animations[i].LineType
+                writeLong stream animations[i].ParentId
+                
+                local q0 = ( quat 0 0 0 1 ) as matrix3
+                local bpos = [0,0,0]
+                local bparent = [0,0,0]
+
+                local dr = dummy name:"DummyRotationController"
+
+
+--                 with animate on
+--                 at time 0 
+                (
+                    bpos = theBone.pos
+                    brot = theBone.rotation
+                    if theBone.Parent != undefined then
+                        ptransform = theBone.parent.transform
+                    
+                    dr.transform = theBone.transform
+                    dr.name += " " + theBone.name 
+                )
+                for anim in animations[i].AnimBlock do
+                (
+                    local wc3key = anim.Key * 1000 / 30
+                    writeLong stream wc3key
+                    
+                    if ( WC3_DEBUG ) then format " - Frame: % \n" anim.Key
+                    
+                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream ( anim.Val - bpos - bparent )
+                    
+                    if ( animations[i].Type == "KGRT" ) then 
+                    (
+                     
+                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
+
+                        if theBone.parent != undefined then 
+                            in coordsys q0
+                                dr.rotation = anim.val  - brot
+                        else
+                            dr.rotation = anim.val - brot
+                        
+                        local rot = dr.rotation
+                                                
+                       -- rot = quat rot.z rot.y rot.x rot.w
+                        
+                        if ( WC3_DEBUG ) then format " - Rotation: % \n" rot
+                        
+                        writer.WriteQuat stream  rot --(quat 0 0 0 1) --quaternian --anim.Val
+                        
+                       
+                        
+                    )
+                    
+                    if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
+                
+                )
+                delete dr
+            )
+        )
+    ),
     function WriteKGAnimations stream wc3Bone=
     (
         
@@ -1299,7 +1373,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream b.ParentId
             writeLong stream b.Flag --> 0x100 or 256
             
-            writer.WriteKGAnimations stream b
+            writer.WriteKGAnimations2 stream b
             
             writeLong stream b.geosetId
             writeLong stream b.geosetAnimationId
@@ -1340,6 +1414,12 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
         local stream = fopen file "wb"
+        
+        local animationInterval = animationrange
+        
+        -- set the T-pose of the object to export correctly
+        animationrange = interval 0 100
+        slidertime = 0
         
         --try (
             /* MDLX */
@@ -1399,6 +1479,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
         fFlush stream
         fClose stream
+        
+        -- set the position back to orignal animation interval
+        animationrange = interval animationInterval.start animationInterval.end
         gc()        
     )
 )
