@@ -21,7 +21,7 @@
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
-    | 0.01 - Main setup
+    | 0.01  - Main setup
     
 */
 GLOBAL WC3_DEBUG = true
@@ -106,7 +106,7 @@ x
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
-           -- kg.ParentId = wc3Bones[i].parentID
+            
             kg.nbrKeys = numkeys b.pos.controller 
             kg.Size += kg.nbrKeys * 16
             for k=1 to kg.nbrKeys do
@@ -130,6 +130,8 @@ x
         struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
+        
+        
         for i=1 to wc3Bones.Count do
         (
             local kg = WC3Anim()
@@ -142,7 +144,8 @@ x
             (
                 local kv = AnimKeyValues()
                 kv.key =  help.TimeToInt ( getKeyTime b.rotation.controller k )
-                at time kv.key --in coordsys gimbal
+                
+                at time kv.key --in coordsys parent
                         kv.val = b.rotation as quat
                 append kg.AnimBlock kv
             )
@@ -956,6 +959,14 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         if ( WC3_DEBUG ) then format "\n%\n" theBone
         
+        local correctionMatrix = eulertoquat (eulerangles 0 0 0)  as matrix3
+        
+        local baseRot = theBone.rotation 
+        local basePos = theBone.pos
+        local parentPos = [0,0,0]
+
+        --baseRot = baseRot * correctionMatrix as quat
+        
         for i=1 to animations.count do
         (
             if ( animations[i].AnimBlock.count > 0 ) then
@@ -965,25 +976,9 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeLong stream animations[i].LineType
                 writeLong stream animations[i].ParentId
                 
-                local q0 = ( quat 0 0 0 1 ) as matrix3
-                local bpos = [0,0,0]
-                local bparent = [0,0,0]
-
-                local dr = dummy name:"DummyRotationController"
-
-
-                local rot90Matrix = ( eulertoquat ( eulerangles 0 -90 90) ) as matrix3
-                local bpos = theBone.pos
-                local brot = theBone.rotation
-                local parentPos = [0,0,0]
                 
-                
-                dr.transform = theBone.transform
-                dr.name += " " + theBone.name 
-
                 for anim in animations[i].AnimBlock do
                 (
-                    
                     
                     local wc3key = anim.Key * 1000 / 30
                     writeLong stream wc3key
@@ -992,32 +987,54 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                     
                     if ( animations[i].Type == "KGTR" ) then 
                     (
-                        at time anim.Key
-                            if ( theBone.Parent != undefined ) then
-                                parentPos = theBone.parent.pos
-                        if ( WC3_DEBUG ) then parentPos
-                        in coordsys rot90Matrix 
-                            writer.WriteVector3 stream ( anim.Val - bpos - parentPos )
+                        if ( theBone.parent != undefined ) then 
+                        (
+                            at time anim.Key
+                            (
+                                parentPos = theBone.parent.position
+                                basePos = theBone.position
+                            )
+                        )
                         
-                        if ( WC3_DEBUG ) then format " - Pos: % \n" ( anim.Val - bpos - parentPos )
+                        writeFloat stream (anim.Val.y - basePos.y - parentPos.y)
+                        writeFloat stream (anim.Val.x - basePos.x - parentPos.x)
+                        writeFloat stream (anim.Val.z - basePos.z - parentPos.Z)
+                        
+                        --writer.WriteVector3 stream anim.Val
                     )
                     if ( animations[i].Type == "KGRT" ) then 
                     (
-
-                        in coordsys rot90Matrix 
-                            dr.rotation = anim.val + brot 
                         
-                        local rot = dr.rotation
+                        if ( theBone.parent != undefined ) then 
+                        (
+                            at time anim.Key
+                            (
+                                baseRot =  theBone.parent.rotation
+                            )
+                            kquat = (anim.Val - baseRot ) * correctionMatrix as quat
+                        )
+                        else
+                        (
+                            baseRot = theBone.rotation
+                            kquat = (anim.Val - baseRot )
+                            )
                         
-                        writer.WriteQuat stream  rot 
+                        writeFloat stream -kquat.z
+                        writeFloat stream kquat.x
+                        writeFloat stream kquat.y
+                        writeFloat stream kquat.w
+                        --baseRot = kquat
+                        --prev = kquat
+                        print anim.Val
+                        print kquat
+                        --writer.WriteQuat stream  rot 
 
-                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
                     )
                     
                     if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
                 
                 )
-                delete dr
+                --delete dr
             )
         )
     ),
@@ -1210,7 +1227,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
     (
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         local geos = GriffonStudios_Helper_Functions.GetGEOS()
-        
+        --local rot90Matrix = ( eulertoquat ( eulerangles 0 0 180) ) as matrix3
         writeLong stream geos.TotalSize
         
         for geo in geos.geos do
@@ -1219,11 +1236,19 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
 
             writer.WriteFixedString stream "VRTX" 4
             writeLong stream geo.VRTX.count
-            for v in geo.VRTX do writer.WriteVector3 stream v
-
+            for v in geo.VRTX do 
+            (
+                local v2 = [v.x, v.y, v.z]
+                writer.WriteVector3 stream v2
+                --writer.WriteVector3 stream ( v * rot90Matrix )
+            )
             writer.WriteFixedString stream "NRMS" 4
             writeLong stream geo.NRMS.count
-            for n in geo.NRMS do writer.WriteVector3 stream n
+            for n in geo.NRMS do 
+            (
+                local n2 = [n.x, n.y, n.z]
+                writer.WriteVector3 stream n2
+            )
 
             writer.WriteFixedString stream "PTYP" 4
             writeLong stream geo.PTYP.count
@@ -1235,9 +1260,12 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             
             writer.WriteFixedString stream "PVTX" 4
             writeLong stream ( geo.PVTX.count * 3 )
-            for p in geo.PVTX do writer.WriteTris stream p
-            
-            writer.WriteFixedString stream "GNDX" 4
+            for p in geo.PVTX do 
+            (
+                
+                writer.WriteTris stream p
+            )
+            writer.WriteFixedString stream "GNDX" 4 --> probably need to change this...
             writeLong stream 0
             
             writer.WriteFixedString stream "MTGC" 4
@@ -1270,7 +1298,6 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream geo.UVBS.count
             for uvbs in geo.UVBS do
             (
-                
                 writer.WriteTextureCoordinates stream uvbs
             )
 
