@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.13 - fixed multibone export, however, still a overall rotation issue
     | 0.12 - multiple bones export work but the rotation is not correct yet, and fixed an export issue when the timetracker is not at frame 0
     | 0.11 - One bone seems to animate ok, bone hierarchy and animation is still off.
     | 0.10 - Scale, position and rotation seem to animate, however wrong weird initial rotation, needs to be fixed
@@ -20,7 +21,7 @@
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
-    | 0.01  - Main setup
+    | 0.01 - Main setup
     
 */
 GLOBAL WC3_DEBUG = true
@@ -346,7 +347,7 @@ x
                 local s = WC3RefAnimSequence()
                 
                 s.name = parts[1]
-                if ( WC3_DEBUG ) then format " %\n" s.name
+                --if ( WC3_DEBUG ) then  format " %\n" s.name
                 local StartFrameStr = (getnotekeytime track i) as string 
                 local EndFrameStr = (getnotekeytime track (i+1)) as string 
                 
@@ -370,7 +371,7 @@ x
                     local key = split[1]
                     local value = split[2]
                     
-                    if ( WC3_DEBUG ) then format " -  %: '%' \n" key value
+                    --if ( WC3_DEBUG ) then format " -  %: '%' \n" key value
                     
                     if ( key == "rarity" ) then s.rarity = (value  as float ) / 100.0
                     if ( key == "moveSpeed" ) then s.movementSpeed = value as float
@@ -753,16 +754,16 @@ x
                 geo.Size += 8
                 geo.uvbs = uvs
                 geo.Size += uvs.count * 8
-                if ( WC3_DEBUG ) then format " - UVBS: %\n" uvs
+                --if ( WC3_DEBUG ) then format " - UVBS: %\n" uvs
             )
             
-            if ( WC3_DEBUG ) then format " - %\n" geo
+            --if ( WC3_DEBUG ) then format " - %\n" geo
             append geos.geos geo
         )
         
         for geo in geos.geos do geos.totalSize += geo.Size
         
-        if ( WC3_DEBUG ) then format " - Total Size: %\n" geos.totalSize
+        --if ( WC3_DEBUG ) then format " - Total Size: %\n" geos.totalSize
         
         return geos
     ),
@@ -938,7 +939,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
     function WriteMatrix stream someBone=
     (
         local matrix = someBone.Transform
-        if ( WC3_DEBUG ) then format " - % \n" matrix
+        --if ( WC3_DEBUG ) then format " - % \n" matrix
         for r=1 to 4 do
         (
             for i=1 to 3 do
@@ -952,6 +953,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local animations= wc3Bone.Animations
         local theBone = wc3Bone.BoneRef
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        if ( WC3_DEBUG ) then format "\n%\n" theBone
         
         for i=1 to animations.count do
         (
@@ -969,47 +972,46 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 local dr = dummy name:"DummyRotationController"
 
 
---                 with animate on
---                 at time 0 
-                (
-                    bpos = theBone.pos
-                    brot = theBone.rotation
-                    if theBone.Parent != undefined then
-                        ptransform = theBone.parent.transform
-                    
-                    dr.transform = theBone.transform
-                    dr.name += " " + theBone.name 
-                )
+                local rot90Matrix = ( eulertoquat ( eulerangles 0 -90 90) ) as matrix3
+                local bpos = theBone.pos
+                local brot = theBone.rotation
+                local parentPos = [0,0,0]
+                
+                
+                dr.transform = theBone.transform
+                dr.name += " " + theBone.name 
+
                 for anim in animations[i].AnimBlock do
                 (
+                    
+                    
                     local wc3key = anim.Key * 1000 / 30
                     writeLong stream wc3key
                     
-                    if ( WC3_DEBUG ) then format " - Frame: % \n" anim.Key
+                    if ( WC3_DEBUG ) then format " - Frame: % (%)\n" anim.Key wc3key
                     
-                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream ( anim.Val - bpos - bparent )
-                    
+                    if ( animations[i].Type == "KGTR" ) then 
+                    (
+                        at time anim.Key
+                            if ( theBone.Parent != undefined ) then
+                                parentPos = theBone.parent.pos
+                        if ( WC3_DEBUG ) then parentPos
+                        in coordsys rot90Matrix 
+                            writer.WriteVector3 stream ( anim.Val - bpos - parentPos )
+                        
+                        if ( WC3_DEBUG ) then format " - Pos: % \n" ( anim.Val - bpos - parentPos )
+                    )
                     if ( animations[i].Type == "KGRT" ) then 
                     (
-                     
-                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
 
-                        if theBone.parent != undefined then 
-                            in coordsys q0
-                                dr.rotation = anim.val  - brot
-                        else
-                            dr.rotation = anim.val - brot
+                        in coordsys rot90Matrix 
+                            dr.rotation = anim.val + brot 
                         
                         local rot = dr.rotation
-                                                
-                       -- rot = quat rot.z rot.y rot.x rot.w
                         
-                        if ( WC3_DEBUG ) then format " - Rotation: % \n" rot
-                        
-                        writer.WriteQuat stream  rot --(quat 0 0 0 1) --quaternian --anim.Val
-                        
-                       
-                        
+                        writer.WriteQuat stream  rot 
+
+                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
                     )
                     
                     if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
@@ -1019,63 +1021,9 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             )
         )
     ),
-    function WriteKGAnimations stream wc3Bone=
-    (
-        
-        local animations= wc3Bone.Animations
-        local theBone = wc3Bone.BoneRef
-        local writer = GriffonStudios_Warcraft_3_Writer_Functions()
-        
-        for i=1 to animations.count do
-        (
-            if ( animations[i].AnimBlock.count > 0 ) then
-            (
-                writer.WriteFixedString stream animations[i].Type 4
-                writeLong stream animations[i].AnimBlock.Count
-                writeLong stream animations[i].LineType
-                writeLong stream animations[i].ParentId
-                
-                local brot = quat 0 0 0 1
-                local bpos = [0,0,0]
-                local bparent = [0,0,0]
-
-                at time 0 
-                (
-                    bpos = theBone.pos
-                    brot = theBone.rotation
-                    if ( theBone.parent != undefined ) then
-                        bparent = theBone.parent.pos
-                    
-                )
-                for anim in animations[i].AnimBlock do
-                (
-                    local wc3key = anim.Key * 1000 / 30
-                    writeLong stream wc3key
-                    if ( WC3_DEBUG ) then format " - Frame: % \n" anim.Key
-                    if ( animations[i].Type == "KGTR" ) then 
-                    (
-                        writer.WriteVector3 stream ( anim.Val - bpos - bparent )
-                    )
-                    
-                    if ( animations[i].Type == "KGRT" ) then 
-                    (
-                        local rot = anim.val - brot
-                        
-                        rot = quat rot.z rot.y rot.x rot.w
-                        if ( WC3_DEBUG ) then format " - Rot: % \n" rot
-                        writer.WriteQuat stream  rot --(quat 0 0 0 1) --quaternian --anim.Val
-                        
-                        --brot = rot
-                    )
-                    if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
-                
-                )
-            )
-        )
-    ),
     function WriteFixedString stream str len=
     (
-        if ( WC3_DEBUG ) then  Format "Writing %\n" str
+        if ( WC3_DEBUG ) then  Format " - Writing %\n" str
         for i=1 to str.count do
         (
             local byte = bit.charasint str[i]
@@ -1092,9 +1040,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
     ),
     function WriteVector3 stream vector3=
     (
-        writeFloat stream vector3.X
-        writeFloat stream vector3.Y
-        writeFloat stream vector3.Z
+         writeFloat stream vector3.X
+         writeFloat stream vector3.Y
+         writeFloat stream vector3.Z
+        
+        
     ),
     function WriteQuat stream quaternian=
     (
@@ -1110,7 +1060,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         writeFloat stream vector4[2]
         writeFloat stream vector4[3]
         writeFloat stream vector4[4]
-
+        
     ),
     function WriteVertexWeights stream vertexWeights=
     (
@@ -1200,11 +1150,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 
                 writeLong  stream 0 -- CoordId
                 writeFloat stream 1 -- Alpha --> animatable
-                writeFloat stream 1 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
+                writeFloat stream 0 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
                 
-                writeFloat stream 1 -- Fresnel Color R --> works 
-                writeFloat stream 1 -- Fresnel Color G --> works 
-                writeFloat stream 1 -- Fresnel Color B --> works 
+                writeFloat stream 0 -- Fresnel Color R --> works 
+                writeFloat stream 0 -- Fresnel Color G --> works 
+                writeFloat stream 0 -- Fresnel Color B --> works 
                 writeFloat stream 0 -- Fresnel Opacity --> works 
                 writeFloat stream 0 -- Fresnel Team Color --> does not work
                 
@@ -1443,8 +1393,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             writer.WriteSEQS stream
             
             /* MTLS & TEXS */
-            format "Writing MTLS\n"
-            format "Writing TEXS\n"
+            format "Writing MTLS & TEXS\n"
             writer.WriteFixedString stream "MTLS" 4
             writer.WriteMTLS stream
         
@@ -1488,10 +1437,10 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 clearlistener()
 --i=1
--- file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_" + ( i as string ) +".mdx"
--- i +=1
--- WC3_DEBUG = true
--- GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
--- format "Written file % \n" (getfilenamefile file)
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_" + ( i as string ) +".mdx"
+i +=1
+WC3_DEBUG = true
+GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+format "Written file % \n" (getfilenamefile file)
 
 
