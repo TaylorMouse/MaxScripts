@@ -9,6 +9,8 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.15 - fixed an issue with the texture replacable id
+    | 0.14 - fixed rotation and translation of the overall model, still 90° off in the vertical axis :/
     | 0.13 - fixed multibone export, however, still a overall rotation issue
     | 0.12 - multiple bones export work but the rotation is not correct yet, and fixed an export issue when the timetracker is not at frame 0
     | 0.11 - One bone seems to animate ok, bone hierarchy and animation is still off.
@@ -91,7 +93,7 @@ STRUCT GriffonStudios_Helper_Functions
                     allBones.totalSize += anim.size
                 )
         )
-x
+
         return allBones
     ),
     /* Get the KGTR ( Key Global Transformation ) of the bones */
@@ -555,7 +557,7 @@ x
         for i=1 to texsList.count do
         (
             textureFile = texsList[i]
-            local t = _texs id:i replaceableId:1 fileName:""
+            local t = _texs id:i replaceableId:1 fileName:"" --> replaceable Id 1 holds no texture
             
             if ( textureFile != "" ) then t = _texs id:i replaceableId:0 fileName:textureFile
             
@@ -934,7 +936,31 @@ x
             append uvs [ uv.x, ( 1.0 - uv.y ) ]
         )
         return uvs
+    ),
+    /*
+        .DESCRIPTION
+        | Fix global rotation for export
+    */
+    function SetGlobalRotation=
+    (
+        local d = dummy name:"Fixer" pos:[0,0,0] rot:(quat 0 0 0 1)
+        
+        for obj in objects do 
+        (
+            if ( classof obj == BoneGeometry and obj.parent == undefined ) then
+            (
+                --obj.parent = d
+            )
+        )
+        rotate d (eulerangles 0 0 0)
+        return d
+    ),
+    function ResetGlobalRotation theRotationDummy=
+    (
+        rotate theRotationDummy (eulerangles 0 0 0)
+        delete theRotationDummy
     )
+        
 )
 
 STRUCT GriffonStudios_Warcraft_3_Writer_Functions
@@ -956,6 +982,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local animations= wc3Bone.Animations
         local theBone = wc3Bone.BoneRef
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
+        
+        theBone.assumeSkinPose()
         
         if ( WC3_DEBUG ) then format "\n%\n" theBone
         
@@ -987,7 +1015,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                     
                     if ( animations[i].Type == "KGTR" ) then 
                     (
-                        if ( theBone.parent != undefined ) then 
+                        if ( theBone.parent != undefined  ) then 
                         (
                             at time anim.Key
                             (
@@ -996,10 +1024,12 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                             )
                         )
                         
-                        writeFloat stream (anim.Val.y - basePos.y - parentPos.y)
-                        writeFloat stream (anim.Val.x - basePos.x - parentPos.x)
-                        writeFloat stream (anim.Val.z - basePos.z - parentPos.Z)
-                        
+--                         writeFloat stream (anim.Val.y - basePos.y - parentPos.y)
+--                         writeFloat stream (anim.Val.x - basePos.x - parentPos.x)
+--                         writeFloat stream (anim.Val.z - basePos.z - parentPos.Z)
+                        writeFloat stream (anim.Val.y - basePos.y )
+                        writeFloat stream (anim.Val.x - basePos.x )
+                        writeFloat stream (anim.Val.z - basePos.z )
                         --writer.WriteVector3 stream anim.Val
                     )
                     if ( animations[i].Type == "KGRT" ) then 
@@ -1017,7 +1047,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                         (
                             baseRot = theBone.rotation
                             kquat = (anim.Val - baseRot )
-                            )
+                        )
+                                                
                         
                         writeFloat stream -kquat.z
                         writeFloat stream kquat.x
@@ -1025,8 +1056,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                         writeFloat stream kquat.w
                         --baseRot = kquat
                         --prev = kquat
-                        print anim.Val
-                        print kquat
+                       -- print anim.Val
+                        -- print kquat
                         --writer.WriteQuat stream  rot 
 
                     )
@@ -1114,8 +1145,6 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         for seq in seqs do
         (
-            
-            
             writer.WriteFixedString stream seq.Name 80
             WriteLong  stream seq.StartFrame
             WriteLong  stream seq.EndFrame
@@ -1167,11 +1196,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 
                 writeLong  stream 0 -- CoordId
                 writeFloat stream 1 -- Alpha --> animatable
-                writeFloat stream 0 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
+                writeFloat stream 1 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
                 
-                writeFloat stream 0 -- Fresnel Color R --> works 
-                writeFloat stream 0 -- Fresnel Color G --> works 
-                writeFloat stream 0 -- Fresnel Color B --> works 
+                writeFloat stream 1 -- Fresnel Color R --> works 
+                writeFloat stream 1 -- Fresnel Color G --> works 
+                writeFloat stream 1 -- Fresnel Color B --> works 
                 writeFloat stream 0 -- Fresnel Opacity --> works 
                 writeFloat stream 0 -- Fresnel Team Color --> does not work
                 
@@ -1238,7 +1267,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream geo.VRTX.count
             for v in geo.VRTX do 
             (
-                local v2 = [v.x, v.y, v.z]
+                local v2 = [v.y, -v.x, v.z]
                 writer.WriteVector3 stream v2
                 --writer.WriteVector3 stream ( v * rot90Matrix )
             )
@@ -1246,7 +1275,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream geo.NRMS.count
             for n in geo.NRMS do 
             (
-                local n2 = [n.x, n.y, n.z]
+                local n2 = [n.y, -n.x, n.z]
                 writer.WriteVector3 stream n2
             )
 
@@ -1398,6 +1427,8 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         animationrange = interval 0 100
         slidertime = 0
         
+        ---theRotationDummy = GriffonStudios_Helper_Functions.SetGlobalRotation()
+        
         --try (
             /* MDLX */
             format "Writing MDLX\n"
@@ -1456,6 +1487,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         fFlush stream
         fClose stream
         
+        --GriffonStudios_Helper_Functions.ResetGlobalRotation theRotationDummy
         -- set the position back to orignal animation interval
         animationrange = interval animationInterval.start animationInterval.end
         gc()        
@@ -1464,10 +1496,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 clearlistener()
 --i=1
+--file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulips_1.mdx"
 file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_" + ( i as string ) +".mdx"
 i +=1
 WC3_DEBUG = true
 GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 format "Written file % \n" (getfilenamefile file)
-
-
