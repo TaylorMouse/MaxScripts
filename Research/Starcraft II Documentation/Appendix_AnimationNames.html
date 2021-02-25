@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Animation Names - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Animation Names</h1>
+                <h2>Overview</h2>
+                <p>StarCraft II has many common names for animations.  They are the most commonly used combinations of the various valid <a href="Appendix_AnimationProps.html">Animation Tokens</a>.  Animations are called by these names by the engine using a <a href="Appendix_FuzzyMatch.html">Fuzzy Matching</a> system, and by following these conventions, unit models are swappable for each other.  While almost any combination of animation tokens can be used, in practice, units in StarCraft II favor a few predefined animations names.  Most of which are listed in the <a href="Tool_AnimPropFloater.html">AnimProp Floater</a>.  Any given model can have multiple variants of an animation, and the engine will choose one at random.  For example, if a model defines <em>'Stand'</em>, <em>'Stand 01'</em>, and <em>'Stand 02'</em>, each will play with a 1/3rd likelihood.  The <a href="Appendix_AnimationPriorities.html">Animation Priority</a> system relies heavily on Animation Names, and it is worth cross referencing when choosing animation names.</p>
+                
+                <ul class="glossary">
+                    <li><h4>Stand</h4><p>The basic idle, and the default animation.  A model with no Anim Properties will have whatever animation is currently active in the timeline exported as <em>'Stand'</em>.</p></li>
+                    <li><h4>Stand Work [Start/End]</h4><p>Commonly used for active skills and workers' mining animations.  Buildings will play this animation when producing units or researching tech.</p></li>
+                    <li><h4>Stand Unpowered [Start/End]</h4><p>Animation played when buildings do not have ability to function.  Protoss buildings play this when lacking pylon power.  Sometimes used for "fainted" units as well.</p></li>
+                    <li><h4>Stand Listen</h4><p>Animation for a character listening to another.  Often used while one character is playing a <em>'Talk'</em> animation in a Cutscene.</p></li>
+                    <li><h4>Talk [Angry/Happy/Victory]</h4><p>Animation while a character is speaking.  If the character is set up for dynamic facial animation, the relevant bones will be overwritten, therefore, this can either be a generic body animation, or include generic babbling facial animation that will get replaced.  The emotional modifiers may be used to select more accurate expressions.</p></li>
+                    <li><h4>Fly [Start/End/Stand/Walk]</h4><p>Used to enforce flying state for units that can be both on the ground and in the air, such as some Terran Buildings.  Note: Most flying units simply use <em>'Walk'</em> for locomotion.</p></li>
+                    <li><h4>Walk [Left/Right/Slow/Fast]</h4><p>Most common animation for movement.  Modifier tokens may modify the exact style of movement.</p></li>
+                    <li><h4>Turn [Left/Right]</h4><p>Used to rotate the character in place.</p></li>
+                    <li><h4>Attack [Inferior/Superior]</h4><p>Animation used when a unit attacks.  This animation may be called again by the game before it completes based on the unit's attack interval, thus it may never reach the end unless it is the last attack.  If a non-looping attack finishes, the unit will commonly fall back into its <em>'Stand'</em> or <em>'Stand Ready'</em> animations.</p></li>
+                    <li><h4>Spell [A/B/C/...]</h4><p>Animation called when a unit uses a special ability.  Can be one-shot or looping depending on the requirements.  Many caster units have multiple distinct spells, and use explicit variations to give each spell a unique visual signature, instead of using implicit variations.</p></li>
+                    <li><h4>Fidget</h4><p>An uncommonly played idle animation that can contain larger and more varied movements than is practical for a <em>'Stand'</em> variant, often used to give the unit some extra personality.  This is usually only triggered after a unit has been standing idle for some time.</p></li>
+                    <li><h4>Death [Blast/Eviscerate/Fire/Silentkill]</h4><p>The animation played when a unit dies.  It must be non-looping, as the engine will remove the unit once the animation finishes.  Most Death animations are no more than 10 seconds, and remove the unit completely from view either by dissolve, fade, or pushing the unit below ground.  The modifier tokens are applied by the killing weapon, and encourage the unit to display a different flavor or death animation.  Artistically, Death animations often tone down team color and emissive so players know that the units are no longer active.</p></li>
+                    <li><h4>Build A [Start/Stand], Build B [Start/Stand], Build C [Start/Stand], Build D Start</h4><p>These animations are played, in order, over the course of most Zerg and Terran building construction. The Stands loop to fill build time, and the Starts are transitions between each state, with Build D Start transitioning directly into the building's <em>'Stand'</em>.</p></li>
+                    <li><h4>GLStand [Start/End] [A/B/C/.../Z]</h4><p>Animations automatically called for a model and constantly looped.  These animations almost always use <a href="Tool_BehaviorEditor.html#TrackSet">Track Sets</a>, because they play with a relatively high priority and would otherwise overwrite all other animation on the model.  They are used most often for ambient effects, material animation, or other aspects of the model that should be constantly and consistently animated.</p></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

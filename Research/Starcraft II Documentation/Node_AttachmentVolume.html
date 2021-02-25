@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Attachment Volumes - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Attachment Volumes</h1>
+                <p>Attachment Volumes are used by StarCraft II to attach items or effects to a general 3D area, as opposed to an exact point in space.  Attachment Volumes are special types of <em>Attachment Points</em>, but the most common, by far, is <em>Vol_Target</em>.  It is important to have Vol_Targets for new units and buildings to look correct when being attacked.</p>
+                
+                <h2 id="VolumeTargets">Volume Targets</h2>
+                <ul>
+					<li>
+                        <p>There can be as many as appropriate per model.  It is marked by the name of the node starting with <em>Vol_</em>.  Common examples of names are, <em>Vol_Target</em>, <em>Vol_Target 01</em>, <em>Vol_Shield</em>, etc.  Numbers cannot be skipped.</p>
+                    </li>
+					<li>
+						<p>Because Attachment Volumes are special cases of Attachment Points, two cannot share a name.  For example, having <em>Ref_Target</em> and <em>Vol_Target</em> in the same file will cause errors.</p>
+					</li>
+					<li>
+						<p>The surfaces of the Volumes should match, as closely as possible, the surface of the model.  It is supposed to be a cheap approximation of the model.</p>
+					</li>
+					<li>
+						<p>Conventionally, Vol_Shield is used for Protoss Shields in the same way Vol_Target is for general impact.  There is usually only one per model, and it is slightly larger than other Volumes.</p>
+					</li>
+					<li>
+						<p>When multiple volumes of the same type are in a model, the selection process is roughly: A volume with a pivot close to the originator of the attachment request will be chosen.  Draw a line from the originator to some point on the surface of the selected volume.  The attachment will occur on the closest intersection point of <em>all</em> surfaces of the current type.</p>
+					</li>
+					<li>
+						<p>Vol_Targets are often just slightly scaled down HitTestFuzzy nodes.  This usually works quite well.</p>
+					</li>
+                    <li>
+                        <p>Must be a <em>Standard</em> primitive: <em>Sphere</em>, <em>Box</em>, or <em>Capsule</em>.</p>
+                    </li>
+                    <li>
+                        <p>Do not collapse the primitive shapes or convert to any other shape.  The exporter reads their radius, length, width, and height fields.</p>
+                    </li>
+                    <li>
+                        <p>Spheres are best for performance speed.  Prefer spheres if possible.  Capsules are next best, and boxes are the worst.</p>
+                    </li>
+					<li>
+                        <p>Unlike Hit Test, parts of shapes below ground are considered.  If the shape is below ground, particle effects that spawn off it may not be visible.</p>
+                    </li>
+                    <li>
+                        <p>Shapes can be rescaled, but only along <strong>local axes</strong>.  Shapes like cylinders can be achieved by increasing the height of a capsule, then scaling it down along a single axis.</p>
+                    </li>
+					<li>
+						<p>Negative Scale is not allowed.</p>
+					</li>
+					<li>
+                        <p>Shapes can, and should, be linked to animated parts of the model where applicable.</p>
+                    </li>
+					<li>
+						<p>Translate, rotate, and scale can be animated to match a model's animation.</p>
+					</li>
+                    <li>
+                        <p>Invisible shapes are turned off.  Visibility can be animated.</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

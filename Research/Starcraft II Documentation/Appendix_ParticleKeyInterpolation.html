@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Particle Smoothing Interpolation - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Particle Smoothing Interpolation</h1>
+                <h2>Overview</h2>
+                <p>SC2Particles have multiple ways to blend values between the three particle life keys, Start Mid and End.  Inside the Per-particle Parameters for Color, Size and Rotation there is a pulldown for <em>Smoothing</em>.  For each type of smoothing is shown an example of particle scale with these values: Start = 1,	Mid = 20, End = 1, Mid Time: = 0.3, Hold Time: = 0.1</p>
+                <img class="detail focus" src="resource/img/Appendix_ParticleKeyInterpolation.png" title="SC2Particle Smoothing interpolation"/>
+                <ul class="glossary">
+                    <li><p><em>Linear</em> has the most basic of linear blending between the Start, Mid and End values over the particle life.
+					 </p><img src="resource/img/Appendix_ParticleKeyInterpolation_Linear.png" title="SC2Particle Smoothing interpolation Example Linear"/></li>
+                    <li><p><em>Smooth</em> is a simple curve with parallel control points.  Creates an ease in/out type curve.</p><img src="resource/img/Appendix_ParticleKeyInterpolation_Smooth.png" title="SC2Particle Smoothing interpolation Example Smooth"/></li>
+                    <li><p><em>Bezier</em> is a simple single segment bezier curve with equal length in and out control points.  The Mid point defines the size of the curve, but it doesn't allow a lopsided or weighted curve.  To achieve lopsided bezier smoothing use <em>Bezier Hold</em> with 0 hold time.</p><img src="resource/img/Appendix_ParticleKeyInterpolation_Bezier.png" title="SC2Particle Smoothing interpolation Example Bezier"/></li>
+                    <li><p><em>Linear Hold</em> adds the ability to have a <em>Hold Time</em> which causes the particle property to linear blend fully to the <em>Mid</em> value of the particle an amount of particle life before and after the <em>Mid Time</em>.</p><img src="resource/img/Appendix_ParticleKeyInterpolation_LinearHold.png" title="SC2Particle Smoothing interpolation Example Linear Hold"/></li>
+                    <li><p><em>Bezier Hold</em> creates two separate bezier curves before and after the <em>Mid Time</em> as well as having a <em>Hold Time</em> before and after the <em>Mid Time</em>.</p><img src="resource/img/Appendix_ParticleKeyInterpolation_BezierHold.png" title="SC2Particle Smoothing interpolation Example Bezier Hold"/></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

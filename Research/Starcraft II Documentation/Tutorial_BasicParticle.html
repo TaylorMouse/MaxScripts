@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 05: Particles - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 05: Particles</h1>
+                <img src="resource/img/Progress_0005_BasicParticle.png" title="An image showing the progress achieved during this tutorial: a grey mesh taken to a textured mesh in the Cutscene Editor"/>
+                <p>StarCraft II has a fully featured particle effect pipeline that allows for all the spell effects seen in the game and added details like fog, dust, and weather. These <em>'Element Systems'</em> are special entities that are comprised of many smaller simulating parts.  This tutorial introduces Particles and Ribbon effects in the context of fleshing out a projectile for the Waterbat, as a way to get you started using the StarCraft II Effect pipeline.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'WaterBalloon_Tutorial01_Model.max'</em>.  You should see a blue metal sphere with a little stem.  This is the model we will be practicing particle effects on.  While not immediately relevant, this model is animated, and has the animation, <em>'Stand'</em> defined.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for the Waterballoon."/>
+                    </li>
+                </ol>
+                <h2>Particle Creation</h2>
+                <ol>
+                    <li value="2">
+                        <p>The StarCraft II Art Tools define several Nodes for 3ds Max.  Where applicable, they show up in the appropriate <em>'Create Panel'</em> type.  For this tutorial, switch to <em>'Particle Systems'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0001_Create.png" title="In the Create Panel, under 'Particle Systems' you will find StarCraft II's custom particle systems."/>
+                    </li>
+                    <li>
+                        <p>From the <em>'Object Type'</em> rollout select <em>'SC2Particles'</em> then click in the viewport to place the particle system. For now, don't worry about the settings.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0002_BubblePlace.png" title="Place one like you would any other object in 3ds Max." />
+                    </li>
+                </ol>
+                <h2>Particle Materials</h2>
+                <ol>
+                    <li value="4" id="MaterialSetup">
+                        <p class="caption">To get the particles to show up in engine, they will need a material, just like anything else.  The <a href="Tutorial_BasicMaterial.html"/>Material Tutorial</a> has detailed information, if required.  Particle Systems require very special, fast materials.  To get started, create a new <em>'SC2 Standard'</em> Material.  To configure this one to be simple and cheap, first, set <em>'Mask'</em> as the material configuration, then choose <em>'Blend'</em> as the blend mode.  This will allow you to specify a texture to smoothly blend the particle into the image.  The rest of the settings help make the particles render faster.  Disable <em>'Hit Test'</em> to exclude the particles from mouse selection calculations, and then disable <em>'Receive Shadows'</em> and <em>'Cast Shadows'</em> so that the particles do not have to do costly shadow calculations.  Enable <em>'Unlit'</em> to opt out of costly lighting calculations as well.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Material_0000_BubbleSettings.png" title="Particle effects can be numerous, so these settings focus on making them simple and cheap." />
+                    </li>
+                    <li>
+                        <p class="caption">Begin editing the texture for the <em>'Diffuse'</em> layer.  Click <em>'SC2 Bitmap'</em> to change the source of the color.  In the list select <em>'Maps &gt; Standard &gt; SC2 Color'</em>. then hit <em>'OK'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Material_0001_BubbleType.png" title="Click 'SC2 Bitmap' to change the type." />
+                        <img class="zoom" src="resource/img/BasicParticle_Material_0002_Star2Color.png" title="Select 'Starcaft 2 Color' from the list and hit 'OK'." />
+                    </li>
+                    <li>
+                        <p class="caption">A <em>'SC2 Color'</em> defines a solid color that can be used for a layer in a material.  For the diffuse layer, <em>'Alpha'</em> is used to define how much of the team color bleeds through.  Set the spinner to the right of the color swatch to <em>'100'</em> so the bubbles have some team color.  Also, for the <em>'Alpha Mask'</em> layer, choose <em>'StarToolsTutorial_Bubble_Mask.tga'</em> and set the <em>'Channel Mask'</em>to <em>'Use R'</em>.  This will make each individual particle show up like a single bubble.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Material_0003_BubbleColor.png" title="Set the alpha, to allow some Team Color to show through." />
+                    </li>
+                    <li>
+                        <p>Going to <em>'SC2ArtTools &gt; Export &gt; Preview'</em> will launch the <em>Cutscene Editor</em> and immediately load the model.  The particles should now be showing up, shooting up in a very plain straight line.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0000_BubbleMaterial.png" title="A default particle system will look pretty simple, just a straight line of your texture." />
+                    </li>
+                </ol>
+                <h2>Particle Emission</h2>
+                <ol>
+                    <li value="8">
+                        <p>To add some spice to the particles, the <em>'Emitter Shape'</em> can be changed.  Select the particle system and go to the <em>'Modify Panel'</em>.  In the <em>'Emission &gt; Emitter Shape'</em> dropdown, choose <em>'Cylinder'</em>, which will provide  some variance.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0003_BubbleShape.png" title="Select one of the many Emitter Shapes." />
+                    </li>
+                    <li>
+                        <p>To increase the rate at which the particles appear, raise <em>'Emission &gt; Lifespan &gt; Emission Rate'</em>to <em>'40.0'</em>.  To keep the total number of particles reasonable, and to be visually appropriate for bubbles, set <em>'Emission &gt; Lifespan &gt; Lifetime'</em> to <em>'.35'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0004_BubbleRateLife.png" title="Setting the Emission Rate and Lifetime allows you to manage how many particles are shown at any give time." />
+                    </li>
+                    <li>
+                        <p><em>'Preview'</em> the model again, and the bubbles should be quickly appearing in a roughly cylindrical cluster.  They still snap in and out of existence instantly, which look less than ideal.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0001_BubbleShape.png" title="The particles should now spawn in varied locations." />
+                    </li>
+                </ol>
+                <h2>Particle Appearance</h2>
+                <ol>
+                    <li value="11">
+                        <p>To change how the particles fade in and out go to the <em>'Per-particle Parameters'</em> rollout, and click the button titled <em>'Mid'</em> in the <em>'Alpha'</em> group.  The number to the left is the opacity (out of 255) at the instant the particle is created.  The number at the end denotes the opacity at the end of the particle lifetime, while the middle number is the target opacity at the fraction of the particle lifetime defined in the <em>'Mid Time'</em> spinner.  Set the beginning and end values to <em>'0'</em> to make the particle fade in and out completely.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0005_BubbleAlpha.png" title="These parameters, those that vary over the lifetime are important to giving personality to the particle system.  These help smoothly show and hide the particles." />
+                    </li>
+                    <li>
+                        <p>A quick <em>'Preview'</em> now should show that the particles fade in and out, which is hopefully more pleasing to look at.  The particles could, however, use a bit more variance.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0002_BubbleAlpha.png" title="The particles should now fade in and out of existence." />
+                    </li>
+                    <li>
+                        <p>Size variation is a good way to add visual interest to a particle system.  In the <em>'Size'</em> group, enable the <em>'Mid'</em> key like with Alpha.  This time, also enable the <em>'Range'</em> checkbox.  This will enable the lower row of numbers, and will cause particles to be randomized between the values.  The top row defines the lower bound for values.  Set them to <em>'0.0, 5.0, 15.0'</em>.  For the upper bound, set <em>'0.0, 20.0, 60.0'</em>.  This will hopefully make the bubbles look like they grow into existence, then pop at the end of their life.  Artistically, for the bubble, it would be good to stay at bubble size for awhile, then make the pop happen very suddenly.  To do this, set the <em>'Smoothing'</em> dropdown to <em>'Linear Hold'</em>.  Set the newly enabled <em>'Hold Time'</em> to <em>'.25'</em> to make the particles stay at the value defined for <em>'Mid'</em> for a larger fraction of the particle life.  Finally, Click the <em>'Shared'</em> to the right of the <em>'Mid Time'</em> slider to decouple the time for the <em>'Mid'</em> key for Size from the time for <em>'Mid'</em> keys for other properties.  Then set <em>'Mid Time'</em> to <em>'.6'</em> to allow the bubble more time to grow in than to pop out.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0005_BubbleSize.png" title="These parameters, those that vary over the lifetime are important to giving personality to the particle system.  These help sell them as popping bubbles." />
+                    </li>
+                    <li>
+                        <p>The bubbles should now be quite a lot more lively.  Over their lifetime, they should scale up into existence, sit around for awhile, and then burst away, and each particle should be slightly different from all the others.  This should be looking good for now, but you are welcome to play around with other settings, such as <em>'Color'</em> to add extra variation or further refine the look.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0003_BubbleSize.png" title="The bubbles should now satisfyingly snap away as if popping." />
+                    </li>
+                    <li>
+                        <p>In the <em>'Physics'</em> rollout, set <em>'Gravity'</em> to <em>'-500.0'</em> and disable <em>'Multiply by map gravity'</em>.  This will cause all the particles to accelerate upwards.  Map gravity is disabled, because higher gravity would make the bubbles move up faster, which would be an odd effect.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0006_BubbleGravity.png" title="There are many physics properties to play with, but for now, we only care about Gravity." />
+                    </li>
+                    <li>
+                        <p>The bubbles should now be roiling upwards until they eventually burst.  The Bubble Particle system is pretty much done at the point.  All that needs to be done is to attach it to the projectile.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0004_BubbleGravity.png" title="The particles should now rise up convincingly." />
+                    </li>
+                    <li id="Alignment">
+                        <p>Line up the particle system with the stem on the WaterBalloon.  Then use the <em>'Link'</em> tool.  With the tool active, click the particle system, and drag onto the mesh, then let go.  This will constrain the particle system to the animated mesh.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0007_BubbleAlign.png" title="Use the link tool on the particle system and the mesh, to make the particles follow as the Waterballoon spins." />
+                    </li>
+                    <li>
+                        <p>Another <em>'Preview'</em> will reveal that the particles now spawn off the stem as it tumbles around.  The spawning of the particles should be scattered and look a lot more like a trail.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0005_BubbleAttach.png" title="The particles are now more integrated into the waterballoon, and should leave a more interesting trail." />
+                    </li>
+                </ol>
+                <h2>Ribbon Setup</h2>
+                <ol>
+                    <li value="19">
+                        <p>To get a more solid trail, however, we'll want to use a Ribbon.  A <em>'SC2Ribbon'</em> is placed just like a particle system.  Click the button, and then drop it.  Ribbons are like particle systems, in that they are comprised of lots of small simulating pieces.  Ribbons differ in that they have a reduced set of options and display as a single strip, useful for cases like tails.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0008_TailPlace.png" title="SC2Ribbons should place just like Particle Systems." />
+                    </li>
+                    <li>
+                        <p>Verify that the <em>'Active'</em> checkbox is enabled.  If <em>'Active'</em> is not enabled, your ribbon may never show up.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0009_TailActive.png" title="The 'Active' checkbox is incredibly important to have on.  There are advanced cases where it should be off, but for this case, it must be on." />
+                    </li>
+                    <li>
+                        <p>Setup another <em>'SC2 Standard'</em> Material for the tail just like the bubble material in <a href="#MaterialSetup">Step 4</a>, but this time using the <em>'Add'</em> blend mode.  For the <em>'Alpha Mask'</em> texture, this time you will want to choose <em>'StarToolsTutorial_Tail_Diff'</em> and set the <em>'Channel Mask'</em>to <em>'Use R'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Material_0004_TailSettings.png" title="The Tail material is very similar to the bubble, but this one is more like light, hence the Additive Blend Mode." />
+                    </li>
+                    <li>
+                        <p>The tail should be a relatively simple rising band.  If you move around the model in the viewport, the tail will follow around, and you can observe the behavior of ribbons.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0006_TailMaterial.png" title="A basic ribbon is pretty plain.  It's just a line with your texture on.  You can move it around and see it follow though." />
+                    </li>
+                </ol>
+                <h2>Ribbon Appearance</h2>
+                <ol>
+                    <li value="23">
+                        <p>The tail should fade out smoothly over time, so set <em>'Per-particle parameters &gt; Alpha &gt; Start'</em> to <em>'192'</em> and <em>'End'</em> to <em>'0'</em>.  Over the life of the trail, it might be nice for it bulge out, then taper off.  Enable the <em>'Mid'</em> key for <em>'Size'</em>m then set the values to <em>'25.0, 50.0, 10.0'</em>.  To bias the bulge earlier in the ribbon, set <em>'Mid Time'</em> to <em>'.2'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0010_TailSettings.png" title="Ribbon settings are similar to particle settings, but a little simpler." />
+                    </li>
+                    <li>
+                        <p>The ribbon, should now have a far more pleasing shape, and look a lot more like something blasting out the back of a quickly moving mortar round.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0007_TailSize.png" title="The tail should now be looking pretty fancy." />
+                    </li>
+                    <li>
+                        <p>Align the Ribbon in the same fashion as the Particle System in <a href="#Alignment">Step 17</a>. Because there can be potentially many Waterbats firing at once, and the effect is relatively minor, set <em>'Max segs/sec'</em> to <em>'20'</em> to make the ribbon slightly cheaper.  Because the ribbon is going to derive most of its size from the movement of the projectile, reduce <em>'Emission &gt; Initial Velocity &gt; Speed'</em> to <em>'20.0'</em>.  Finally, because the projectile has a relatively brief life, set <em>'Emission &gt; Lifespan &gt; Lifetime'</em> to <em>'.25'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Viewport_0011_TailAlign.png" title="Attach the tail to the mesh just like the particle system." />
+                    </li>
+                    <li>
+                        <p>The ribbon should now be shooting out of the stem with the bubbles.  As the ball twists, the ribbon should trace where the stem has been.  The water-based mortar round is ready to fly out of the Waterbat's weapons and towards any unsuspecting foe, and repair allied buildings.</p>
+                        <img class="zoom" src="resource/img/BasicParticle_Preview_0008_TailAttach.png" title="The spinning waterballoon should now be spraying a fancy teamcolor trail behind it." />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

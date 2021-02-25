@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 02: Animation - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 02: Animation</h1>
+                <img src="resource/img/Progress_0002_BasicAnimation.png" title="An image showing the progress achieved during this tutorial: a static mesh to a lively one."/>
+                <p>StarCraft II uses bone-based animation.  Geometry can be linked or skinned to a skeleton; the exporter should handle both correctly.  This tutorial focuses on getting an already rigged and animated model into game.</p>
+                <h2>Rig Setup</h2>
+                <ol>
+                    <li>
+                        <p>To animate a model for StarCraft II, it will need to use a skeletal rig, that honors our <a href="Appendix_RiggingGuidelines.html">Animation Guidelines</a>. The act of creating such a rig is outside the scope of this tutorial, though there are <a href="http://download.autodesk.com/us/3dsmax/2011/help/index.html?url=./files/WS73099cc142f48755-b497228123ab7be9f5-7b3c.htm,topicNumber=d0e13845">other rigging tutorials</a> available.  If you wish to build your own, the file <em>'Waterbat_Tutorial02_Textured.max'</em> can be used as a starting point.  If you prefer to use an existing rig, one has been provided as <em>'Waterbat_Tutorial03_Rigged.max'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for Waterbat Animation."/>
+                    </li>
+                </ol>
+                
+                <h2>Animation Setup</h2>
+                <ol>
+                    <li value="2">
+                        <p>Animating can be a fun, artistic process, and you are welcome to provide your own animations.  While the act of animating in 3ds Max is also outside the scope of this tutorial, we have provided a set of animations for the Waterbat in <em>'Waterbat_Tutorial04_Animated.max'</em> which you can use for this tutorial.  StarCraft II uses several predefined <a href="Appendix_AnimationNames.html">Animation Names</a> and automatically binds many of them at runtime using a <a href="Appendix_FuzzyMatch.html">Fuzzy Matching System</a>.  For the Waterbat, we have provided <em>'Stand'</em>, <em>'Fidget'</em>, <em>'Turn Left'</em>, <em>'Turn Right'</em>, <em>'Attack'</em>, <em>'Death'</em>, <em>'Walk'</em>, <em>'Unload'</em>, and <em>'Unload End'</em> animations.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for Waterbat Animation."/>
+                    </li>
+                </ol>
+                
+                <h2>Anim Props</h2>
+                <p>Animations in a model file are defined by tagging slices of the timeline.  There can be as many or as few in a single file as you like, and they may be in any order at any positive time.  They are managed with the <em>'Anim Props Floater'</em>.  Animations must follow the <a href="Appendix_RiggingGuidelines.html#Animation">Animation Guidelines</a>, and have <a href="Appendix_AnimationNames.html">Animation Names</a> comprised of Valid <a href="Appendix_AnimationProps.html">Animation Tokens</a>.</p>
+                <ol>
+                    <li value="3">
+                        <p>In order to view and edit Anim Props, navigate to the Menu Item, <em>'SC2ArtTools &gt; Animations &gt; Anim Props Floater'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0001_AnimPropsFloater.png" title="The Menu path to access The Anim Props Floater is 'SC2ArtTools &gt; Animations &gt; Anim Props Floater'." />
+                    </li>
+                    <li id="NewAnim">
+                        <p class="caption">This should bring up the Anim Props Floater.  At this point, the dialog should be relatively blank.  To add new animation definitions, click on the <em>'New'</em> button.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0000_Initial.png" title="The Anim Props Floater, where animation settings are applied." />
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0001_AddAnim.png" title="Click 'New' to define a new Animation." />
+                    </li>
+                    <li id="AddAnim">
+                        <p class="caption">This should bring up yet another new dialogue, the <em>'Create New Anim'</em> prompt.  Select <em>'Stand'</em> in the long list.  If you are using the sample file, set <em>'Start'</em> to <em>'100'</em> and <em>'Length'</em> to <em>'95'</em>, because the example <em>'Stand'</em> animation exists from frames 100 to 195.  If you are not using the example file, match it to wherever your basic looping idle animation is in time.  Once you hit <em>'Add'</em> you should be presented with the Anim Props Floater again, but now with an animation listed.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimList_0000_StandAdd.png" title="Select Stand and click Add." />
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0002_FirstAnim.png" title="Your animation definition should show up in the AnimProp Floater." />
+                    </li>
+                </ol>
+                
+                <h2>'Stand'</h2>
+                <ol>
+                    <li value="6">
+                        <p><em>'Stand'</em> is the most important general purpose animation for StarCraft II.  It serves as the baseline idle that all models will play.  If a model is exported with animation, but no animation is defined, it is assumed to be <em>'Stand'</em>.  It should be an idle loop that can be easily blended in and out of.  In <em>'Waterbat_Tutorial04_Animated.max'</em> <em>'Stand'</em> extends from frame 100 to frame 95.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0002_Stand.png" title="Example frame from the 'Stand' Animation." />
+                    </li>
+                    <li>
+                        <p>Animations can have variations that are swapped at random at runtime.  A two digit number placed as a separate token in the animation names will specify such an implicit variation.  As such, an alternate animation, <em>'Stand 01'</em> has been included in the example from frames 300 to 400.  To mark this animation for export, repeat the <a href="#NewAnim">Add Animation process</a> in <a href="#NewAnim">Step 4</a> and <a href="#AddAnim">Step 5</a> but with the appropriate frame ranges.  By choosing the same animation name, the Anim Props Floater will automatically add the appropriate variation token.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0003_Stand01.png" title="Example frame from the 'Stand 01' Animation." />
+                    </li>
+                </ol>
+                
+                <h2>Navigating Anims</h2>
+                <ol>
+                    <li value="8">
+                        <p class="caption">Now, with more than a single animation defined, the Anim Props Floater has some additional utility.  By clicking an animation name, the floater will automatically update the timeline to view that animation.  This behavior can be disabled using the <em>'Update Timeline'</em> checkbox if desired.  If you made a mistake in the time ranges, the <em>'Start'</em> and <em>'End'</em> fields can be used to make corrections.  The <em>'Goto Time Zero'</em> button can be used to go back to Time Zero, where changes to geometry and non-animatable parameters can be made safely.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0003_AddedAnims.png" title="Multiple animations listed in the Anim Prop Floater." />
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0004_GotoZero.png" title="Clicking 'Goto Time Zero' will take you to the Zero frame where you can make adjustments." />
+                    </li>
+                    <li>
+                        <p>View the Waterbat in the <em>Cutscene Editor</em> using <em>'SC2ArtTools &gt; Export &gt; Preview'</em>.  The Waterbat should be playing the <em>'Stand'</em> animation as that is the common fallback.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0000_Stand.png" title="The Waterbat should now have a bit more life when previewed." />
+                    </li>
+                    <li>
+                        <p>Right-click the blue Animation Block that reads <em>'Stand (0)'</em> to expose options for manipulating the block.  Choose <em>'Change Animation &gt; Stand 01'</em> to view the variant Anim.  You can use this method to view any animation present on the model.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0001_ChangeAnim.png" title="Right-clicking the Animation Block in the timeline gives you many options, such as changing the Current Animation." />
+                    </li>
+                </ol>
+                
+                <h2>Common Animations</h2>
+                <p>For all the following animations, you will again want to repeat the <a href="#NewAnim">Add Animation process</a> in <a href="#NewAnim">Step 4</a> and <a href="#AddAnim">Step 5</a> but with the appropriate frame ranges.  The following section provides a brief description of each animation and the frame ranges to use.</p>
+                
+                <h2>'Fidget'</h2>
+                <ol>
+                    <li value="11">
+                        <p><em>'Fidget'</em>, from frames 500 to 590 for the Waterbat, is a special idle animation that is played far less often than a stand.  During a regular game it is mixed in after a unit has been standing still for awhile.  It is common to put in animations that really sell the personality of the unit here.  You are free to make them grandiose, as they are not played often.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0004_Fidget.png" title="Example frame from the 'Fidget' Animation." />
+                    </li>
+                    <li>
+                        <p><em>'Fidget 01'</em> extends from frames 700 to 790.  Much like <em>'Stand 01'</em> it is an implicit variation, and the engine will automatically choose one at random.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0005_Fidget01.png" title="Example frame from the 'Fidget 01' Animation." />
+                    </li>
+                </ol>
+                
+                <h2>'Turn'</h2>
+                <ol>
+                    <li value="13">
+                        <p><em>'Turn Left'</em> is between frames 900 and 910.  Turns are used to reorient the character, and are often very short, simple animations.  They are blended into and out of very quickly, and thus generally only need to imply some sort of rotational movement.  The character itself should not change orientation in the animation.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0006_TurnLeft.png" title="Example frame from the 'Turn Left' Animation." />
+                    </li>
+                    <li>
+                        <p><em>'Turn Right'</em> is the right-ward counterpart and sits on frames from 1000 to 1010 in the provided examples.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0007_TurnRight.png" title="Example frame from the 'Turn Right' Animation." />
+                    </li>
+                </ol>
+                <h2>'Attack'</h2>
+                <ol>
+                    <li value="15">
+                        <p><em>'Attack'</em>, from frames 1100 to 1160, is played whenever the Waterbat uses its weapon.  The animation may loop, but it is not guaranteed to finish.  The refire rate on the animation is tied to the attack rate in Data, and will be retriggered on that interval.  If the attack requires a different idle pose, you may need to author a <em>'Stand Ready'</em> animation which is often used for an attack-ready idle in Data.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0008_Attack.png" title="Example frame from the 'Attack' Animation." />
+                    </li>
+                </ol>
+                
+                <h2>'Death'</h2>
+                <ol>
+                    <li value="16">
+                        <p><em>'Death'</em> animations in StarCraft II are generally 300 frames long, and as such, the Waterbat's extends from 1300 to 1600.  They are played when the unit is killed, and can be made more specific using additional <a href="Appendix_AnimationProps.html#DeathTokens">Animation Tokens</a>.  <em>'Death'</em> animations must remove the model from vision, because when the animation finishes, the model will cease to be drawn.  They generally will also mute the colors of units, by doing things like turning off emissive, so that dead units are less distracting to the player.  The common techniques for this involve either doing a fade-out, a dissolve, or simply sliding the model underground.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0009_Death.png" title="Example frame from the 'Death' Animation." />
+                    </li>
+                    <li>
+                        <p class="caption">It doesn't make sense to loop death Animations, and in fact it can cause unwanted behaviors, so in the <em>'Anim Prop Floater'</em> navigate to <em>Properties &gt; Non-Looping</em> and enable the checkbox.  This will define this as a one-shot animation.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0005_DeathNonLoop.png" title="Death animations should not loop.  The 'Non-Looping' checkbox suggests this to the engine." />
+                    </li>
+                </ol>
+                
+                <h2>'Walk'</h2>
+                <ol>
+                    <li value="18">
+                        <p><em>'Walk'</em>, from 1700 to 1728 for the Waterbat, is an animation cycle that is played whenever the model is moving, if it is available.  Walks should be concise, looping animations that can be easily blended in and out of, especially from <em>'Stand'</em> and <em>'Attack'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0010_Walk.png" title="Example frame from the 'Walk' Animation." />
+                    </li>
+                    <li>
+                        <p class="caption">Walks can have some extra features for scaling animations and previewing properly.  Defining <em>'Properties &gt; MoveSpeed'</em> enables these features.  For the Waterbat, we want a value of about <em>190</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0007_WalkSpeed.png" title="Alter the walk speed to get an accurate view of the run-cycle in the Cutscene Editor." />
+                    </li>
+                    <li>
+                        <p>To view your walk animation moving forward in the <em>Cutscene Editor</em>, you can go to <em>'Animation &gt; Toggle Walk'</em>.  This will make the model move forward at <em>'MoveSpeed'</em>, and you can verify that feet are locking correctly and everything looks natural.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0003_ToggleWalk.png" title="Toggle Walk will make the model move forward at a given rate when a 'Walk' animation is playing." />
+                    </li>
+                    <li>
+                        <p>Because the Walk position resets to the Actor position when time loops in the Cutscene Editor, you may want to extend the timeline to get a better look at how the walk animation loops.  Left-click the anchors at the far right of the blocks in the timeline and drag them out to the right to give yourself more time.  Looping animations will automatically play for the full duration.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0002_ExtendTimeline.png" title="Extending the timeline will allow you to watch an animation loop several times before any time-sensitive resets occur." />
+                    </li>
+                    <li>
+                        <p>If the Waterbat runs off screen and you would prefer it to stay centered in the viewport, you can toggle the <em>Animation &gt; Follow Motion</em> option.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0004_ToggleFollow.png" title="If you wish to have a steady view on a model as it moves, you can enable Follow Motion." />
+                    </li>
+                </ol>
+                
+                <h2>'Unload'</h2>
+                <ol>
+                    <li value="23">
+                        <p><em>'Unload'</em> occupies frames 1901 and 1900.  This is a generic idle for when exiting a dropship.  The unit isn't actually visible most of the time in the dropship.  The important part is that this animation should be a logical loop and lead cleanly into <em>'Unload End'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0011_Unload.png" title="Example frame from the 'Unload' Animation." />
+                    </li>
+                    <li>
+                        <p><em>'Unload End'</em> sits from frames 2000 to 2045, and is the last animation for the Waterbat.  <em>Unload End</em> is played when a unit exits a dropship, and should bring the unit from approximately 180 Max units in the air to the ground, normally transitioning directly into <em>'Stand'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Viewport_0012_UnloadEnd.png" title="Example frame from the 'Unload End' Animation." />
+                    </li>
+                    <li>
+                        <p class="caption">Much like <em>'Death'</em>, there is no sensible way to loop <em>'Unload End'</em>.  We should then make Unload End as Non-Looping as well.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_AnimProp_0006_UnloadEndNonLoop.png" title="Similar to Death, Unload End cannot sensibly loop, and should be marked as such." />
+                    </li>
+                </ol>
+                
+                <h2>Final Touches</h2>
+                <ol>
+                    <li value="26">
+                        <p>You can <em>'SC2ArtTools &gt; Export &gt; Preview'</em> and toggle between all the different animations available at this point.  The Waterbat should have a usable set of animations, and is almost ready to use in-game.</p>
+                        <img class="zoom" src="resource/img/BasicAnimation_Preview_0005_Final.png" title="Example frame from the 'Unload End' Animation." />
+                    </li>
+
+                </ol>
+                
+            </div>
+        </div>
+    </body>
+</html>

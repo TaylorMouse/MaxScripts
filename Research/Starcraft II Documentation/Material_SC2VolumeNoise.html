@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Volume Noise - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Volume Noise</h1>
+                <p>The <em>SC2 Volume Noise</em> Material, is very similar to <a href="Material_SC2Volume.html">SC2 Volume</a> in both purpose and execution.  This material creates a volumetric effect with varying densities.  The effect is created by two scrolling 3D textures that define the fog density.  This is a relatively expensive material to draw and is used sparingly. This material is only available on Ultra Graphics settings and above.  To use this material, it is required that the mesh be a "watertight" closed volume or there will be problematic visual artifacts.</p>
+                <h2>Noisy Volume</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_VolumeNoise.png" title="Volume Noise's only rollup.  It provides ways to manipulate the scrolling textures that create the noisy effect."/>
+                    <ol class="compact">
+                        <li><p><em>Falloff Type</em> is not user editable.  It is locked to <em>Linear</em> due to the nature of the volume probe.  The volume effect fades in uniformly with depth.</p></li>
+                        <li><p><em>Density</em> controls how thick the fogging effect should be.  This is multiplied by the results of the <em>Noise Texture</em> lookups, so the resulting visual may appear less dense.</p></li>
+                        <li><p><em>FallOff</em> controls how deep into the volume a sample has to be before it contributes a full effect.  Smaller values make the volume effect fade in more at the edges.</p></li>
+                        <li><p><em>NearPlane</em> is the distance into the volume that must be travelled before fog begins to show up.  For fog that the camera goes into, this can be a useful property, because it prevents the fog from becoming too thick too quickly.  It can be used as a constant reduction in visual density.</p></li>
+                        <li><p><em>Alpha Test Threshold</em> clips the visual effect when the fog density would be below the specified value.  At low values this can be used to correct for certain visual artifacts.  At high values it can be used to produce a blob-like surreal effect.</p></li>
+                        <li><p><em>Color</em> sets the color to apply to the volume.  Only RGB channels are considered.  This should be either an <em>SC2 Color</em> or an <em>SC2 Bitmap</em> using <em>Screen Space</em> UV mapping.  Other mapping types will yield undesirable effects.</p></li>
+                        <li><p><em>Noise Texture 1</em> is not user editable.  It is a slot reserved for one of the 3D noise textures used by this material.  The texture is similar to 3D Perlin Noise.</p></li>
+                        <li><p><em>Noise Texture 2</em> is not user editable.  It is a slot reserved for one of the 3D noise textures used by this material.  The texture is similar to 3D Perlin Noise.  Scroll parameters affect this texture in reverse.</p></li>
+                        <li><p><em>Noise Freq</em> increases the rate at which phenomena occur in the noise textures.</p></li>
+                        <li><p><em>Amp</em> is the intensity for the noise values.  Lower values can result in smoother transitions in the noise, while higher values may appear "patchy". Other values, such as <em>Density</em> may also need to be altered to compensate.</p></li>
+                        <li><p><em>TranslationXYZ</em> is a hand-controlled offset and scroll of the noise effect.  This value can be used as a constant offset to find a more desirable section of noise, or as an animated parameter to artistically scroll the noise.  Unlike <em>ScrollRateXYZ</em> this parameter affects both texture queries equally.</p></li>
+                        <li><p><em>RotationXYZ</em> rotates the local space of the noise texture queries.  This allows for easier adjustment of scrolling direction, but also subtly changes the look of the material.</p></li>
+                        <li><p><em>ScaleXYZ</em> scales the query for the noise textures.  Higher values in one axis appear to squish the noise along that axis.</p></li>
+                        <li><p><em>ScrollRateXYZ</em> defines a speed at which to offset the texture queries.  This allows for a constant speed movement of the noise effect, without having to be aware of the properties of the volume textures.  This parameter scrolls <em>Noise Texture 2</em> in the reverse of the specified direction.</p></li>
+                        <li><p><em>Draw before transparency</em> changes the sort order of this instance of the material.  <em>SC2 Volume Noise</em> does not sort with individual transparencies.  Normally, the volume noise material will draw after all transparencies, and obscure various effects.  If it is preferable that the volume draw after opaque materials, but before all other transparencies, this flag can be used.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial 07: Turret - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial 07: Turret</h1>
+                <img src="resource/img/Progress_Advanced0007_Turret.png" title="An image showing the progress achieved during this tutorial: 3ds Max to in-game."/>
+                <p><em>Starcraft II</em> supports a very simple method of procedurally animating a single axis rotating turret for units with the correct turret data assigned.  This tutorial will demonstrate setting up the turret nodes correctly with an alternate Immortal model called the <em>Hovortal</em>.  The Immortal already has the turret data assigned and it also setup in data to not rotate making the turret example very easy to see.  Turrets cannot be seen in the cutscene editor and must be tested on a map with <em>Liberty.sc2mod</em> data in game.</p>
+				
+				<h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Hovortal_Turret_Tutorial01_Start.max'</em>  It contains a new immortal unit that is split into two parts, a base and a turret complete with all animations and effects.  They lower base is separated from the turret for now, but we will link them together with a turret.  It is recommended to use <em>World Reference Coordinates</em> and <em>Use Pivot Point Center</em> in 3dS Max for this tutorial. </p>
+						<img class="zoom" src="resource/img/Turret_01_Start.png" title="Open the File Hovortal_Turret_Tutorial01_Start.max"/>
+                    </li>
+                </ol>
+                <h2>Create a Turret Bone</h2>
+                <ol>
+                    <li value="2">
+                        <p>SC2ArtTools require two nodes be placed and linked together to make a single turret.  The first node is bone with no animation that has the pivot of the node centered on where the turret will rotate.  Create a <em>Box</em> with a <em>20 x 20 x 20</em> size with the name <em>'Bone_Turret'</em>.</p>
+                        <img class="zoom" src="resource/img/Turret_02_Create_BoneTurret.png" title="Placing the Bone_Turret node"/>
+                    </li>
+                </ol>
+				<h2>Position the Turret Bone</h2>
+                <ol>
+                    <li value="3">
+                        <p>Bring up the <em>Move Transform Type-In</em> by right clicking the <em>Select and Move</em> and type the values of <em>0, 0, 100</em> into the <em>Move Transform Type-In</em>.</p>
+                        <img class="zoom" src="resource/img/Turret_03_Position_BoneTurret.png" title="Positioning the Bone_Turret node"/>
+                    </li>
+                </ol>
+				<h2>Link the Turret Bone to the Base</h2>
+                <ol>
+                    <li value="4">
+                        <p>Link the <em>Bone_Turret</em> to the existing red <em>Bone_Root</em> using the <em>Select the Link</em> tool from the Tool Bar.</p>
+                        <img class="zoom" src="resource/img/Turret_04_Link_BoneTurret.png" title="Linking the Bone_Turret node"/>
+                    </li>
+                </ol>
+                <h2>Create the Ref_TurretZ Attachment Point</h2>
+				<ol>
+					<li value="5">
+						<p>The second node to make a working turret is the procedurally rotated <em>Attachment Point</em> which has identical position and rotation to the parent <em>Bone_Turret</em>. Create an Attachment Point from <em>'Create Menu > Helpers > SC2AttachPt'</em> and select <em>Change Type</em> to <em>Ref_TurretZ</em> and place it in the scene.</p>
+						<img class="zoom" src="resource/img/Turret_05_Create_RefTurretZ.png" title="Creating the Ref_TurretZ Attachment Point"/>
+				</ol>
+				<h2>Position the Ref_TurretZ Attachment Point</h2>
+				<ol>
+					<li value="6">
+						<p>With the <em>Ref_TurretZ</em> selected use the <em>Move Transform Type-In</em> move the <em>Ref_TurretZ</em> to <em>200, 0, 100</em>.  This will position the attachment point at the bottom of the Turret of the Hovortal.</p>
+						<img class="zoom" src="resource/img/Turret_06_Position_RefTurretZ.png" title="Moving the Ref_TurretZ Attachment Point into position."/>
+					</li>
+				</ol>
+				<h2>Link the Ref_TurretZ Attachment Point</h2>
+				<ol>
+					<li value="7">
+                        <p>Link the existing red <em>Bone_Chest</em> to the <em>Ref_TurretZ</em> using the <em>Select the Link</em> tool from the Tool Bar.  Also link the <em>Ref_TurretZ</em> to the <em>Bone_Turret</em>.</p>
+                        <img class="zoom" src="resource/img/Turret_07_Linking_RefTurretZ.png" title="Linking the Ref_TurretZ node"/>
+					</li>
+                </ol>				
+				<h2>Align the Ref_TurretZ Attachment Point</h2>
+				<ol>
+					<li value="8">
+						<p>With the new <em>Ref_TurretZ</em> selected, use the <em>Quick Align</em> tool and select the <em>Bone_Turret</em>.  This will move the turret into the correct position completing the model.</p>
+						<img class="zoom" src="resource/img/Turret_08_Align_RefTurretZ.png" title="Align Ref_TurretZ Attachment Point"/>
+					</li>
+                </ol>
+				<h2>Save Model to a Mod</h2>
+				<ol>
+					<li value="9">
+						<p>To see the turret in action we need to get the model in the game.  Follow the directions in the <a href="Tutorial_CommittingModels.html">Committing Models Tutorial</a> and make a new Mod named <em>Hovortal.SC2Mod</em>, save it and close the mod.  Rename this 3ds Max file to <em>'Hovortal.max'</em> and commit the model to the new Mod using <em>SC2ArtTools &gt; Commit &gt; Commit</em>.  In the <em>StarCraft II Editor</em> create a new Arcade Map and add the custom dependency Hovortal.SC2Mod.</p>
+						<img class="zoom" src="resource/img/Turret_09_Commit_Hovortal.png" title="Select 'SC2ArtTools &gt; Commit &gt; Commit' to push the model into your mod."/>
+					</li>
+                </ol>
+				<h2>Edit Immortal Data to change to Hovortal</h2>
+				<ol>
+					<li value="10">
+						<p>In the new map, edit the Immortal Model Data to Point to the new model.</p>
+						<img class="zoom" src="resource/img/Turret_10_AddToMap_Hovortal.png" title="StarCraft II Editor Edit Immortal Data"/>
+					</li>
+                </ol>				
+                
+                <h2>Place Hovortal on the Map</h2>
+                <ol>
+                    <li value="11">
+                        <p>Place some new Immortals on the map</em>.</p>
+                        <img class="zoom" src="resource/img/Turret_11_PlaceOnMap_Hovortal.png" title="Placing the new Immortal on the Map" />
+					</li>
+                </ol>
+				<h2>Final Result</h2>
+                <ol>
+                    <li value="12">
+                        <p>In the Editor select <em>Test Document</em>.  This should launch a map with only some Hovortals to play with.  Notice how the base doesn't rotate but the turrets do.</p>   
+                        <img class="zoom" src="resource/img/Turret_12_Hovortal_Profit.png" title="Hovortals with Turrets in Action." />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

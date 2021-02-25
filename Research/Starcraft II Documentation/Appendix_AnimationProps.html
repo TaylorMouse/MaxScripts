@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Animation Names - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Animation Tokens</h1>
+                <h2>Overview</h2>
+                <p><a href="Appendix_AnimationNames.html">Animation Names</a> are comprised of one or more animation tokens.  The game will request an animation using some combination of these tokens, and use the one that gives the best match using a <a href="Appendix_FuzzyMatch.html">Fuzzy Match</a> System.  Many tokens are unused, and most tokens have no hard-coded meaning.  They are just referenced in certain conventional ways in Data.  Tokens that are not recognized by the engine may produce unusable animations.</p>
+                <br/><h3>Action Tokens</h3>
+                <p>Generally, action tokens are used with AnimPlay commands in the editor, and denote verbs that the model should perform.</p>
+                <ul class="glossary">
+                    <li><h4>Attack</h4><p>This token is most often appended to the current animation state when a unit is in the process of attacking.</p></li>
+                    <li><h4>Birth</h4><p>Used when a model first enters the world.  Very common for Zerg units born out of a morph ability, and the initial hit of spell effects.</p></li>
+                    <li><h4>Blink</h4><p></p></li>
+                    <li><h4>Block</h4><p></p></li>
+                    <li><h4>Build</h4><p></p></li>
+                    <li><h4>Burrow</h4><p>Used as both the act of burrowing for Zerg units, and a modifier token for other actions while burrowed.</p></li>
+                    <li><h4>Channel</h4><p>Denotes a sustained action.  Often used for looping spells.</p></li>
+                    <li><h4>Cloak</h4><p></p></li>
+                    <li><h4>Corrupted</h4><p></p></li>
+                    <li><h4>Creep</h4><p></p></li>
+                    <li><h4>Dance</h4><p>Played when the /dance command is used.  Useful for taunts.</p></li>
+                    <li><h4>Death</h4><p></p></li>
+                    <li><h4>Detect</h4><p></p></li>
+                    <li><h4>Dialogue</h4><p></p></li>
+                    <li><h4>Fidget</h4><p>A very rare alternate stand animation.  Can have characterized special movement, because it will not be played often.</p></li>
+                    <li><h4>Flail</h4><p></p></li>
+                    <li><h4>Fling</h4><p></p></li>
+                    <li><h4>Freeze</h4><p></p></li>
+                    <li><h4>Gather</h4><p></p></li>
+                    <li><h4>Jump</h4><p>Leaping, such as a Reaper travelling up and down a cliff.</p></li>
+                    <li><h4>Kill</h4><p></p></li>
+                    <li><h4>Land</h4><p></p></li>
+                    <li><h4>Listen</h4><p>Often used for an active idle while another character is speaking.</p></li>
+                    <li><h4>Load</h4><p>Entering a drop ship.  Animations with this token should generally take a unit from the ground to the air.  Because pickups are instantaneous, this is not often used.</p></li>
+                    <li><h4>Morph</h4><p></p></li>
+                    <li><h4>NearImpact</h4><p></p></li>
+                    <li><h4>Penetrate</h4><p></p></li>
+                    <li><h4>Pickup</h4><p></p></li>
+                    <li><h4>Placement</h4><p>Animation used when deciding where to spawn or build a unit or structure.  Often applies a ghost-like or holographic display to emphasize that the object is not yet real.</p></li>
+					<li><h4>Pose</h4></li>
+                    <li><h4>Reload</h4><p></p></li>
+                    <li><h4>Restart</h4><p></p></li>
+                    <li><h4>Run</h4><p></p></li>
+                    <li><h4>Shield</h4><p></p></li>
+                    <li><h4>Spell</h4><p></p></li>
+                    <li><h4>Stand</h4><p>The default animation.  The exporter will mark the scene as a <em>Stand</em> animation if no other Animation Names are defined.  Stand is also the animation that the engine tries to play when no other animation is requested.</p></li>
+                    <li><h4>Standup</h4><p></p></li>
+                    <li><h4>Talk</h4><p>Animation while a character is speaking.  If the character is set up for dynamic facial animation, the relevant bones will be overwritten, therefore, this can either be a generic body animation, or include generic babbling facial animation that will get replaced.</p></li>
+					<li><h4>Taunt</h4></li>
+                    <li><h4>Turn</h4><p>Used to reorient a unit.  Commonly paired with either <em>'Left'</em> or <em>'Right'</em></p></li>
+                    <li><h4>Unburrow</h4><p>Called when a Zerg unit leaves the burrowed state, giving it an opportunity to animate coming up from the ground.  Happens right when the <em>'Burrow'</em> status is removed.</p></li>
+                    <li><h4>Unload</h4><p>Exiting a drop ship.  Animations with this token should generally take a unit from the air to the ground.</p></li>
+                    <li><h4>Victory</h4><p></p></li>
+                    <li><h4>Walk</h4><p>Applied as the primary token when a unit is moving.</p></li>
+                    <li><h4>Work</h4><p>Commonly used for active skills and workers' mining animations.  Buildings will play this animation when producing units or researching tech.</p></li>
+                </ul>
+                
+                <br/><h3>State Tokens</h3>
+                <p>State tokens are used to modify the currently playing animation.  They often coerce the model into using a different set of animations for the same verbs, and are left on the model for the duration of the associated status.</p>
+                <ul class="glossary">
+                    <li><h4>Attached</h4><p>Terran Add-ons use this when successfully connected to a building.</p></li>
+                    <li><h4>Cover</h4><p></p></li>
+                    <li><h4>Dead</h4><p>Post death state.  Can be used to do things like choose animations with emissive textures animated to off.</p></li>
+                    <li><h4>Fly</h4><p>Used to enforce flying state for units that can be both on the ground and in the air, such as some Terran Buildings.</p></li>
+                    <li><h4>Thrown</h4><p></p></li>
+                    <li><h4>Ready</h4><p>Used as a preparation state for another action.  For example, <em>Ready</em> is often used to keep a character in an attack pose, even if they are not attacking.</p></li>
+                    <li><h4>Unpowered</h4><p>Often used for the case of a unit or building being present, but disabled, such as a Protoss building outside of a pylon power field.</p></li>
+                    <li><h4>Wounded</h4><p>Can be applied to switch to a set of limping animations, also used to make Zerg Buildings bleed when they are badly damaged.</p></li>
+                </ul>
+                
+                <h3 id="DeathTokens">Death Type Tokens</h3>
+                <p>Death types denote different ways to show a unit being eliminated from the game.  The killing weapon specifies which death type to favor, and the model will play the most specific animation possible, unless in Reduced Violence mode.</p>
+                <ul class="glossary">
+                    <li><h4>Blast</h4><p>Explosive death, such as from a Siege Tank shot.</p></li>
+                    <li><h4>Disintegrate</h4><p>Acidic deaths, such as a Roach's attack.</p></li>
+                    <li><h4>Eat</h4><p><em>Unused</em> Death Type for a unit getting devoured by another unit.</p></li>
+                    <li><h4>Electrocute</h4><p>Death by electrocution, such as from a lightning effect.</p></li>
+                    <li><h4>Eviscerate</h4><p>Slicing death, such as a cut from a Zealot or Dark Templar.</p></li>
+                    <li><h4>Fire</h4><p>Burn death, such as from a Hellion.</p></li>
+                    <li><h4>Silentkill</h4><p>Stealth kill, such as a killing shot from a Ghost.</p></li>
+                    <li><h4>Squish</h4><p><em>Unused</em> Death Type for a unit getting killed by a strong force from above.</p></li>
+                </ul>
+                
+                <br/><h3>Directional Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>Forward</h4><p>In front of the unit's current facing direction.</p></li>
+                    <li><h4>Back</h4><p>Behind the unit's current facing direction.</p></li>
+                    <li><h4>Left</h4><p>To the unit's left.  Often seen in combination with <em>'Turn'</em></p></li>
+                    <li><h4>Right</h4><p>To the unit's right.  Often seen in combination with <em>'Turn'</em></p></li>
+                    <li><h4>Inferior</h4><p>Facing downward, such as firing down a cliff.</p></li>
+                    <li><h4>Equal</h4><p>Facing parallel, though in practice, not often used.</p></li>
+                    <li><h4>Superior</h4><p>Facing upwards, such as firing at an air unit or up a cliff.  Sometimes, such as with the Baneling, this is also used to denote something that is better, or upgraded.</p></li>
+                </ul>
+                
+                <br/><h3>Emotional Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>Angry</h4><p></p></li>
+                    <li><h4>Dominant</h4><p></p></li>
+                    <li><h4>Happy</h4><p></p></li>
+                    <li><h4>Scared</h4><p></p></li>
+                    <li><h4>AngryEyes</h4><p></p></li>
+                    <li><h4>FearEyes</h4><p></p></li>
+                    <li><h4>HappyEyes</h4><p></p></li>
+                    <li><h4>SadEyes</h4><p></p></li>
+                    <li><h4>SeriousEyes</h4><p></p></li>
+                    <li><h4>SurpriseEyes</h4><p></p></li>
+                </ul>
+				
+				<br/><h3>Body Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>Arm</h4><p></p></li>
+                    <li><h4>Chest</h4><p></p></li>
+                    <li><h4>Eye</h4><p></p></li>
+                    <li><h4>Leg</h4><p></p></li>
+                </ul>
+				
+				<br/><h3>Character Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>Adjutant</h4><p></p></li>
+                    <li><h4>Dehaka</h4><p></p></li>
+                    <li><h4>Evomaster</h4><p></p></li>
+                    <li><h4>Horner</h4><p></p></li>
+					<li><h4>Kerrigan</h4><p></p></li>
+					<li><h4>Lasarra</h4><p></p></li>
+					<li><h4>Raynor</h4><p></p></li>
+					<li><h4>Stukov</h4><p></p></li>
+					<li><h4>Valerian</h4><p></p></li>
+					<li><h4>Zagara</h4><p></p></li>
+                </ul>
+                
+                <br/><h3>User Interface Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>Click</h4><p>The mouse has been pressed on the current item.</p></li>
+                    <li><h4>Highlight</h4><p>Attention is being called to the current item.</p></li>
+                    <li><h4>Hover</h4><p>The mouse is currently over the item.</p></li>
+                </ul>
+                
+                <br/><h3>Miscellaneous Tokens</h3>
+                <ul class="glossary">
+					<li><h4>Close</h4></li>
+					<li><h4>Far</h4></li>
+					<li><h4>Double</h4></li>
+                    <li><h4>Alternate</h4><p></p></li>
+                    <li><h4>Complex</h4><p></p></li>
+                    <li><h4>Simple</h4><p></p></li>
+                    <li><h4>Small</h4><p></p></li>
+                    <li><h4>Medium</h4><p></p></li>
+                    <li><h4>Large</h4><p></p></li>
+                    <li><h4>Slow</h4><p></p></li>
+                    <li><h4>Fast</h4><p></p></li>
+                    <li><h4>Turbo</h4><p></p></li>
+                    <li><h4>Enemy</h4><p></p></li>
+                    <li><h4>Lighting</h4><p></p></li>
+					<li><h4>Glow</h4></li>
+					<li><h4>Portrait</h4><p>Can be used to separate sets of animations.  For example, if a single model is used both in-game and in a portrait window, the Portrait prop can be used to distinguish between two Stand animations.</p></li>
+                    <li><h4>Custom</h4><p>By requiring this token when calling an animation, it can be used to make sure you get a particular crafted animation for the situation.  For example requesting <em>'Custom Stand'</em> will never trigger a regular stand animation.  Useful for organization.</p></li>
+                </ul>
+                
+                <br/><h3>Global Loops</h3>
+                <p><a href="Tutorial_GlobalLoopAnimation.html">Global loops</a> are animations that always play throughout a model's lifetime.  They play with a very high priority, and will overwrite most other animation unless they are masked with a <a href="Tool_BehaviorEditor.html#TrackSet">TrackSet</a>.  It is common to see Global Loops used for things like general material animation for pulsing lights or a scrolling texture.</p>
+                <ul class="glossary">
+                    <li><h4>GLBirth</h4><p>Played when a unit is first created, and transitions into <em>'GLStand'</em></p></li>
+                    <li><h4>GLStand</h4><p>Looped while a unit is alive.</p></li>
+                    <li><h4>GLDeath</h4><p>Triggered upon a unit's death.  Transitions it from <em>'GLStand'</em> to <em>'GLDead'</em></p></li>
+                    <li><h4>GLDead</h4><p>A unit can loop an animation from where GLDeath has finished until the model actually removed from rendering.</p></li>
+                </ul>
+                
+                <br/><h3>Special Tokens</h3>
+                <ul class="glossary">
+                    <li><h4>IGNORE</h4><p>Has no meaningful effect on the 3ds Max side, but requesting an animation with the 'ignore' token in the query will always return no results, which makes animations with the token 'ignore' in their names nearly impossible to call.</p></li>
+                    <li><h4>Default</h4><p>Reserved, but functionally unused Prop.  <em>'Stand'</em> is the de facto default.</p></li>
+                    <li><h4>'Protoss', 'Terran', and 'Zerg'</h4><p>Used by some Cutscene assets for categorization purposes, but not commonly used for in-game units.</p></li>
+                    <li><h4>'Start' and 'End'</h4><p>While these tokens have no ingrained behavior, they are universally used for Bracketed Animations.  When denoted as such in the Data editor, <em>'Start'</em> will play, then the unmodified animation will loop, and finally <em>'End'</em> will play before the animation sequence finishes.</p></li>
+                    <li><h4>'01' through '99'</h4><p>Two-digit numbers denote implicit variations of animations.  Two animations with different Two-digit numbers, but otherwise identical tokens will be chosen at random by the animations system.  <em>'00'</em> may be explicitly specified, but it is identical to having no implicit variation token, which may produce unexpected results.</p></li>
+                    <li><h4>'A' through 'Z' and 'Zero' through 'Nine'</h4><p>Single letters in the roman alphabet, as well as spelled out versions of the numerals are reserved for the purposes of creating explicit variations that are not triggered automatically by the variation system.</p></li>
+                </ul>
+                
+				<br/><h3>Legacy Tokens</h3>
+				<p>Animation Tokens were also used during the development of WarCraft III.  These tokens have been ported forward to the StarCraft II engine.  There are no examples of their use in StarCraft II, but they are available for use with the engine.</p>
+                <ul class="glossary">
+                    <li><h4>Alternateex</h4></li>
+					<li><h4>Berserk</h4></li>
+					<li><h4>Bone</h4></li>
+					<li><h4>Chain</h4></li>
+					<li><h4>Complete</h4></li>
+					<li><h4>Critical</h4></li>
+					<li><h4>Decay</h4></li>
+					<li><h4>Defend</h4></li>
+					<li><h4>Drain</h4></li>
+					<li><h4>EatTree</h4></li>
+					<li><h4>Entangle</h4></li>
+					<li><h4>Fill</h4></li>
+					<li><h4>Flesh</h4></li>
+					<li><h4>Gold</h4></li>
+					<li><h4>Hit</h4></li>
+					<li><h4>Light</h4></li>
+					<li><h4>Looping</h4></li>
+					<li><h4>Lumber</h4></li>
+					<li><h4>Moderate</h4></li>
+					<li><h4>Off</h4></li>
+					<li><h4>Puke</h4></li>
+					<li><h4>Severe</h4></li>
+					<li><h4>Slam</h4></li>
+					<li><h4>Spiked</h4></li>
+					<li><h4>Spin</h4></li>
+					<li><h4>StageFirst</h4></li>
+					<li><h4>StageSecond</h4></li>
+					<li><h4>StageThird</h4></li>
+					<li><h4>StageFourth</h4></li>
+					<li><h4>StageFifth</h4></li>
+					<li><h4>Swim</h4></li>
+					<li><h4>Throw</h4></li>
+					<li><h4>Upgrade</h4></li>
+                </ul>
+				
+				<br/><h3>Disallowed Tokens</h3>
+				<p>Some tokens are specifically disallowed by the system and will produce invalid animations and files.</p>
+                <ul class="glossary">
+                    <li><h4>Unknown</h4></li>
+					<li><h4>First</h4></li>
+					<li><h4>Last</h4></li>
+					<li><h4>Count</h4></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

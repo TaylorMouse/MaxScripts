@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Texmap Types: SC2 Color - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Texmap Types: SC2 Color</h1>
+
+                <p><em>SC2 Color</em> provides a quick and cheap alternative to <em>SC2 Bitmap</em>.  It allows for the specification of a direct color to provide to the shader, rather than having to provide a texture.</p>
+                
+                <h2>Color &amp; Alpha</h2>
+                <div class="group">
+					<p>The Color &amp; Alpha rollout defines a simple color and alpha for that particular material</p>
+                    <img class="detail focus" src="resource/img/Texmap_SC2Color_Alpha.png" title="Color & Alpha"/>
+                    <ol class="compact">
+                        <li><p><em>Color</em> defines the color to provide to the current material layer.</p></li>
+                        <li><p><em>Alpha</em> sets the value of the Alpha channel for the current layer.  For any material layer that requires a single channel value, this is the value used.</p></li>
+                </div>
+                
+				<h2>Fresnel</h2>
+                <p>Fresnel settings control the appearance of the color based on the normal direction of the surface.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Fresnel.png" title="Settings for shaping the current SC2 Color based on the normal direction of the surface."/>
+                    <ol class="compact">
+                        <li><p><em>Fresnel mode</em></p>
+                            <ul>
+                                <li><p><em>None</em> disables the effect.  All the parameters in this rollout become unused.</p></li>
+                                <li><p><em>Standard</em> makes the color favor surfaces pointing perpendicular to the camera direction.  This has a visual effect of highlighting the outer edges of a model.</p></li>
+                                <li><p><em>Inverted</em> masks the color so it is most visible when the surface normal is directly facing the camera.  This has a visual effect of highlighting the core of a model.</p></li>
+                                <li><p><em>Constant Standard</em> calculates the mask by using the surface normal and a single arbitrary axis.  By default this is the world Z axis, but it can be reoriented using the <em>Rotation</em> field.  This favors surfaces pointing perpendicular the defined axis.</p></li>
+                                <li><p><em>Constant Inverted</em> calculates the mask by using the surface normal and a single arbitrary axis.  By default this is the world Z axis, but it can be reoriented using the <em>Rotation</em> field.  The color appears on surfaces facing towards the defined axis.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Fresnel exponent</em> controls the falloff of the fresnel effect by applying a power curve.  This occurs before min and max operations, and as such, the values of <em>Fresnel Min</em> and <em>Fresnel Max</em> may be relative to a non-linear term.  Changing this field, may change their apparent values.</p></li>
+                        <li><p><em>Fresnel min</em> may have two different meetings depending on the value of the <em>Clamp Position</em> parameter.  When <em>Clamp Position</em> is enabled, this value represents the point along the fresnel falloff where the color will no longer be visible.  When clamping is disabled, this value represents the minimum brightness of the color after the fresnel term.</p></li>
+                        <li><p><em>Fresnel max</em> may have two different meetings depending on the value of the <em>Clamp Position</em> parameter.  When <em>Clamp Position</em> is enabled, this value represents the point along the fresnel falloff where the color will be fully visible.  When clamping is disabled, this value represents the maximum brightness of the color after the fresnel term.</p></li>
+                        <li><p><em>Clamp position</em> changes the behavior of the fresnel effect's brightness.  When disabled, the color fades from a minimum intensity to a maximum intensity, as defined by <em>Fresnel Min</em> and <em>Fresnel Max</em>.  When enabled, the color is instead faded in from 0 to 1 from the points where the fresnel brightness would have been clamped by the same values.  Enabling clamp is useful when the color is intended to disappear completely from certain angles.</p></li>
+                        <li><p><em>Do not mirror</em> prevents the effect from showing up on both sides of the mesh.  While this is not usually noticeable on a view-aligned fresnel effect, it can be an undesirable artifact on the <em>Constant</em> variants.</p></li>
+                        <li><p><em>Local transform</em> makes the fresnel effect occur in local space.  The <em>Rotation</em> and <em>Mask</em> effects are rotated with the model.  This can be useful if the effect, for example, should be aligned with a cylinder, no matter which way the cylinder is rotated.</p></li>
+                        <li><p><em>Rotation</em> realigns the vector used to calculate the fresnel effect.  For the <em>Constant</em> fresnel variants the default vector is facing along the Z axis.  In relation to the default view, the first parameter yaws the effect left and right.  The second parameter pitches the effect up and down.</p></li>
+                        <li><p><em>Mask</em> restricts movement of a non-constant fresnel vector along certain axes.  For example, a value of <em>1.0</em> in the third component would completely prevent the fresnel effect from moving up and down as the camera angle changes.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Cameras: SC2 FreeCamera & TargetCamera - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Cameras: SC2 FreeCamera &amp; TargetCamera</h1>
+                <p>The <em>SC2 FreeCamera</em> &amp; <em>SC2 TargetCamera</em> are very similar to 3ds Max's cameras, but with a few extra parameters that are specific to StarCraft II. The difference between the SC2 FreeCamera and the SC2 TargetCamera is that the target camera always looks at a target and the free camera is free. In this document we’re going to mainly focus on these extra parameters. To get more information about common camera parameters like Lens, FOV, Environment Ranges, Clipping Planes, Multi-Pass Effect, Focal Depth, or Sampling go to 3ds Max Help and search for "Common Camera Parameters".</p>
+                <h2>Extra Parameters</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Node_SC2Camera_Properties.png" title="SC2Camera Parameters"/>
+                    <ol class="compact">
+                        <li><p><em>Shadow Clip</em> controls where the clipping plane is for shadows. No shadows will draw beyond the distance that you add to this parameter.</p></li>
+						<li value="2">
+						<p><em>DOF Amount</em> is the amount of depth of field that is used in a scene and can range from 0.0 to 1.0. Zero being no depth of field and one would be full depth of field.</p>
+						</li>
+						<li value="3">
+						<p><em>Focal Depth</em> refers to the distance away from the camera where objects are the most in focus or the least blurry. This parameter can be used to make a strong focal point where everything outside of that focal depth starts to get blurry.</p>
+						</li>
+						<li value="4">
+						<p><em>Falloff Start</em> is where the depth of field starts or the blurring begins.</p>
+						</li>
+						<li value="5">
+						<p><em>Falloff End</em> is where the depth of field ends or the blurring is at its maximum. Then the blur becomes consistent past the falloff end distance.</p>
+						</li>
+						<li value="6">
+						<p><em>Use Vertical FOV</em> determines whether the vertical field of view is turned on or off.</p>
+						</li>
+                    </ol>
+					<p>This is what those extra parameters look like in the Editor.</p>
+					<img src="resource/img/Node_SC2Camera_PreviewProperties.png" title="This is what those extra parameters look like in the Editor."/>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

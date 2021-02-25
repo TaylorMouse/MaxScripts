@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Effect: Particle - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Effect: Particle</h1>
+                <p>The <em>SC2Particle</em> Node, found in the <em>Particle Systems</em> create panel, emits a system of renderable points, called 'particles', based on its properties.  These particles simulate individually and are a fast way to create exciting visual effects.  In StarCraft II, these are used for sparks, spells, explosions, muzzle flashes, weather, fires, and more.</p>
+                <h2>Emission</h2>
+                <div class="group">
+                    <p>The Emission rollout defines properties for the creation of every separate particle.  Many of these values can be animated, and control initial individual particle properties, such as when and where to create particles, what directions they should be travelling, and a few parameters that control the look of the system as a whole.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Emission.png" title="SC2 Particle's Emission Rollout, responsible for the rate of creation of each individual particle."/>
+                    <ol class="compact">
+                        <li><p><em>Emitter Shape</em> defines the physical location from which particles spawn.  Distributions across the volume are not guaranteed to be even.
+                            <ul>
+                                <li><em>Point</em> spawns from exactly the SC2Particle node's position.</li>
+                                <li><em>Plane</em> defines a flat square from which particles can be emitted, along the emitter's local XY-plane, and centered on the node.</li>
+                                <li><em>Sphere</em> picks a point in the volume of a sphere around the node.</li>
+                                <li><em>Box</em> uses a 3D box centered on the emitter node.</li>
+                                <li><em>Cylinder</em> emits from a shape defined by a radius and height, centered on the emitter.</li>
+                                <li><em>Disc</em> is a circle mounted to the emitter, oriented along the node's local XY-plane.</li>
+                                <li><em>Spline</em> emits from along a spline picked in the <em>Linked Spline</em> dropdown.</li>
+                                <li><em>Mesh</em> emits from the faces of the mesh picked in <em>Linked Mesh</em> dropdown.  If Vertex Color is applied and exported by the material on the mesh, then the Red channel of vertex color regulates the probability that a face will be used for particle emission.  Less red results in a lower probability.  If no red is present on a face, no particles will be emitted from it.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Linked Spline</em> is used for <em>Spline</em> emitter shapes. The exporter will attempt to convert any spline that can be reduced to a single Bezier Spline.  Only valid splines will be listed here.  (Specifically, the exporter will first try to convert to a SplineShape, and extract exactly 1 BezierSpline from it.  Any node that can satisfy this condition should work.)</p></li>
+                        <li><p><em>Linked Mesh</em> is used for <em>Mesh</em> emitter shapes. It will only display meshes that will be exported.  If a mesh has a material set to <em>Export Vertex RGBA</em>, then the intensity of the Vertex Color Red will be used to define the distribution of emission over the mesh.</p></li>
+                        <li><p><em>Lower Bounds</em> defines, for a <em>Spline</em>, what percentage along the spline it should start emitting from.  This allows emitting from sub-sections of splines.</p></li>
+                        <li><p><em>Upper Bounds</em> defines, for a <em>Spline</em>, what percentage along the spline it should stop emitting from.  This allows emitting from sub-sections of splines.</p></li>
+                        <li><p><em>Length (Outer Shape)</em> is the length dimension in generic max units for emitter shapes that require it, and generally correlates with the local Y-axis.</p></li>
+                        <li><p><em>Width (Outer Shape)</em> is the width dimension in generic max units for emitter shapes that require it, and generally correlates with the local X-axis.</p></li>
+                        <li><p><em>Height (Outer Shape)</em> is the height dimension in generic max units for emitter shapes that require it, and generally correlates with the local Z-axis.</p></li>
+                        <li><p><em>Radius (Outer Shape)</em> is the radius in generic max units for round emitter shapes, or when using a <em>Spline</em>.</p></li>
+                        <li><p><em>Use Inner Shape</em> Enables an interior shape, which hollows out the emitter, allowing emission from only a shell.  Otherwise particles are emitted throughout the volume.  The inner shape is always the same as the shape of the emitter.</p></li>
+                        <li><p><em>Length (Inner Shape)</em> is the length dimension in generic max units for emitter shapes that require it, and generally correlates with the local Y-axis.</p></li>
+                        <li><p><em>Width (Inner Shape)</em> is the width dimension in generic max units for emitter shapes that require it, and generally correlates with the local X-axis.</p></li>
+                        <li><p><em>Height (Inner Shape)</em> is the height dimension in generic max units for emitter shapes that require it, and generally correlates with the local Z-axis.</p></li>
+                        <li><p><em>Radius (Inner Shape)</em> is the radius in generic max units for round emitter shapes, or when using a <em>Spline</em>.</p></li>
+                        <li><p><em>Auto Calculate</em> forces the exporter to attempt to calculate the <em>Max. Particles</em> field based on the <em>Emission Rate</em>, the <em>squirt quantity</em>, and the <em>Lifetime</em> of the particles.  For simple particle systems, this is almost always correct, but for complex animated parameters, this may need to be disabled.</p></li>
+                        <li><p><em>Max. Particles</em> is the upper bound for the number of particles a particle system can have.  This is critical for performance, and a lower number is better.  Note that particles that are currently alive are favored over creating new particles, and thus a number that is too small here may cause hitches in emission.</p></li>
+                        <li><p><em>Emission Rate</em> defines the number of particles per second that will spawn.</p></li>
+                        <li><p><em>Squirt Quantity</em> is a special keyframe triggered field for burst particle emission.  When there is a keyframe that is non-zero, and differs in value from the previous keyframe, exactly that number of particles (subject to Graphics settings) will be created at that time.  This is useful for explosions and other instantaneous effects.</p></li>
+                        <li><p><em>Lifetime</em> is the time, in seconds, that a particle will live for.  Most effects in <em>Per-particle Parameters</em> are normalized across this lifetime.</p></li>
+                        <li><p><em>Range (Lifetime)</em> enables randomized lifetimes among particles, allowing for more variety in the look of the particle system.  When enabled, the field is the maximum lifetime of a particle.  It must always be larger than <em>Lifetime</em>.</p></li>
+                        <li><p><em>Kill sphere</em>, when non-zero, is a hard-stop distance that will instantly kill a particle when it exceeds this distance.  This is measured from the <em>SC2Particle</em> node, and not the point of emission.  Particles that spawn outside the sphere will be visible for exactly one frame.</p></li>
+                        <li><p><em>Local Time</em> toggles the particle system between simulating in real time or synced with the animation.  If the particle system should simulate in "real-time" no matter what, this checkbox should remain unchecked.  Check it if the particle system should adjust to match the animation speed.</p></li>
+                        <li><p><em>Pre-pump</em> simulates the particle system prior to its first appearance on screen, making it appear at full strength, rather than "filling up" the first time it appears.  This is used to make a particle system look like it has been running already when first seen.  <em>Squirt</em> will not be pre-pumped.</p></li>
+                        <li><p><em>Grid</em> is currently broken and not advised to be used.</p></li>
+                        <li><p><em>Initial Velocity</em> defines the direction particles should be traveling when emitted.
+                            <ul>
+                                <li><em>Constant</em> picks a direction based on the <em>Yaw</em> and <em>Pitch</em> settings.</li>
+                                <li><em>Radial</em> always pushes away from the center of the emitter node.</li>
+                                <li><em>Z-axis</em> picks randomly to move in the direction of the positive or negative local Z-Axis for the emitter.</li>
+                                <li><em>Random</em> picks an entirely arbitrary orientation.</li>
+                                <li><em>Mesh Normal</em> when using a <em>Mesh</em> <em>Emitter Shape</em>, uses the normal of the face being emitted from as the direction vector.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Yaw</em> rotates emission along the SC2Particle node's local X-axis. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Pitch</em> rotates emission along the SC2Particle node's local Y-axis. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Horz Spread</em> gives a randomized range of angles from which particles can spawn.  The axis of freedom corresponds to the axis of freedom for <em>Pitch</em>. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Vert Spread</em> gives a randomized range of angles from which particles can spawn.  The axis of freedom corresponds to the axis of freedom for <em>Yaw</em>. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Speed</em> sets the magnitude of each particle's direction vector when it is emitted. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Range (Speed)</em> enables randomized speed among particles, allowing for more variety in the look of the particle system.  When enabled, the field is the maximum speed of a particle.  It must always be larger than <em>Speed</em>. ( This will disable procedural overlay noise on <em>Speed</em>. )</p></li>
+                        <li><p><em>Inherit Parent Velocity</em> makes each particle add the velocity of the model it is part of when it is emitted.  This makes the system look like it is moving with the model as opposed to being dropped off in space.</p></li>
+                        <li><p><em>% (Inherit Parent Velocity)</em> denotes the percentage transfer of parent velocity to each emitted particle if <em>Inherit Parent Velocity</em> is turned on.</p></li>
+                        <li><p><em>Instance Type</em> controls the shape of particles in the particle system.
+                            <ul>
+                                <li><em>Billboard</em> will always be square to the camera.</li>
+                                <li><em>Tail</em> will face the camera, but be elongated based on <em>Tail Length</em> and distance traveled.</li>
+                                <li><em>Facing Traveling Direction</em> sets the particle's face normal to be the direction it travels.  Up and Right vectors are derived from the emitter.</li>
+                                <li><em>World Facing Direction</em> makes all particles face in a worldspace direction defined by <em>Yaw (Instance Type)</em> and <em>Pitch (Instance Type)</em>.</li>
+                                <li><em>Single Axis</em> particles will face the camera by rotating along only one axis, defined by <em>Yaw (Instance Type)</em> and <em>Pitch (Instance Type)</em>.</li>
+                                <li><em>Ground Oriented</em> will make a particle's default orientation match that of the heightmap below the particle.  Particles can be spun with <em>Pitch (Instance Type)</em>.</li>
+                                <li><em>Ground Direction Oriented</em> matches the ground for facing direction, but leaves a trail similar to <em>Tail</em> in the XY plane.  The orientation matches the direction the particle is traveling.</li>
+                                <li><em>Emitter Oriented</em> will set each particle to face the same direction as the SC2Particle node's local Z-axis.  This is most notable when <em>Pitch</em> and <em>Yaw</em> are used, causing divergence between the emission direction and the node's physical direction.</li>
+                                <li><em>Physics Normal Oriented</em> will orient the particle in the direction of the surface it was generated off of if and only if it was generated as a result of terrain or object collision.  For particles not generated in this manner, this will yield undefined results.</li>
+                                <li><em>Pinned</em> will create a stretched quad for each particle.  This quad will face the camera and its end points will be the initial position of the particle, and the current position of the particle.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Tail Length</em> defines the ratio of <em>Size</em> to the length of a particle tail.</p></li>
+                        <li><p><em>Yaw (Instance Type)</em> controls the shape of particles in the particle system.</p></li>
+                        <li><p><em>Pitch (Instance Type)</em> controls the shape of particles in the particle system.</p></li>
+                        <li><p><em>Offset</em> expands the leading edge of a <em>Pinned</em> particle.  The width of the leading edge is <em>Size</em> * ( 1 + <em>Offset</em> ).</p></li>
+                        <li><p><em>Clamped Tail Length</em> makes tail-type particles start with zero length and max out at their <em>Tail Length</em>. ( Behavior is undefined with <em>Pinned</em> Particle Systems )</p></li>
+                        <li><p><em>Fixed Tail Length</em> forces a particle tail to start, and remain, at its <em>Length</em> for the duration of the particle lifetime.  When unchecked, physical particle tail length is Velocity * Size * Length / 100.</p></li>
+                        <li><p><em>Use Model</em> allows the user to pick a Group in the same file to be replicated for every particle.  When enabled, the button enters model selection mode.</p></li>
+                        <li><p><em>Swap Y & Z</em> changes the forward vector of the model selected in <em>Use Model</em>.</p></li>
+                        <li><p><em>Sorted (could be slow)</em> will force particle to sort themselves based on depth, so that the closest to the camera draws "in front".  Normally, particles will be traversed in their order in memory.  Which would favor putting particles emitted first "behind" the others visually, but will have occasional sorting artifacts.  If the <em>SC2 Standard Material</em> assigned to a particle system has a <em>Blend Mode</em> of <em>Add</em>, this flag does nothing except make the particle system more expensive to calculate.</p></li>
+                        <li><p><em>Sort based on Z height</em> forces sorting to be done based on the height along the Z-axis, rather than distance to the camera.  This is particularly useful for <em>Ground</em> oriented particles, where they may visually intersect incorrectly otherwise.</p></li>
+                        <li><p><em>Reverse iteration</em> makes the renderer traverse the particle system back to front.  Visually this inverts the sorting order of the particles.  Without the <em>Sorted</em> checked, particles emitted first will generally appear "in front" of others.  With <em>Sorted</em>, the furthest away will appear "in front".</p></li>
+                        <li><p><em>Trail % Chance</em> sets the percentage of particles emitted that can generate trailing particles.  Whether or not a child will generate children is decided at the time of emission, and it will keep this property throughout its lifetime.</p></li>
+                        <li><p><em>Emission Rate</em> defines at what rate the child particles will be spawned. Note that this ignores the child particle system's <em>Emission</em> properties, but respects <em>Max. Particles</em>.</p></li>
+                        <li><p><em>Picker (Particle Trail Emission)</em> allows the user to select a child particle system for use with emission trails.  Properties pertaining to <em>Emission</em>, <em>Speed</em> and <em>Shape</em> are ignored.</p></li>
+                    </ol>
+                </div>
+                <h2>Per-particle Parameters</h2>
+                <div class="group">
+                    <p>Per-element parameters are unique for every particle emitted.  They generally define properties that change over the lifetime of a particle, and are useful for changing the look and feel of the particle system.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Perelement.png" title="SC2 Particle's Element Parameters, the values that change over time for every segment."/>
+                    <ol class="compact">
+                        <li><p><em>Start (Color)</em> defines the color of a particle when it first spawns.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Color)</em>, if enabled, defines the color of a particle during the middle of its lifetime.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Color)</em>, if enabled, defines the color of the particle as it approaches its terminus.</p></li>
+                        <li><p><em>Start (Color Range)</em> defines the color of a particle when it first spawns.  When the <em>Range</em> checkbox is enabled, particles will be assigned a color randomly linearly interpolated between this value and that of <em>Start (Color)</em>.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Color Range)</em>, if enabled, defines the color of the particle during the middle of its lifetime.  When the <em>Range</em> checkbox is enabled, particles will be assigned a color randomly linearly interpolated between this value and that of <em>Mid (Color)</em>.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Color Range)</em>, if enabled, defines the color of the particle as it approaches its terminus.  When the <em>Range</em> checkbox is enabled, particles will be assigned a color randomly linearly interpolated between this value and that of <em>End (Color)</em>.</p></li>
+                        <li><p><em>Mid Time (Color)</em> is the percentage of the particle's lifetime that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this particle system that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Color)</em> is the size of the plateau for <em>Mid</em> to be active, if <em>Smoothing</em> is set to a value with "Hold" in its name.</p></li>
+                        <li><p><em>Smoothing (Color & Alpha)</em> picks one the <a href="Appendix_ParticleKeyInterpolation.html">interpolation methods</a> between the start, mid, and end colors.  Alpha interpolates using this same method.</p></li>
+                        <li><p><em>Start (Alpha)</em> defines the opacity (from 0-255) of each particle when it first spawns.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Alpha)</em>, if enabled, defines the opacity (from 0-255) of each particle during the middle of its lifetime.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Alpha)</em>, if enabled, defines the opacity (from 0-255) of each particle as it approaches its terminus.</p></li>
+                        <li><p><em>Start (Alpha Range)</em> defines the opacity (from 0-255) of each particle when it first spawns.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Start (Alpha)</em>.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Alpha Range)</em>, if enabled, defines the opacity (from 0-255) of each particle during the middle of its lifetime.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Mid (Alpha)</em>.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Alpha Range)</em>, if enabled, defines the opacity (from 0-255) of each particle as it approaches its terminus.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>End (Alpha)</em>.</p></li>
+                        <li><p><em>Mid Time (Alpha)</em> is the percentage of the particle's lifetime that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this particle system that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Alpha)</em> is the size of the plateau for <em>Mid</em> to be active, if <em>Smoothing</em> is set to a value with "Hold" in its name.</p></li>
+                        <li><p><em>Start (Size)</em> defines the width of a particle when it first spawns.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Size)</em>, if enabled, defines the width of a particle during the middle of its lifetime.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Size)</em>, if enabled, defines the width of a particle as it approaches its terminus.</p></li>
+                        <li><p><em>Start (Size Range)</em> defines the width of a particle when it first spawns.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Start (Size)</em>.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Size Range)</em>, if enabled, defines the width of a particle during the middle of its lifetime.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Mid (Size)</em>.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Size Range)</em>, if enabled, defines the width of a particle as it approaches its terminus.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>End (Size)</em>.</p></li>
+                        <li><p><em>Mid Time (Size)</em> is the percentage of the particle's lifetime that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this particle system that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Size)</em> is the size of the plateau for <em>Mid</em> to be active, if <em>Smoothing (Size)</em> is set to a value with "Hold" in its name.</p></li>
+                        <li><p><em>Smoothing</em> picks one the <a href="Appendix_ParticleKeyInterpolation.html">interpolation methods</a> between the start, mid, and end sizes.</p></li>
+                        <li><p><em>Start (Rotation)</em> defines, in degrees, the absolute rotation of a particle about the axis of its normal, when it spawns.</p></li>
+                        <li><p><em>Mid (Rotation)</em>, if enabled, defines, in degrees, the middle rotation value of a particle.  If <em>Relative Mid End</em> is enabled, this value is an offset from the current rotation.  If <em>Relative Mid End</em> is disabled, this is a target absolute rotation that the particle will rotate to.  This value will be fully applied exactly at <em>Mid Time (Rotation)</em>.</p></li>
+                        <li><p><em>End (Rotation)</em>, if enabled, defines, in degrees, the final rotation value of a particle.  If <em>Relative Mid End</em> is enabled, this value is an offset from the current rotation.  If <em>Relative Mid End</em> is disabled, this is a target absolute rotation that the particle will rotate to.  This value will be fully applied as the particle reaches its terminus.</p></li>
+                        <li><p><em>Relative Mid End</em> toggles the values of <em>Mid (Rotation)</em>, <em>End (Rotation)</em>, <em>Mid (Rotation Range)</em>, and <em>End (Rotation Range)</em> between being relative offsets from the current rotation, and absolute rotations.</p></li>
+                        <li><p><em>Start (Rotation Range)</em> defines, in degrees, the absolute rotation of a particle about the axis of its normal, when it spawns.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Start (Rotation)</em>.</p></li>
+                        <li><p><em>Mid (Rotation Range)</em>, if enabled, defines, in degrees, the middle rotation value of a particle.  If <em>Relative Mid End</em> is enabled, this value is an offset from the current rotation.  If <em>Relative Mid End</em> is disabled, this is a target absolute rotation that the particle will rotate to.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>Mid (Rotation)</em>.  This value will be fully applied exactly at <em>Mid Time (Rotation)</em>.</p></li>
+                        <li><p><em>End (Rotation Range)</em>, if enabled, defines, in degrees, the final rotation value of a particle.  If <em>Relative Mid End</em> is enabled, this value is an offset from the current rotation.  If <em>Relative Mid End</em> is disabled, this is a target absolute rotation that the particle will rotate to.  When the <em>Range</em> checkbox is enabled, particles will be randomly assigned a value between this value and that of <em>End (Rotation)</em>.  This value will be fully applied as the particle reaches its terminus.</p></li>
+                        <li><p><em>Mid Time (Rotation)</em> is the percentage of each particle's lifetime that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this particle system that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Rotation)</em> is the size of the plateau for <em>Mid</em> to be active, if <em>Smoothing (Rotation)</em> is set to a value with "Hold" in its name.</p></li>
+                        <li><p><em>Smoothing</em> picks one the <a href="Appendix_ParticleKeyInterpolation.html">interpolation methods</a> between the start, mid, and end rotations.</p></li>
+                        <li><p><em>Rows (Flipbook)</em> defines the number of rows in a texture atlas used as an animation. This must be paired with the <em>Use Particle Flipbooks</em> property on an <em>SC2 Bitmap</em>, and allows for animation of individual particles.</p></li>
+                        <li><p><em>Columns (Flipbook)</em> defines the number of columns in a texture atlas used as an animation. This must be paired with the <em>Use Particle Flipbooks</em> property on an <em>SC2 Bitmap</em>, and allows for animation of individual particles.</p></li>
+                        <li><p><em>Start (Flipbook)</em> defines the first frame of a particle flipbook animation.  This is 1-based, and begins counting from the top left and proceeds right across a row before moving down a column to the next row.</p></li>
+                        <li><p><em>Mid (Flipbook)</em>, if enabled, defines the active frame of a particle flipbook animation at <em>Mid Time</em>.  This is 1-based, and begins counting from the top left and proceeds right across a row before moving down a column to the next row.  It is exactly this value at <em>Mid Time</em>.  Backwards traversal is allowed.</p></li>
+                        <li><p><em>End (Flipbook)</em>, if enabled, defines the active frame of a particle flipbook animation as it approaches its terminus.</p></li>
+                        <li><p><em>Mid Time (Flipbook)</em> is the percentage of the particle's lifetime that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this particle system that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Random Flipbook Start</em> sets the flipbook to start on an arbitrary frame.  The length of animation calculated from <em>Start (Flipbook)</em> to <em>End (Flipbook)</em> will still be used to figure out how many frames to step forward over the <em>Lifetime</em> of the particle.</p></li>
+                    </ol>
+                </div>
+                <h2>Misc</h2>
+                <div class="group">
+                    <p>Misc values are scattered in use-case.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Misc.png" title="SC2 Particle's Miscellaneous properties."/>
+                    <ol class="compact">
+                        <li><p><em>World Space</em> makes the particles simulate in world-space, rather than local space.  If simulating in world-space, only the emitter rotates with the parent model.  Every already emitted particle continues simulating in world space.  If simulating in local-space, the entire particle system will rotate when a model rotates.  Similarly, gravity is also applied along the local Z-axis.</p></li>
+                        <li><p><em>Accept Lighting</em> *unused* This is a stub from shared particle UI.</p></li>
+                        <li><p><em>Overlay Offset</em> adjusts the phase for the procedural overlay noise.  If the noise for two particle systems is too synchronized, adjusting this value can make them look more natural.</p></li>
+                        <li><p><em>'LOD Cut'</em> denotes which graphical setting level the particle system will no longer be displayed at.  If critical for gameplay, leaving this at <em>'None'</em> is prudent.  Otherwise, it is useful for performance scaling.</p></li>
+                        <li><p><em>'LOD Reduction'</em> denotes which graphical setting at which the particle system will start emitting fewer segments.  For each setting-level the user is at below this setting, 25% of the segments will be culled to preserve performance.</p></li>
+                        <li><p><em>Scale Time by Parent Model</em> determines whether or not the particle system should simulate faster or slower when the model is told to play an animation faster or slower.  If this checkbox is off, the particle system will simulate in real-time seconds instead of game seconds.</p></li>
+                        <li><p><em>Force CPU Simulation</em> makes the particle system use a CPU reference implementation.  Element systems such as particles are optimized to run on the GPU, but sometimes exhibit artifacts.  CPU Simulation should be the most accurate simulation possible.</p></li>
+                        <li><p><em>UV2 Rand Offset</em> will randomly offset <em>Explicit UV Channel 2</em> for any <em>SC2 Bitmap</em> used in a material assigned to this particle system on a per-particle basis.  By using a generic, tiling texture with this property, more visual variety can be achieved with minimal computational expense.</p></li>
+                    </ol>
+                </div>
+                <h2>Physics</h2>
+                <div class="group">
+                    <p>Every particle in a particle system simulates independently, and follow a basic physical model.  These properties control the inputs into that simulation, and are uniform across all elements in the particle at a given frame.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Physics.png" title="SC2 Particle's Physics values, which govern the simulation of each particle."/>
+                    <ol class="compact">
+                        <li><p><em>Mass</em> defines the mass for each element in force evaluation.  This is used for both drag and the influence each particle by <a href="Node_SC2Force.html">SC2Force</a> nodes.</p></li>
+                        <li><p><em>Range (Mass)</em> sets an upper bound for masses that particles can randomly start with.  This randomizes separately from any other field, and is not paired with <em>Size</em></p></li>
+                        <li><p><em>Gravity</em> is the acceleration along the Up-Vector for any given element.</p></li>
+                        <li><p><em>Multiply by map gravity</em> tells the particle system to factor in the gravity in the map for its calculations.  If it is important for a particle system to look exactly one way, leave this off.  If it is preferred that the particle system looks like it has mass and integrates into the environment, this should be on.</p></li>
+                        <li><p><em>Drag</em> slows down the particle's movement through air.  It is multiplied by the velocity to yield the force that slows down the particle.</p></li>
+                        <li><p><em>Wind Multiplier</em> tells the particle system to factor in map wind for simulation.  This allows particles to be pushed around ambiently.</p></li>
+                    </ol>
+                </div>
+                <h2>Noise</h2>
+                <div class="group">
+                    <p>Noise is a post-simulation change to the appearance of a particle system.  It is used to add seemingly random variation to particle system, while still allowing the user to operate on simple, editable, and understandable values for the rest of the system.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Noise.png" title="SC2Particle's noise properties, which control the randomization of the particle system to add visual interest."/>
+                    <ol class="compact">
+                        <li><p><em>Frequency</em> regulates the rate of change in the noise pattern.  Higher values will have more varied noise, while lower values will induce less change over the course of the system.</p></li>
+                        <li><p><em>Amplitude</em> scales the effect of noise on the system.  The higher the number, the further from an element's original point it can be pushed.  Note that noise is applied after tangents are generated, and therefore, high amplitudes can potentially create skewed lighting results.</p></li>
+                        <li><p><em>Cohesion</em> alters the speed at which the offset values travel through the noise field.  A value of 0 will have static noise, while higher values will animate the noise more and more quickly.</p></li>
+                        <li><p><em>Edge</em> mutes the noise closer to the emitter.  A value of 0, will have points being pushed immediately after being emitted, while a value of .5 will make points not receive the full amplitude of the noise until through the particle's lifetime.</p></li>
+                    </ol>
+                </div>
+                <h2>Collision</h2>
+                <div class="group">
+                    <p>The collision rollout regulates collision response for particles in the particle system.  While particles will perform a physical simulation no matter what, collision is an expensive operation that must be opted in to.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Collision.png" title="Each particle's collision properties.  These mask and regulate the collision response for each particle."/>
+                    <ol class="compact">
+                        <li><p><em>Terrain Collision</em> enables all collision calculations for particles.  By default, particles will collide only with the height map.  This is potentially costly in performance.</p></li>
+                        <li><p><em>Object Collision</em> upgrades particle collisions to react to rigid bodies such as debris.  This greatly increases the expense of the element system.</p></li>
+                        <li><p><em>Bounce %</em> defines with what percentage of the particle's velocity (normal to the colliding surface) it should preserve when recoiling from a surface when it collides.  100% is perfectly elastic.  0% makes it stick to the surface.</p></li>
+                        <li><p><em>Friction</em> defines with what percentage of the particle's velocity (tangent to the surface) it should retain when striking a surface.  0% is completely frictionless, as if sliding along ice.  100% will cause the element to stick.</p></li>
+                        <li><p><em>Die on Bounce</em> sets, when non-zero, the number of collisions an individual particle can sustain before being culled.</p></li>
+                        <li><p><em>Particles (Spawn On Collision)</em> selects an <em>SC2Particle</em> that contains the definition for particles to spawn when a particle from this particle system encounters a collision event.  Note that this ignores the child particle system's <em>Emission</em> properties, but respects <em>Max. Particles</em>.</p></li>
+                        <li><p><em>Chance % (Particles On Collision)</em> is the percentage of collisions that will cause a particle to die and spawn particles defined in <em>Particles (Spawn On Collision)</em> in its place.</p></li>
+                        <li><p><em>Min (Particles To Emit)</em> the minimum number of particles a Spawn On Collision event will generate to replace the particle lost in the collision.</p></li>
+                        <li><p><em>Max (Particles To Emit)</em> the maximum number of particles a Spawn On Collision event will generate to replace the particle lost in the collision.</p></li>
+                        <li><p><em>Ribbons (Spawn On Collision)</em> *unused* This field will never be populated.</p></li>
+                        <li><p><em>Chance % (Ribbons On Collision)</em> *unused* without <em>Ribbons (Spawn On Collision)</em> this field has no use.</p></li>
+                        <li><p><em>Splats (Spawn On Collision)</em> selects an <em>SC2Projector</em> that contains the definition for a splat to spawn when a particle from this particle system encounters a collision event.</p></li>
+                        <li><p><em>Chance % (Splats On Collision)</em>  is the percentage of collisions that will cause a particle to die and spawn particles defined in <em>Splats (Spawn On Collision)</em> in its place.</p></li>
+                        <li><p><em>Energy on Spawn %</em> multiplies spawned particle system's speed by this percentage.</p></li>
+                        <li><p><em>Independent %</em> *unused*.</p></li>
+                    </ol>
+                </div>
+                <h2>Forcefield Selection</h2>
+                <div class="group">
+                    <p>The Forcefield rollout is used to govern the interaction between <em>SC2Force</em> nodes and particles.  These alter the look of the particle system by pushing it around and making it react to the world around it.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_Forcefield.png" title="Each particle's reaction to various types of forces in the game world."/>
+                    <ol class="compact">
+                        <li><p><em>Local Channels</em> lists the mask for particle/force interaction.  Elements from this system will interact only with <em>SC2Force</em> nodes that have at least one of the same channels enabled.</p></li>
+                        <li><p><em>World Profile</em> is a dropdown contain common sets of World Channels, to quickly choose common profiles.  This is more useful from the perspective of the force, rather than the receiver.</p></li>
+                        <li><p><em>World Channels</em> behave like <em>Local Channels</em> but across multiple objects.  For example, smoke wafting in the wind would be enlisted in the <em>Wind</em> channel, and a nuclear explosion would use the <em>Wind</em> channel as well.  The result is that the explosion would push around the smoke.  If they were not both in wind, the smoke would remain stationary.  This is for both artistic reasons and performance.  Common usage of the channels can be seen in the <em>World Profile</em> drop down.</p></li>
+                    </ol>
+                </div>
+                <h2>Screen Space</h2>
+                <div class="group">
+                    <p>The Screen Space rollout enables a special feature of particles that allows them to accumulate in an off-screen buffer and be recomposited with special settings.  This is useful for simulating the look of goopy substances and fluids, but requires very specific settings.  If this feature is enabled, you will want to use a material that is set to <em>Mask</em> with <em>Add</em> as its blend mode.  Otherwise the offscreen buffer will not accumulate properly.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Particle_ScreenSpace.png" title="A special graphical interaction settings for particles"/>
+                    <ol class="compact">
+                        <li><p><em>Screen Space</em> enables using an offscreen buffer for this particle system.</p></li>
+                        <li><p><em>ScreenSpace Textured</em> enables the <em>Diffuse</em> map to be drawn over the particle system during the final composite.  This forces an extra fullscreen pass and because of the performance implications of that, should only be used in special situations.  An <em>SC2 Bitmap</em> must be used in the <em>Diffuse</em> slot.  <em>SC2 Color</em> texmaps will not work.</p></li>
+                        <li><p><em>Offset U</em> moves the texture coordinates of a screenspace texture horizontally.</p></li>
+                        <li><p><em>Tiling U</em> scales the UV coordinates horizontally for a screenspace texture.</p></li>
+                        <li><p><em>Angle U</em> rotates a screenspace texture along the U axis.  Note: the axis for this rotation is at .5 W in UVW space.</p></li>
+                        <li><p><em>Offset V</em> moves the texture coordinates of a screenspace texture vertically.</p></li>
+                        <li><p><em>Tiling V</em> scales the UV coordinates vertically for a screenspace texture.</p></li>
+                        <li><p><em>Angle V</em> rotates a screenspace texture along the V axis.  Note: the axis for this rotation is at .5 W in UVW space.</p></li>
+                        <li><p><em>Angle W</em> rotates a screenspace texture along the W axis.  Note: the axis for this rotation is at .5 U and .5 V in UVW space.</p></li>
+                        <li><p><em>Alpha Threshold</em> allows for a separate compositing threshold for a ScreenSpace Textured particle system.  This is hard-coded to 128 for performance reasons, when not specifically enabled.  All pixels with alpha values below this threshold will be ignored, and all values greater will be drawn to the framebuffer.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

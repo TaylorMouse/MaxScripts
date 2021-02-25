@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Volume - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Volume</h1>
+                <p><em>SC2 Volume</em> is used for approximating volumetric fog effects.  It is a relatively expensive material to draw and is used sparingly. This material is only available on Ultra Graphics settings and above.  To use this material, it is required that the mesh be a "watertight" closed volume or there will be problematic visual artifacts.</p>
+                <h2>Volume</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_Volume.png" title="SC2 Volume's only rollout.  It has properties for controlling the visual density and color."/>
+                    <ol class="compact">
+                        <li><p><em>Blend Mode</em> controls how the volume is drawn into the scene.</p>
+                            <ul>
+                                <li><p><em>Blend</em> uses a standard alpha blend to composite the volume onto the scene.</p>
+                                <li><p><em>Add</em> brightens the scene using the output color of the volume.</p>
+                                <li><p><em>Mod</em> multiplies the volumes color against the scene color, causing a darkening effect.</p>
+                            </ul>
+                        </li>
+                        <li><p><em>Falloff Type</em> controls the way the volume effect ramps in as the viewer looks through a thicker volume.</p>
+                            <ul>
+                                <li><p><em>Linear</em> changes the way the density of the effect behaves.  This setting makes distance directly result in visual thickness.  This is often a less physically correct, but easier to control effect.</p>
+                                <li><p><em>Exponential</em> makes the visual effect ramp in slower, and peak suddenly.  This will often yield the most natural, smooth fog effects, but less clearly defines a volume and may be more difficult to control.</p>
+                            </ul>
+                        </li>
+                        <li><p><em>Density</em> represents the amount of particulate or other volumetric effect.  Higher values yield stronger visual effects.</p></li>
+                        <li><p><em>Color</em> sets the color to apply to the volume.  Only RGB channels are considered.  This should be either an <em>SC2 Color</em> or an <em>SC2 Bitmap</em> using <em>Screen Space</em> UV mapping.  Other mapping types will yield undesirable effects.</p>
+                        <li><p><em>Alpha Threshold</em> clips the outer edges of the volume where <em>Density</em> would result in a blending amount less than this value.  This can be useful for making a volume effect feel more like a solid container.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

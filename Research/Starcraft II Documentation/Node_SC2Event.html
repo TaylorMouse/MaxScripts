@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: SC2Event - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: SC2Event</h1>
+                <p>The <em>SC2Event</em> Node can be found in the <em>Helpers</em> create panel.  It is a helper object that can hold an animated track for triggering game events from the model file.  There are multiple event types, and most are for debugging or deprecated by newer Starcraft II Cutscene Editor events but a few are still useful.
+                <h2>Event Marker Properties</h2>
+                <div class="group">
+                    <p>The SC2Event helper will create additional UI based on type chosen.  The events are sent to the Starcraft II game with a single line of text that is the summary of the event data.  </p>
+                    <img class="detail focus" src="resource/img/Node_SC2Event.png" title="SC2 Event Helper Rollout, responsible for triggering special game events from a model."/>
+                    <ol class="compact">
+                        <li><p><em>Change Type</em> allows picking from a list of event types.  Each event type in the list are described below.  The name of the node will change based on event type and the name should not be changed by other means.</p></li>
+                        <li><p><em>Use Hierarchy:</em> is unused.</p></li>
+                        <li><p><em>Attach To Model:</em> is unused.</p></li>
+                        <li><p><em>Event Keys</em> has three buttons to control and navigate event animation tracks.
+							<ul>
+                                <li><em> < </em>moves current time to the previous key.</li>
+								<li><em>Key</em> will set a key at the current time.  When a key is set, the button will turn red on that frame.</li>
+                                <li><em> > </em>moves current time to the next key.</li>       
+                            </ul>						
+						<li><p><em>Option String</em> is a text field to add specific data to the event.  </p></li>   
+                    </ol>
+				</div>
+				<h2>Event Types</h2>
+				<div class="group">
+                    <p>This pop-up lister allows picking the event type by name.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Event_Type.png" title="SC2 Event Select Name Pop-up, allows picking event type by name."/>
+                    <ol class="compact">
+                        <li><p><em>New Name</em> is the current selected event type.
+							<ul>
+                                <li><em>Evt_CameraCut</em> This is a special event type that causes the exporter to create keys for cameras and objects separated by 1 millisecond.  This is used for instances where you want things to move instantly and not blend over 33 milliseconds the normal key sample rate for SC2ArtTools.  This CameraCut Event is used to make cinematic camera cuts in the same model animation.  To make an extra key only for the camera, link this node to the camera.  To make an extra key for all objects in the model, leave this event unlinked in the scene.</li>
+								<li><em>Fade</em> is a way to trigger a full screen fade to and from black.  </li>
+                                <li><em>FootPrintLeft</em> and <em>FootPrintRight</em> are deprecated event type.  It is recommended to use Data events in StarCraft II with Foot Attachment points.</li>
+								<li><em>Light</em> event type can change the world light to a new lightset when this event key goes off.  Type in the Option String the name of the light set as it appears in Starcraft II Editor Data.</li>
+								<li><em>MoviePause</em> is a deprecated event type. Can pause a video applied to a model.  That same result can be animated on the material more easily.</li>
+								<li><em>MoviePlay</em> is a deprecated event type. Can resume play of a video applied to a model.  That same result can be animated on the material more easily.</li>
+								<li><em>MovieRestart</em> can restart a video to the first frame.</li>
+								<li><em>RTT</em> is a deprecated event type.  RTT is Render-To-Texture and this event and turns on a Render-To-Texture buffer.  The Option String is made up of the model camera name and the Render Target Map Channel from 1 to 7.</li>
+								<li><em>Simulate</em> triggers a physics on for all active SC2physics objects in the model.</li>
+								<li><em>Sound</em> event will play a sound when triggered.  Requires SC2Data sound ID in the Option String.</li>
+								<li><em>Spawn</em>  is a deprecated event type.  Spawn event will create an instance of a model when triggered with correctly setup Starcraft II Editor Data.</li>
+								<li><em>Splat</em>  is a deprecated event type. The Splat event can generate a data created SC2Projector with correctly setup Starcraft II Editor Data.</li>
+                            </ul>			
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

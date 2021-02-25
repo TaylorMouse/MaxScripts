@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Helper: Vertex Warp - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Helper: Vertex Warp</h1>
+                <p>The <em>SC2VertexWarp</em> Node, found in the <em>Standard Helpers</em> create panel, creates a node that will deform models that are within its bounds.  Only a <em>Unit</em> with the <em>Warpable</em> Behavior flag set will be able to deform, and therefore this is not accessible in the Cutscene Editor.  In StarCraft II, this is used exclusively for the Vortex spell on the Protoss Mothership.</p>
+                <h2>Vertex Warp</h2>
+                <div class="group">
+                    <p></p>
+                    <img class="detail focus" src="resource/img/Node_SC2VertexWarp.png" title="SC2 Vertex Warp's rollout.  This controls all properties associated with the Vertex Warp."/>
+                    <ol class="compact">
+                        <li><p><em>Type</em> defines the method for the vertex deformation.  Currently, only <em>Twirl</em> is supported.
+                            <ul>
+                                <li><em>Twirl</em> spins and pulls the vertices towards the center of the Vertex Warp.  The closer to the center, the more extreme the deformation.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Radius</em> for cylindrical types, sets the radius of the warp effect.  At distances greater than this value, meshes will not be affected.</p></li>
+                        <li><p><em>Strength</em> sets the intensity of the deformation.  For <em>Twirl</em> this value is approximately how many half-rotations should be made by the time the mesh reaches the center of the warp.</p></li>
+                    </ol>
+				</div>
+            </div>
+        </div>
+    </body>
+</html>

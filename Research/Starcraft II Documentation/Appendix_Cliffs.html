@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Cliff Models - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Cliff Models</h1>
+                <p>The Starcraft II engine uses a large set of 3d tiling models for each cliff type.  <em>CliffMade1.max</em> in the example directory is an example of a Man-made type cliff set with fixed UVs and <em>CliffNatural0Ex1.max</em> is the basis of all the natural cliffs in Starcraft II: Heart of the Swarm that use procedural UVs.
+				</p>
+                <img class="zoom" src="resource/img/Appendix_CliffMaxFile.png" title="Opening the CliffNatural0Ex1.max file"/>
+				<h2>Cliff Object Naming Requirements</h2>
+				<p>The 3DSMax file and all cliff objects inside it need to have three sections separated by <em>'_'</em> in their naming to export and work in the game correctly. </p>
+					<p><em>CliffNatural0Ex1_BBDC_00</em></p>
+					<p><em>CliffNatural0Ex1_CCRS_00</em></p>
+				<ul>
+					<li><p><em>Base Name</em> of the objects must be the same as the 3dsmax file.  In this example <em>'CliffNatural0Ex1'</em> is the base name.</li></p>
+					<li><p><em>Four Letter Identifiers</em> are used for each model that use the letters <em>'A'</em>, <em>'B'</em>, <em>'C'</em>, and <em>'D'</em> for cliff heights of the corners with <em>'A'</em> being the unplayable low terrain level and <em>'D'</em> being the highest terrain level.  Ramps use the letters Q, R, and S for denoting walkable cliff ramp corners from lowest to highest.  The four corners are counted counterclockwise from above starting at the bottom left corner.</li></p>
+					<li><p><em>Two Digit Variation Count</em> is at the very end on the object name.  This needs to start with <em>'_00'</em> and can go up from there.  Generally Starcraft II cliffs are made with four variations of common cliffs to disguise repetition.</li></p>
+				</ul>
+				<h2>Cliff Mesh Requirements</h2>
+				<p>Each Cliff Object's outer vertices are precisely positioned to tile and be welded to its neighboring Cliff objects and terrain.</p>
+				<img class="zoom" src="resource/img/Appendix_CliffObject.png" title="Vertices of a Cliff Object"/>
+				<ul>
+					<li><p><em>Outer Dimensions</em> of the cliff objects are 200x200 units in X and Y directions.  The <em>'B'</em> cliff height is always at Z height 0.  <em>'C'</em> and <em>'D'</em> are at 200 and 400 Z height respectively.  The non-playable low terrain is set in data but is most commonly -800 Z height. The Pivot Point of each cliff object must be in the middle of X and Y dimension and placed exactly at 0 height.</li></p>
+					<li><p><em>Pathing Requirements</em> of cliffs require the top one-half of a cliff to be mostly flat for units to walk on.  The Bottom portions are un-walkable.</li></p>
+					<li><p><em>Cliff Tiling</em> requires the profile of the cliff to cliff edges needs to have identical vertex positions in all pieces that match cliff heights.  Example:  All <em>B-C</em> and <em>C-B</em> Cliff sides must have identical profiles.  For sides that have the same letter code (example: <em>B-B</em>) the vertices must match the terrain cells with a single vertex in the middle of the 200 unit long edge.  In The Starcraft II engine these cliff pieces can be rotated as needed.  </li></p>
+					<li><p><em>Vertex Color</em> is required for using the Tri Planar Cliff texturing.  Black in the Vertex Color Alpha will cause the terrain material to show through to be used on the tops and bottoms of the cliff objects.</li></p>
+					<li><p><em>Space Cliff Edge</em> type tilesets like <em>CliffMade1.max</em> have the bottom <em>'A'</em> height terrain hidden and the cliff mesh just ends at the lowest level.  </li></p>
+                </ul>
+				<h2>Cliff Materials</h2>
+				<p>Cliff Objects themselves use a material from another model.  The same mesh can be used with a different material to save disk space.  The Man-made type cliffs will use as cliff material that is built to match the UVs of that cliff.  <em>CliffMade1.max</em> uses <em>BelShirCliff1_Material.max</em> and <em>CliffMade6.max</em> uses <em>BraxisAlphaCliff1_Material.max</em>.</p>
+				<img class="zoom" src="resource/img/Appendix_CliffMaterial.png" title="Cliff Material 3DSMax file"/>
+				<ul>
+					<li><p><em>Material Settings</em> for cliff materials for most cliffs must be <em>Mask Blend</em> mode with the <em>Alpha Mask</em> texture revealing the terrain in walkable areas or <em>Mask Opaque</em> with the <em>Alpha Mask</em> and <em>Alpha Test Threshold</em> above <em>0</em>.</em> </p></li>
+                </ul>
+				<h2>Tri Planar Cliff Materials</h2>
+				<p>Cliff Objects themselves use a material from another model.  The same mesh can be used with a different material to save disk space.  With Heart of the Swarm we added a new material type called Tri Planar Blending.  Load the max file <em>CliffNatural2_Material.max to see how the Tri Planar Material is set up.</em></p>
+				<img class="zoom" src="resource/img/Appendix_CliffMaterialTriplanar.png" title="Cliff Material 3DSMax file"/>
+				<ul>
+					<li><p>Tri Planar Cliff materials must use the <em>Mask</em> Material <em>Preset</em>, and the <em>Blend</em> Material <em>Blend Mode</em>.  <em>Use Vertex Color</em> and <em>Export Vertex RGBA</em> should both be on.  The <em>Mapping</em> setting in all relevant <em>SC2 Bitmap</em> slots should be set to <em>Tri Planar World Local Z</em>.  Extra documentation on this mapping setting is available in the <a href="Texmap_SC2Bitmap.html">SC2 Bitmap</a> documentation.</p></li>
+					<li><p><em>Atlas Textures</em> procedurally blend along each of the three major axes.  The First Diffuse Texture <em>CliffNatural2_diffuse_00.tga</em> draws in both the X and Y world axis directions with a blend based on normal direction.  The second texture in the Atlas is auto detected by name. In the example <em>CliffNatural2_diffuse_01.tga</em> blends from the top and bottom.  With proper textures, there should be no seams, and no need for UVs. Both Atlas textures must be the same dimensions.  The material layers for Normal Map and Specular Map use Atlas Textures the same way.</p></li>
+
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

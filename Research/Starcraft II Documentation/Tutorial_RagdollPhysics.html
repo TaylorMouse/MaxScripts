@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial: Ragdoll Physics - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial: Ragdoll Physics</h1>
+                <img src="resource/img/Progress_RagdollPhysics.png" title="An image showing the progress achieved during this tutorial: A WaterBat with ragdoll physics in the Cutscene Editor"/>
+                <p>In <em>StarCraft II</em>, the <em>'Domino Physics Engine'</em> supports jointed physics which can be used in anything from simple hinged doodads to ragdoll deaths in the game.  This tutorial introduces you to setting up jointed physics objects for a ragdoll death.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_RagdollTutorial01_Start.max.max'</em>.  This contains a fully set up Waterbat with a death animation in it. </p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for the Waterbat_RagdollTutorial01_Start.max."/>
+                    </li>
+                    <li>
+                        <p>Before we get on with creating the ragdoll.  Let's set up the scene to make it easier to work with.  Since we are going to be dealing mostly with the bones, let's change to <em>Wireframe</em> mode so we can see them.  Further, make sure the <em>current time</em> is at <em>frame zero</em> as well.  </p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0001_SceneState.png" title="Turn On Wireframe mode to see the bones and make sure current time is at Zero frame."/>
+                    </li>
+                </ol>
+                <h2>Main Body Joint</h2>
+                <ol>
+                    <li value="3">
+                        <p> The first joint we are going to create is for the main body.  This consists of the <em>'Root'</em> which is the top bone in the hierarchy; and <em>'BoneBack02'</em> which is the upper Body.  Select those two bones and add a <em>Cone Joint</em> between them by invoking <em>'SC2ArtTools &gt; Physics &gt; Add Cone Joint To Selected'</em>.  The <em>Behavior Editor</em> should pop up automatically and a new <em>'Physics Joint'</em> behavior should now be listed.  <em>SC2Physics</em> helpers have also been auto-created for those two bones thus turning them into physics bodies.</p>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0002_SelectMainBodyBones.png" title="Select 'Root' and 'BoneBack02'."/><br/>						
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0003_AddMainBodyJoint.png" title="Add a new joint between 'Root' and 'BoneBack02' by invoking 'SC2ArtTools &gt; Physics &gt; Add Cone Joint To Selected'"/><br/>
+						<img class="zoom" src="resource/img/Ragdoll_BehaviorEditor_0000_PhysicsJointBehaviorAdded.png" title="A 'Physics Joint' behavior has been added in the 'Behavior Editor'."/><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0004_AutoCreatedSC2Physics.png" title="Two 'SC2Physics' helpers have been auto-created."/>
+                    </li>
+					<li>
+                        <p>Let's fine-tune the auto-created <em>SC2Physics</em> helpers so that they better represent the body mesh.  Select <em>'SC2Physics_BoneBack'</em>, change the <em>Radius</em> to <em>25</em>.  For <em>'SC2Physics_Root'</em>, since it doesn't play much of a part in collision for this case, select it and change its <em>Radius</em> smaller to <em>4</em> and move it down slightly and out of the way as shown. </p>						
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0005_AdjustBoneBackSC2Physics.png" title="Adjust the SC2Physics helper for 'BoneBack001'"/><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0006_AdjustRootSC2Physics.png" title="Adjust the SC2Physics helper for 'Root'" />
+                    </li>					
+                    <li>
+                        <p>Now we are going to adjust the actual joint.  In the <em>Behavior Editor</em>, press the <em>'+'</em> button to expand and show the associated bones.  Zoom-in a bit in the viewport, and you should see a visual representation of the joint as cones.  It may seem like only one cone at the moment, but there are actually two- one for each bone.  Select both cones by <em>Ctrl-Clicking</em> their corresponding items in the <em>Behavior Editor</em>.</p>
+						<img class="zoom" src="resource/img/Ragdoll_BehaviorEditor_0001_ExpandJointItem.png" title="In the 'Behavior Editor', expand the new 'Physics Joint' behavior to show the bone members." /><br/>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0007_SelectJointDisplayHelpers.png" title="Select the joint presented as cone display objects by 'Ctrl-Clicking' their corresponding items in the 'Behavior Editor'" />
+                    </li>
+					<li>
+                        <p>The tips of the cones represents the joint's pivot point and the tool has auto-aligned it at the child bone which is wrong in our case.  Instead, re-align it to the parent bone by clicking <em>Align Pos To Bone 1</em> and <em>Align Rot To Bone 1</em>.  Next, point the large middle arrow on the base of the cone which is the forward axis of the joint toward the front of the Waterbat.  Do this clicking <em>Rotate Forward Axis 90</em> 3 times.   </p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0008_AlignToBone1.png" title="Align the position and rotation of the joint to the 'Root' bone." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0009_AlignForward.png" title="Align the forward vector of the joint toward the front of the Waterbat and click the 'Rotate Forward Axis 90' button three times." />
+                    </li>
+					<li>
+                        <p>We also need this joint to have a lesser range of motion.  Change the <em>Cone Angle</em> to <em>20</em>.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0010_ChangeConeAngle.png" title="Change 'Cone Angle' to 20." />
+                    </li>
+					<li>
+                        <p>The Main Body Joint is done.  Before moving on, use <em>'SC2ArtTools &gt; Display &gt; Collapse SC2 Helpers'</em> to de-clutter the viewport.</p>
+                    </li>
+					
+                </ol>
+                <h2>Arms Joints</h2>
+                <ol>
+                    <li value="9">
+                        <p class="caption">For the arm joints, let's take a different approach and make all the related joints first before making necessary adjustments.  In the viewport, select <em>'BoneBack02'</em>, <em>'BoneArmR'</em>, <em>'BoneForeArmR'</em>, <em>'BoneArmL'</em>, and <em>'BoneForeArmL'</em>.  Use <em>'SC2ArtTools &gt; Physics &gt; Add Cone Joint To Selected'</em> to make all the joints.  There should now be 4 new <em>SC2Physics</em> helpers, one for each arm bone.  Since a <em>SC2Physics</em> helpers was already created for <em>'BoneBack02'</em>, no new one was made.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0011_SelectArmBones.png" title="Select 'BoneBack02', 'BoneArmR', 'BoneForeArmR', 'BoneArmL', and 'BoneForeArmL'." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0012_AddConeJointsToArms.png" title="'Add Cone Joint To Selected'." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0013_SC2PhysicsArms.png" title="Four new SC2Physics helpers are auto-created for the arm bones." />
+                    </li>
+					<li>
+                        <p>Start adjusting the <em>SC2Physics</em> helpers to fit the geometry better.  Select <em>'SC2Physics_BoneArmR'</em>, change its <em>Radius</em> to <em>18</em> and move it higher to cover part of the right shoulder pad.  For <em>SC2Physics_BoneForeArmR</em>, change the <em>Shape type</em> to <em>Capsule</em> with <em>Radius</em> of <em>13</em> and <em>Height</em> of <em>40</em>.  Rotate it and move it down so it matches as shown.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0014_AdjustRightArmSC2Physics1.png" title="Adjust SC2Physics helpers for the right upper arm." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0015_AdjustRightArmSC2Physics2.png" title="Adjust SC2Physics helpers for the right lower arm." />
+                    </li>
+					<li>
+                        <p>Apply the same adjustments for the <em>SC2Physics</em> helpers on the left arm.</p>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0016_AdjustLeftArmSC2Physics.png" title="Adjust SC2Physics helper adjustments for the left arm." />
+                    </li>
+					<li>
+                        <p>Before going to joint adjustment, use <em>'SC2ArtTools &gt; Display &gt; Collapse SC2 Helpers'</em> to clean up the viewport again.</p>
+                    </li>
+					<li>
+                        <p>Go back to the <em>Behavior Editor</em> and select both cones for the <em>'BoneArmR_J_BoneBack02'</em> joint.  In <em>local</em> coordinate system, and <em>Pivot Point</em> center, rotate the cones until it's about parallel to <em>BoneShoulderR</em> with the forward arrow toward the front of the Waterbat</p>.
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0017_AdjustRightArmJoint1.png" title="Adjust right shoulder joint('BoneArmR_J_BoneBack02') as shown" />
+                    </li>
+					<li>
+                        <p>For <em>'BoneForeArmR_J_BoneArmR'</em> which is the elbow joint, it should work more like a hinge.  To do that, change its <em>Joint Type</em> to <em>'Revolute'</em> instead of Cone.  The joint shape in the viewport changes to a half Disc shape.</p>.
+                        <img class="zoom" src="resource/img/Ragdoll_BehaviorEditor_0002_RevoluteJoint.png" title="Change the right elbow joint('BoneForeArmR_J_BoneArmR') to 'Revolute' joint type." />
+                    </li>
+					<li>
+                        <p>Select and rotate the discs along the z axis so that the elbow rotates around the correct axis as shown</p>.
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0018_AdjustRightArmJoint2.png" title="Adjust 'Revolute' joint plane." />
+                    </li>
+					<li>
+                        <p>The forearm of the Waterbat is pretty big and we need to change the limits to keep it from going through the upper arm and shoulder.  Instead of adjusting the Limit spinners, we can adjust the limits directly in the viewport via <em>Manipulate</em> mode.  Turn on <em>Select and Manipulate</em>, then drag the triangle near the top of the screen on the disc until <em>twistMax</em> is about <em>80</em>.  Turn off <em>Select and Manipulate</em></p>.
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0019_AdjustTwist.png" title="Adjust 'twistMax' to 80 with 'Manipulate On'" />
+                    </li>
+					<li>
+                        <p>Repeat the joint adjustments for the left arm.</p>.
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0020_AdjustLeftArmJoint.png" title="Repeat the joint adjustments for the left arm." />
+                    </li>
+                </ol>
+				<h2>Leg Joints</h2>
+                <ol>
+                    <li value="18">
+                        <p class="caption">For the leg joints, select <em>'Root'</em>, <em>'BoneLegR'</em>, <em>'BoneCalfR'</em>, <em>'BoneLegL'</em>, and <em>'BoneCalfL'</em> and add joints for them with <em>'SC2ArtTools &gt; Physics &gt; Add Cone Joint To Selected'</em>.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0021_SelectLegBones.png" title="Select 'Root', 'BoneLegR', 'BoneCalfR', 'BoneLegL', and 'BoneCalfL'." />
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0022_LegJoints.png" title="'Add Cone Joint To Selected'." />
+                    </li>
+					<li>
+                        <p>Adjust the <em>SC2Physics</em> helpers to approximate as shown.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0023_AdjustLegsSC2Physics.png" title="Adjust the SC2Physics helpers for the legs as shown." />
+                    </li>
+					<li>
+                        <p>Adjust the alignment for <em>'BoneLegR_J_Root'</em> joint as shown.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0024_AdjustRightLegJoint1.png" title="Adjust the right leg joint('BoneLegR_J_Root') as shown." />
+                    </li>
+					<li>
+                        <p>Change the <em>'BoneCalfL_J_BoneLegR'</em> joint to <em>Revolute</em> and select <em>Enable Limits</em>.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0025_AdjustRightLegJoint2.png" title="Change the right knee joint('BoneCalfL_J_BoneLegR') to 'Revolute' joint type and adjust 'twistMin' and 'twistMax' to limit rotation and make the joint feel like a knee." /> 
+                    </li>					
+					<li>
+                        <p>Apply the same <em>SC2Physics</em> joint adjustments left leg.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0026_AdjustLeftLegJoint1.png" title="Make the same joint adjustments to left leg." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0027_AdjustLeftLegJoint2.png" title="Make the same joint adjustments to left knee." />
+                    </li>					
+                </ol>
+				<h2>Add a Simulation Event</h2>                
+					<p>As explained in the <a href="Tutorial_BasicPhysics.html">Basic Physics Tutorial</a>, by default, physics objects are created in an <em>Active Kinematic</em> physics state which means they won't simulate until they are turned on.  For this tutorial, instead of doing that through the <em>'SC2Physics'</em> helpers like we did in the Basic Physics Tutorial, we are going to use a Simulation Event.</p>
+				<ol>	
+                    <li value="23">
+                        <p class="caption">Go to the <em>'Create'</em> panel, then select <em>'SC2Event'</em> and click somewhere in the screen to create a <em>'SC2Event'</em>.  Switch to the <em>'Modify'</em> panel, click the <em>'Change Type'</em> and change the type to <em>'Evt_Simulate'</em>.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0028_AddSC2EventHelper.png" title="Create 'SC2Event' helper." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Viewport_0029_EventSimulate.png" title="Change 'SC2Event' helper to 'Evt_Simulate' type." />
+					</li>
+					<li>
+						<p class="caption">Now we are going to set a key on the <em>SC2Event</em> to turn all the physics objects in the scene on at the same time.  Change the current time to <em>101</em> which is the second frame of the <em>Death</em> animation.  Toggle the <em>'Key'</em> button which should turn red indicating that a key is now present at frame 101.</p>
+                        <img class="zoom" src="resource/img/Ragdoll_Viewport_0030_EventSimulateKey.png" title="Add a 'Evt_Simulate' key at frame 101 to turn all the physics objects in the scene on at the same time." />
+					</li>	
+                </ol>
+				
+				<h2>Preview to See The Result</h2>
+                <ol>
+                    <li value="25">
+						<p>Go to <em>'SC2ArtTools &gt; Export &gt; Preview'</em> and launch the <em>Cutscene Editor</em> to preview the model.  In the <em>Cutscene Editor</em>, make sure <em>'Show Ground'</em> is on.  The Waterbat should collapse onto the ground as soon as the <em>'Death'</em> animation plays.</p>
+						<img class="zoom" src="resource/img/Ragdoll_Previewer_0000_Preview1.png" title="Preview the file and the Waterbat should fall down onto the ground in the Cutscene Editor as soon as the 'Death' animation plays." />
+                    </li>
+					<li>
+						<p>It is also a good idea to test the ragdoll impacting the ground from different angles.  We can do that in the <em>Cutscene Editor</em> by cloning the Waterbat using the <em>Copy</em> and <em>Paste</em> functionality.  Stop the animation playback then select the <em>'Waterbat_RagdollTutorial01_Start'</em> and the <em>'Animation Layer'</em> layer under it.  Use <em>'Edit &gt; Copy'</em> and then <em>'Edit &gt; Paste'</em> a couple of times to create copies of the Waterbat.</p>
+						<img class="zoom" src="resource/img/Ragdoll_Previewer_0001_Clone.png" title="In the Cutscene Editor, select the 'Waterbat_RagdollTutorial01_Start' and the 'Animation Layer' layer under it, then use 'Copy' and 'Paste' to create more copies of the Waterbat." />
+                    </li>
+					<li>
+						<p><em>'Translate'</em> the Waterbat copies up into the air a bit so they have some room to fall and <em>'Rotate'</em> them in varying degrees.  Press <em> Play</em> to start the animation again, and each Waterbat should fall from the air and end up in different poses on the ground.</p>
+						<img class="zoom" src="resource/img/Ragdoll_Previewer_0002_RotatePos.png" title="Translate the Waterbat up a bit and rotate them in varying degree." /><br/>
+						<img class="zoom" src="resource/img/Ragdoll_Previewer_0003_Landed.png" title="Each Waterbat end up in a different pose upon landing." />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

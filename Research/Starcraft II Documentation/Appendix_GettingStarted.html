@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Getting Started - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Getting Started</h1>
+                <p>Thank you for downloading the StarCraft II Art Tools! The StarCraft II Art Tools are the same tools which are used in-house by Blizzard Entertainment to develop StarCraft II: Wings of Liberty and StarCraft II: Heart of the Swarm. We are excited about putting these tools into the hands of mod makers for StarCraft II. These tools augment the power and flexibility of the StarCraft II Editor. We look forward to seeing all the amazing and epic experiences that players can create with these extra capabilities. Good Luck and Have Fun!</p>
+                
+                <h2>Setup</h2>
+                <ul>
+                    <li>
+                        <p>The StarCraft II Art Tools are only compatible with Autodesk 3ds Max 2011. If the installer was used, the tools should already be available inside 3ds Max 2011. You can verify that the tools were properly installed by looking for the <em>SC2ArtTools</em> menu on the main menu bar of 3ds Max 2011, or by verifying that <em>Star2Exporter.dlt</em> is loaded in <em>Customize &gt; Plug-in Manager</em>.</p>
+                    </li>
+					<li>
+						<p>To complete the installation, run 3ds Max and set up the path to your StarCraft II executable.  This will allow the Preview function to launch the StarCraft II Editor directly.  To do this, select the menu item <em>SC2ArtTools &gt; Export &gt; Set BuildPath</em>.  A popup will prompt you to put the path to were you have installed StarCraft II</em>.</p>
+						<ul>
+							<li>An example path might look like: <em>C:\Program Files (x86)\StarCraft II\</em></li>
+						</ul>
+					</li>
+                    <li>
+                        <p>The StarCraft II Art Tools have a few helper plug-ins including <em>Star2OggPlugin.bmi</em> and <em>NullHelper.dlo</em>.</p>
+                    </li>
+                    <li>
+                        <p>If the installer could not find 3ds Max 2011 at the time of installation, then you can use the following steps to manually finish the installation.</p>
+						<ul>
+							<li><p>Copy <em>d3dx9_42.dll</em> into the 3ds Max installation folder.</p></li>
+							<li><p>Copy all contents from the StarCraft II Art Tools <em>plugins</em> folder into the 3ds Max <em>plugins</em> folder.</p></li>
+							<li><p>Copy all contents from the StarCraft II Art Tools <em>ui</em> folder into the 3ds Max <em>ui</em> folder.</p></li>
+							<li><p>Verify that the 3ds Max subfolder <em>plugins</em> appears as a valid plug-in path in <em>Customize &gt; Plug-in Manager</em>.  If the path is not listed, it can be added in <em>Customize &gt; Configure System paths &gt; 3rd Party Plug-Ins (Tab)</em>.</p></li>
+						</ul>
+                    </li>
+                </ul>
+                
+                <h2>Sample Files</h2>
+                <ul>
+                    <li>
+                        <p>The Tutorials section is provided to give a basic walk-through of the StarCraft II Art Tools.  It is a good place to start and introduces, in order, the basic concepts of the StarCraft II art process.  We have included example files, which are located in the StarCraft II Art Tools <em>Examples</em> subfolder, in the target directory chosen at installation.</p>
+                    </li>
+					<li><p>Example files are only for use with StarCraft II as per the license agreement in the Installer.  The license can be reviewed in the file <em>LICENSE_SC2ArtTools.rtf</em> within the StarCraft II Art Tools installation folder.
+					</li>
+					<li>
+                        <p>These example files have been added to help you understand the basic process for getting art assets into the StarCraft II engine.  Directly editing files in the <em>Examples</em> folder is not recommended, as these files will be removed when the StarCraft II Art Tools are Uninstalled.</p>
+                    </li>
+
+					<li>
+                        <p>These example files use a shared texture directory.  For the textures to show up correctly, it is recommended that you add the <em>\Examples\SharedTextures</em> subfolder from your install directory to 3ds Max's list of resource paths at <em>Customize &gt; Configure User Paths... &gt; External Files (Tab)</em>.</p>
+						<img class="zoom" src="resource/img/Appendix_UserPaths.png" title="It is important to use the External Files tab of Configure User Paths."/>
+                    </li>
+                </ul>
+				
+				<h2>Community</h2>
+				<ul>
+					<li><p>The <a href="http://us.battle.net/sc2/en/forum/8126899/">Official Art Tools and Cutscenes Forum</a> exists for sharing experiences, knowledge, and feedback.  Please join us and your fellow creators there!</p>
+					</li>
+				</ul>
+				
+				<h2>Known Issues</h2>
+				<ul>
+					<li><p>There are some <a href="Appendix_KnownIssues.html">Known Issues</a> in the StarCraft II Art Tools.  It is recommended that users be somewhat familiar with these issues, just in case you unknowingly encounter one of them which might negatively impact your experience.</p>
+					</li>
+				</ul>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1497,7 +1497,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 clearlistener()
 --i=1
 --file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulips_1.mdx"
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_box_" + ( i as string ) +".mdx"
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_orc_" + ( i as string ) +".mdx"
 i +=1
 WC3_DEBUG = true
 GriffonStudios_Warcraft_3_Reforged_Exporter.Export file

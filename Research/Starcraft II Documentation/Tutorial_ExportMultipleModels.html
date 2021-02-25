@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial 04: Multiple Model Export - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial 04: Multiple Model Export</h1>
+                <img src="resource/img/Progress_Advanced0004_MultiExport.png" title="An image showing the progress achieved during this tutorial: 3ds Max to Cutscene Editor."/>
+                <p>The <em>StarcraftArtTools</em> can export multiple models from a single 3DSMax file.  In this tutorial we will take a simplified Mar Sara Tree Doodad and set it up to export into three separate models and view them in the exporter.  All models that come from the same file will have the same base name, and single underscore and two digit variation count on the end.</em></p>
+				</p>
+					<p><em>SC2ArtToolsTutorialTree.max</em></p>
+					<p><em>SC2ArtToolsTutorialTree_00.m3</em></p>
+					<p><em>SC2ArtToolsTutorialTree_01.m3</em></p>
+				<ul>
+				
+				<h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'SC2ArtToolsTutorialTree_Start.max'</em>.  If you look you will notice it contains three trees.  Two of the trees are made of multiple bones and meshes while one is a single object already.</p>
+						<img class="zoom" src="resource/img/MultipleModelExport_0001_Start.png" title="Open the Tree Tutorial Start"/>
+                    </li>
+                </ol>
+                <h2>Group and name the Trees</h2>
+                <ol>
+                    <li value="2">
+                        <p>The complex trees will need to be grouped and named for the SC2ArtTools Exporter to recognize them as a separate model.  Select all of the components of the first tree and use <em>Group &gt; Group </em> and type the name <em>'SC2ArtToolsTutorialTree_00'</em>.  Do the same thing for the second tree named <em>'SC2ArtToolsTutorialTree_01'</em>.  </p>
+						<img class="zoom" src="resource/img/MultipleModelExport_0002_Group00.png" title="Group and Rename Tree 00"/>
+						<img class="zoom" src="resource/img/MultipleModelExport_0003_Group01.png" title="Group and Rename Tree 01"/>
+                    </li>
+                </ol>
+				<h2>Name the Third Tree</h2>
+                <ol>
+                    <li value="3">
+                        <p>The third tree is a single object.  We can just rename the object to <em>'SC2ArtToolsTutorialTree_02'</em> without having to group it.</p>
+                        <img class="zoom" src="resource/img/MultipleModelExport_0004_Rename02.png" title="rename Tree 02"/>
+                    </li>
+                </ol>
+				<h2>Edit Pivot Points of the Groups</h2>
+                <ol>
+                    <li value="4">
+                        <p>We need to edit the pivot points of the two groups to reflect a new local world pivot of the model.  Select a group and edit the pivot point by lowering the z of the pivot to 0 in world coordinates.  This will become the m3 model's new pivot location on export.  Do the same for the second group.  Take this time to save the 3DSMax file to the correct name <em>'SC2ArtToolsTutorialTree.max'</em>.</p>
+                        <img class="zoom" src="resource/img/MultipleModelExport_0005_MovePivots.png" title="Positioning the Pivot Points"/>
+                    </li>
+                </ol>
+				<h2>Set the 3dSMax File to export As Objects</h2>
+                <ol>
+                    <li value="5">
+                        <p>On the <em>'SC2ArtTools &gt; Export &gt; Export Floater'</em> set the <em>Source</em> to <em>Objects</em>.  This setting will save with the 3DSMax file.  The exporter will now export every separate object as its own model.  On preview it ignores the naming limitations and will preview every object it can export.
+						</p>
+                        <img class="zoom" src="resource/img/MultipleModelExport_0006_SetObjects.png" title="Set Export Floater to Objects"/>
+                    </li>
+                </ol>
+				<h2>Preview Add the Animation</h2>
+                <ol>
+                    <li value="6">
+                         <p>Preview the file.  You will notice three tree models show up in the Cutscene Editor, all named correctly, each with own animations.  You are now ready to commit them as needed.</p>
+                        <img class="zoom" src="resource/img/MultipleModelExport_0007_Preview.png" title="Preview as Multiple Models"/>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

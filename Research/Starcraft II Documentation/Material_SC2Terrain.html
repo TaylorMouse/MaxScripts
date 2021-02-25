@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Terrain - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Terrain</h1>
+                <p>The <em>SC2 Terrain Material</em> allows a custom model to use the colors of the terrain painted directly below it on the map in which it is placed.  Terrain textures can be cached as a performance optimization, therefore it is inadvisable to use this material on any model that moves.  In StarCraft II this is often used to integrate doodads with the terrain, such as the little terrain chunks on the sides of the mineral resource models, or to make a large custom model appear as if it part of the ground as it done with most <em>Terrain Objects</em>.  Meshes that use <em>SC2 Terrain</em> should not be over 800 3ds Max units, or 8 in-game units in size, otherwise there may be visual errors; <em>Subdivide Meshes</em> in the <em>Export Floater</em> can be used to correct this in extreme cases.  <em>SC2 Terrain</em> implicitly accepts Creep.</p>
+                <h2>Terrain Material</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_Terrain.png" title="SC2 Terrain's only rollout.  It provides a mask texture used to control the material opacity."/>
+                    <ol class="compact">
+                        <li><p><em>Mask Texture</em> restricts the area where the terrain material will show.  This mask requires a single channel: either as the alpha channel of the provided <em>SC2 Bitmap</em>; a single R, G, or B channel specified in the <em>Color Operations</em> rollout in the provided <em>SC2 Bitmap</em>; or the alpha value of an <em>SC2 Color</em>.  Values closer to white will make the terrain show more.  Using a mask will force the material to draw as Alpha Blend.  It is often useful to use a mask when <em>SC2 Terrain</em> is used as layer in an <em>SC2 Composite Material</em>.  If no mask is specified, <em>SC2 Terrain</em> shows at full strength.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

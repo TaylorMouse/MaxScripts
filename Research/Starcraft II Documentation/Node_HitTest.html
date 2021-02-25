@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Hit Test Volumes- StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Hit Test Volume</h1>
+                <p>Hit Test Volumes are used for managing selection in StarCraft II.  There are two types of Hit Test Volumes, <em>HitTestTight</em>, mostly for drag selection, and <em>HitTestFuzzy</em>, mostly for click selection.</p>
+                
+                <h2 id="HitTestTight">HitTestTight</h2>
+				<p>HitTestTight nodes define the center mass of a model, and are used extensively for in-game drag selection.  These are not a special node type created by the SC2ArtTools.  Rather, they are standard 3ds Max primitives that the exporter handles specially based on their names.</p>
+				<img class="detail" src="resource/img/Node_HitTestTight.png" title="The one itTestTight should surround whatever feels like the main part of the model."/>
+                <ul>
+					<li>
+                        <p>There can be only one per model.  It is marked by the node name containing <em>HitTestTight</em>.  If more than one valid node is found, one will be selected arbitrarily.</p>
+                    </li>
+					<li>
+						<p>Should represent the major mass of the model.  Ignore small parts that stick out, like horns, tails, etc.</p>
+					</li>
+                </ul>
+				
+                <h2 id="HitTestFuzzy">HitTestFuzzy</h2>
+				<p>HitTestFuzzy nodes are used as an early pass for click selection.  There should be one or more per model, and the whole model should be completely enclosed by HitTestFuzzy geometry.  Larger models should use more HitTestFuzzys to better match the model's actual form.  However, only one will suffice for small models.  HitTestFuzzy nodes are not a special node type created by the SC2ArtTools.  Rather, they are standard 3ds Max primitives that the exporter handles specially based on their names.</p>
+				<img class="detail" src="resource/img/Node_HitTestFuzzy.png" title="HitTestFuzzy nodes should surround all parts of a model, and only needs to be as accurate as is appropriate for the size of the model on screen."/>
+                <ul>
+					<li>
+                        <p>There can be as many as appropriate per model.  It is marked by the name of the node containing <em>HitTestFuzzy</em>.</p>
+                    </li>
+					<li>
+						<p>Should completely cover the model.  If any polygons extend outside of Hit Test Fuzzy volumes, they may not be selectable in game.</p>
+					</li>
+                </ul>
+				
+				<h2 id="HitTestCommon">Common Properties</h2>
+				<p>HitTestTight and HitTestFuzzy share many common constraints and properties.</p>
+				<ul>
+                    <li>
+                        <p>Must be a <em>Standard</em> primitive: <em>Sphere</em>, <em>Box</em>, or <em>Capsule</em>.</p>
+                    </li>
+                    <li>
+                        <p>Do not collapse the primitive shapes or convert to any other shape.  The exporter reads their radius, length, width, and height fields.</p>
+                    </li>
+                    <li>
+                        <p>Spheres are best for performance speed.  Prefer spheres if possible.  Capsules are next best, and boxes are the worst.</p>
+                    </li>
+					<li>
+                        <p>Parts of shapes below ground are ignored.  You may take advantage of this to create half domes, half capsules, and other shapes.</p>
+                    </li>
+                    <li>
+                        <p>Shapes can be rescaled, but only along <strong>local axes</strong>.  Shapes like cylinders can be achieved by increasing the height of a capsule, then scaling it down along a single axis.</p>
+                    </li>
+					<li>
+						<p>Negative Scale is not allowed.</p>
+					</li>
+					<li>
+                        <p>Shapes can, and should, be linked to to animated parts of the model where applicable.</p>
+                    </li>
+					<li>
+						<p>Translate, rotate, and scale can be animated to match a model's animation.</p>
+					</li>
+                    <li>
+                        <p>Invisible shapes are turned off.  Visibility can be animated.</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

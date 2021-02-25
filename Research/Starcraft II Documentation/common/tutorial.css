@@ -1,0 +1,190 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+body {
+    padding: 3.5em 7.5% 6em 1em;
+    font-family: Calibri, sans-serif;
+}
+
+
+.wrap {
+    
+    min-width: 600px;
+}
+
+.content {
+    margin-left: 10px;
+    color: #333;
+    line-height: 1.3em;
+    max-width: 875px;
+}
+
+.content>p, .content>.group>p {
+    margin: .5em 1.5em 1.5em 3em;
+    text-indent: 0em;
+}
+
+.content img {
+    margin: 0 auto .35em auto;
+    text-align: center;
+    vertical-align:text-top;
+}
+
+
+.content>img {
+    display: block;
+    margin-left: 3em;
+}
+
+.content img.detail {
+    margin-top: .8em;
+    margin-left: 20px;
+    float: right;
+}
+
+.content p>img {
+    margin-left: 10px;
+    float: right;
+    display: inline-block;
+}
+
+.content ol {
+    margin: .25em 0em .75em 1em;
+    color: #DDE;
+    font-size: 2em;
+}
+
+.content ol li {
+    border-left: 3px solid #DDE;
+    margin-top: .5em;
+    margin-bottom: 1em;
+    padding-left: .35em;
+    /*min-width: 800px;*/
+}
+
+.content ol>li>* {
+    font-size: .5em;
+    color: #333;
+}
+
+.content ul {
+    margin: .25em 0em .75em 2em;
+    list-style-type: none;
+    max-width: 800px;
+}
+
+.content ul li {
+    border-left: 3px solid #DDE;
+    margin-top: .5em;
+    margin-bottom:.5em;
+    padding-left: .35em;
+    width: 98%;
+ }
+
+
+.content li p {
+    margin-bottom: .5em;
+}
+
+.content li img {
+    margin-bottom: .5em;
+}
+
+.content li p.caption {
+    width: 725px;
+}
+
+.content em {
+    font-weight: 900;
+    color: #70708A;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.content strong {
+    font-weight: 1600;
+    color: #333;
+    font-size: 1.2em;
+    white-space: nowrap;
+	text-decoraction: underling;
+}
+
+.content ol.compact {
+    margin: .25em 0em .75em 1.5em;
+    color: #777;
+    font-size: 1.6em;
+}
+
+.content ol.compact li {
+    border-left: 3px solid #DDE;
+    margin-top: .5em;
+    margin-bottom: .25em;
+    padding-left: .35em;
+    padding-right: .35em;
+    overflow:visible;
+}
+
+.content ol.compact>li>* {
+    font-size: .625em;
+    color: #333;
+}
+
+h1,h2,h3,h4 {
+    clear: right;
+}
+
+h1 {
+    margin-bottom: .5em;
+}
+
+h3 {
+    margin-left: 2em;
+}
+
+h4 {
+    margin-left: .5em;
+}
+
+h5 {
+    margin-left: 2em;
+}
+
+
+.shrink {
+}
+
+.nobreak {
+    white-space: nowrap;
+}
+
+.accent {
+    border: 2px solid #BBC;
+    padding: 1px;
+}
+
+.content .glossary {
+    width: 70%;
+}
+.content .glossary p {
+    margin-left: 2em;
+}
+
+.home {
+    width: 9.5em;
+    position: absolute;
+    top: -10px;
+    right: 10%;
+    padding: 20px 10px 10px 10px;
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    background: #DDE; 
+    text-align: center;
+    font-size: .925em;
+}
+
+.focus {
+    float: right;
+}

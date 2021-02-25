@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial 03: Export Anim - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial 03: Export Anim</h1>
+                <img src="resource/img/Progress_Advanced0003_ExportAnim.png" title="An image showing the progress achieved during this tutorial: 3ds Max to Cutscene Editor"/>
+                <p>The <em>StarcraftArtTools</em> can export a complete model with animation by default known as an <em>.M3</em>, but it can also export a model with no animations as well as an animation only file known as an <em>.M3A</em></p>
+				
+				<h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_AnimationExportTutorial_Model.max'</em>.  It contains the Waterbat unit with no animations.  Open the <em>'SC2ArtTools &gt; Export &gt; Export Floater'</em> and notice the <em>Output</em> is set to Model.  </p>
+						<img class="zoom" src="resource/img/AnimationExport_0001_ModelOnly.png" title="Export Floater Model Only"/>
+                    </li>
+                </ol>
+                <h2>Preview the Model</h2>
+                <ol>
+                    <li value="2">
+                        <p>Preview the model.  This will pop up the Cutscene Editor and you will see there is a blank stand anim and nothing else.  The stand anim is actually just created by the game when no anim is present and it is not a real stand anim.  </p>
+                        <img class="zoom" src="resource/img/AnimationExport_0002_ModelOnlyPreview.png" title="Preview the WaterBat Model with no Anim"/>
+                    </li>
+                </ol>
+				<h2>Open the Animation file in 3DSMax</h2>
+                <ol>
+                    <li value="3">
+                        <p>Open <em>'Waterbat_AnimationExportTutorial_Anim.max'</em>.  It contains the Waterbat unit with  animations.  In the <em>'SC2ArtTools &gt; Export &gt; Export'</em> notice the <em>Output</em> is set to Anim.  </p>
+                        <img class="zoom" src="resource/img/AnimationExport_0003_AnimOnly.png" title="The WaterBat Animation Only File"/>
+                    </li>
+                </ol>
+				<h2>Preview Add the Animation</h2>
+                <ol>
+                    <li value="4">
+                        <p>Now we will export an <em>m3a</em> file and add it to the <em>Waterbat_AnimationExportTutorial_Model.m3</em> by using <em>'Export Floater &gt; Preview Add'</em>. This will export the animation file and load it into the Cutscene Editor on the existing model.  If there are multiple models in the Cutscene Editor, the selected one will get the <em>m3a</em> added to it.  The model in the Cutscene Editor will now show an added animation file and have extra animations available.</em></p>
+                        <img class="zoom" src="resource/img/AnimationExport_0004_AnimOnlyPreview.png" title="The animation should now be playing back on the model originally placed in the scene."/>
+                    </li>
+                </ol>
+                <h2>Notes on Animation Files</h2>
+				<ol>
+					<li value="5">
+						<p>The <em>m3a</em> Animation file can animate all animatable tracks as long as Objects and Track Names are identical to the base model.</p>
+						<p>Models where it is anticipated that an <em>m3a</em> will be used should have <em>Bone Reduction</em> set to <em>None</em> in the <a href="Tool_ExportFloater.html">Export Floater</a>.</p>
+						<p><em>m3a</em> files can also be loaded on to a Complete Model with animation.</p>
+						<p>Multiple <em>m3a</em> files can be loaded on to a single model.</p>
+						<p><em>m3a</em> files Cannot be unloaded from a model in-game without exiting the map.</p>
+					</li>
+
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

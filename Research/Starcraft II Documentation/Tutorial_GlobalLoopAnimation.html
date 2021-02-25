@@ -1,0 +1,111 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial 02: Global Loop Animation - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial 02: Global Loop Animation</h1>
+                <img src="resource/img/Progress_0007_GlobalLoop.png" title="An image showing the progress achieved during this tutorial: A waterbat with a blinking light Global Loop Animation that playbacks along with other animations."/>
+                <p>In StarCraft II, a <em>Global Loop Animation</em> is a special type of <a href="Tutorial_SplitbodyAnimation.html">SplitBody Animation</a> that is automatically started by a model as soon as it is created in the game.  The animation would play uninterruptedly on top of other animations for the lifespan of the unit, doodads, or building the model represents.  This type of animation is used in the game for constantly looping animations such as the rotating <em>rotors</em> of the <em>Banshee</em>.  We will learn how to set up a Global Loop Animation in this tutorial by adding a blinking light effect to the WaterBat's backpack.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_GlobalLoopAnimation_Tutorial01_Start.max'</em>.  It contains an animated Waterbat with the addition of a mesh and material for the blinking backpack light.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for the Waterbat_GlobalLoopAnimation_Tutorial01_Start.max."/>
+                    </li>
+                </ol>
+                <h2>Add a Global Loop Animation</h2>
+				<p>As mentioned, all <em>Global Loop Animations</em> found for a model are started as soon as the model is created in the game.  The engine is able to identify this type of animation by <a href="Appendix_AnimationNames.html"> Animation Name</a>.  We will start by creating an animation with the name <em>'GL_Stand'</em>, which is reserved for Global Loop Animation.</p>
+                <ol>					
+                    <li value="2">
+                        <p class="caption">Open the <em>Anim Props Floater</em> and press <em>'New'</em>.  On the pop-up, add an animation called <em>'GL_Stand'</em> with <em>'start'</em> at <em>2100</em> and <em>'length'</em> of <em>30</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_AnimProps_0000_NewAnim.png" title="Set the SC2Physics helper to Dynamic Physics State." />
+                    </li>					
+                </ol>
+				<h2>Animating the Blinking Light</h2>
+				<p>For the blinking light effect, we will be using the <em>'RGB Multiply'</em> track of the <em>Emissive</em> texture in <em>'Unit_Terran_Waterbat_BackPackLights_Material'</em>.  Let's animate that track.</p>
+                <ol>					
+					<li value="3">
+                        <p>Select the new <em>'GL_Stand'</em> animation from the list to set the 3ds Max animation range to the range of the <em>'GL_Stand'</em>- Start at <em>2100</em> and End at <em>2130</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_AnimProps_0001_SelectGLstand.png" title="Set the 3ds Max animation range to 2100 - 2130 by selecting the 'GL_Stand' animation." />
+                    </li>
+					<li>
+                        <p>Open the <em>Material Editor</em> and select the <em>'Unit_Terran_Waterbat_BackPackLight_Material'</em>, which should be in the second slot.</p>
+						
+                        <img class="zoom" src="resource/img/GlobalLoop_MatEdit_0000_SelectMat.png" title="Select the 'Unit_Terran_Waterbat_BackPackLight_Material' in the Material Editor."/>	
+                    </li>
+					<li>
+						<p>Click on the <em>Emissive</em> texture to select it.  The UI should now read <em>'Emissive:  Unit_Terran_Waterbat_BackPackLights_Emissive'</em>, and the rollout should be updated to show properties of the <em>'Unit_Terran_Waterbat_BackPackLights_Emissive'</em> texture.</p>
+						<img class="zoom" src="resource/img/GlobalLoop_MatEdit_0001_SelectTexture.png" title="Select the 'Unit_Terran_Waterbat_BackPackLights_Emissive' texture." />
+						<img class="zoom" src="resource/img/GlobalLoop_MatEdit_0002_TexturePropsRoll.png" title="The Material Editor rollout should now be showing properties of the 'Unit_Terran_Waterbat_BackPackLights_Emissive' texture." />
+					</li>
+					<li>
+						<p>In the rollout, find the <em>'RGB Multiply'</em> property and create a new key for it at <em>frame 2100</em> with a <em>value of 0</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Viewport_0001_FirstKey.png" title="Create a 'RGB Multiply' key at frame 2100 with a value of 0."/>
+					</li>
+					<li>
+						<p>Create another key for the <em>'RGB Multiply'</em> property at <em>frame 2115</em> with a <em>value of 4</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Viewport_0002_SecondKey.png" title="Create another 'RGB Multiply' key at frame 2115 with a value of 4."/>
+					</li>
+					<li>
+						<p>Create a final key for the <em>'RGB Multiply'</em> property at <em>frame 2130</em> with a <em>value of 0</em> again.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Viewport_0003_ThirdKey.png" title="Create a final 'RGB Multiply' key at frame 2130 with a value of 0."/>
+					</li>
+                </ol>				
+                <h2>Create a Track Set</h2>
+				<p>In order for <em>Global Loop Animations</em> to play on top of other animations, their <a href="Appendix_AnimationPriorities.html">Animation Priorities</a> is higher than most other animations by default.  For that reason, any <em>Global Loop Animation</em> should also be a <a href="Tutorial_SplitbodyAnimation.html">SplitBody Animation</a>.  Otherwise, a model would be locked on playing the <em>Global Loop Animation</em> for all tracks on creation and no subsequent animation added would play on any track.  In this case, the <em>'GL_Stand'</em> needs to be turned into a SplitBody Animation, and we will start by creating a new track set.</p>
+                <ol>				
+                    <li value="9">
+                        <p>Open the Track Sets Editor, press the <em>'Add a Track Set'</em> button to add a new track set and then name it <em>'BackpackGlow'</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_TrackSetEditor_0000_NewTrackSet.png" title="Create a new Track Set and name it 'BackpackGlow'." />
+                    </li>
+					<li>
+                        <p>In the <em>Material Editor</em>, make sure the <em>'Unit_Terran_Waterbat_BackPackLights_Emissive'</em> texture is still selected.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_MatEdit_0002_TexturePropsRoll.png" title="Make sure the 'Unit_Terran_Waterbat_BackPackLights_Emissive' texture is still selected in the Material Editor."/></br>
+                    </li>
+					<li>
+                        <p>Back in the Track Sets Editor, with the <em>'BackpackGlow'</em> track set selected, press the <em>'Add Material or Texture'</em> button.  The <em>'Unit_Terran_Waterbat_BackPackLights_Emissive'</em> texture should now be listed as a member of the <em>'BackpackGlow'</em> track set.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_TrackSetEditor_0001_AddTexture.png" title="Add the 'Unit_Terran_Waterbat_BackPackLights_Emissive' texture to the 'BackpackGlow' track set." />
+                    </li>
+					<li>
+                        <p>Click the <em>'+'</em> button next to the assigned <em>'Unit_Terran_Waterbat_BackPackLight_Material'</em> texture to reveal the related tracks, then check the <em>'RGB Multiply'</em> track.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_TrackSetEditor_0002_AssignTrack.png" title="Turn on the 'RGB Multiply' track." />
+                    </li>
+                </ol>
+				<h2>Assigning the Track Set</h2>
+                <ol>				
+					<li value="12">
+                        <p>In the <em>Anim Props Floater</em>, with the <em>'GL_Stand'</em> animation selected, press the <em>Add</em> button on the <em>SubAnim Tracks rollout</em>.  Select the <em>'BackpackGlow'</em> track set created earlier in the pop-up window that appears and then press <em>'OK'</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_AnimProps_0002_AssignTrackSet.png" title="Assign the 'BackpackGlow' track set to the 'GL_Stand' animation." />
+                    </li>
+					<li>
+                        <p>We only want <em>'GL_Stand'</em> to influence tracks in the <em>'BackpackGlow'</em> track set, but a <em>'Default Track Set'</em> is still on the list.  The <em>'Default Track Set'</em> represents all tracks not included by user track sets for each animation.  Therefore, to exclude all tracks not defined in <em>'BackpackGlow'</em>, select the <em>'Default Track Set'</em> and press the <em>'Remove'</em> button.  The <em>'BackpackGlow'</em> track set should be the only one left on the list.</p>						
+                        <img class="zoom" src="resource/img/GlobalLoop_AnimProps_0003_NoDefaultTrackSet.png" title="Make sure 'Export Default Track Set' is Off." />
+						<img class="zoom" src="resource/img/GlobalLoop_AnimProps_0004_BackpackGlowOnly.png" title="The 'BackpackGlow' track set should be the only track set left on the list." />
+						<p><em>'GL_Stand'</em> is now a <a href="Tutorial_SplitbodyAnimation.html">SplitBody Animation</a> that only plays on the <em>'BackpackGlow'</em> track set, which is basically only the <em>'RGB Multiply'</em> track of the <em>'Unit_Terran_Waterbat_BackPackLights_Emissive'</em> texture.</p>
+                    </li>
+                </ol>
+				<h2>Preview to Check the Work</h2>
+                <ol>				
+					<li value="14">
+                        <p>Use <em>'SC2ArtTools &gt; Export &gt; Preview'</em> and launch the <em>Cutscene Editor</em> to see the animation.  When the Waterbat loads, it should be playing its <em>'Stand'</em> animation.  On top of that, the center lights on his backpack should also be blinking now because of the <em>'GL_Stand'</em> animation that is constantly playing automatically.  <em>Global Loop Animations</em> do not need to be add explicitly added as animation blocks in the Cutscene Editor, they start as soon as a model loads.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Preview_0000_Stand.png" title="Preview, and the Waterbat plays 'Stand' along with the blinking light 'GL_Stand' animation."/>
+                    </li>
+					<li>
+                        <p>To demonstrate how a <em>Global Loop Animation</em> plays uninterruptedly through animation changes, add a <em>'Walk'</em> animation block after the <em>'Stand'</em>.  The result shows that the light blinks persist with the same interval even during and after transitioning into the <em>'Walk'</em>.</p>
+                        <img class="zoom" src="resource/img/GlobalLoop_Preview_0001_StandToWalk.png" title="The blinking light remains the same across the 'Stand' and 'Walk' animations." />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

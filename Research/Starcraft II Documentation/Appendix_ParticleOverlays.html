@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Particle Animation Overlays - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Particle Property Overlays</h1>
+                <p>The <em>SC2Particles</em> and <em>SC2Ribbons</em> have a unique feature for some parameters, Property Overlays.  In general <em>SC2Particles</em> have a simple random range for most values.  Property Overlays are a way to add more unique animation ability quickly to these kinds of effects.  This will alter the property  at particle creation time with a procedural offset value, and will remain constant for the life of each particle.  The value is controllable with a simple set of curve types as well as animatable values for amplitude, and frequency.</p>
+                
+                <h2>SC2Particle Properties that allow Overlays</h2>
+                <p>Next to some of the <em>SC2Particles</em> properties is a small UI button that is blank by default.  If there is an overlay applied the box will show an <em>O</em> on the button.  </p>	
+                <img class="detail" src="resource/img/Appendix_ParticleOverlayUI.png" title="SC2Particle Property Overlay"/>
+                <ul>
+                    <li><p><em>Yaw</em> Overlay will give a procedural offset to the initial particle direction in the local X axis.</p></li>
+                    <li><p><em>Pitch</em> Overlay will give a procedural offset to the initial particle direction in the local Y axis.</p></li>
+                    <li><p><em>Vert Spread</em> Overlay will give a procedural offset to the random range of the particle initial direction of travel on the Vertical axis.</p></li>
+                    <li><p><em>Horz Spread</em> Overlay will give a procedural offset to the random range of the particle initial direction of travel on the Horizontal axis.</p></li>
+                    <li><p><em>Speed</em> Overlay will give a procedural offset to the initial Speed of particles.</p></li>
+                    <li><p><em>Alpha</em> Overlay will add an offset to the particle alpha values.</p></li>
+                    <li><p><em>Rotation</em> Overlay adds an offset to the particle rotation. The amplitude value is in radians and not degrees.</p></li>
+                    <li><p><em>Size</em> Overlay adds an offset to the particle scale.</p></li>
+                </ul>
+                
+                <h2>SC2Particle Property Overlay Pop-Up</h2>
+                <p>By clicking the overlay button, a Pop-up window will appear where you can modify the values for the Property Overlay.</p>	
+                <img class="detail" src="resource/img/Appendix_ParticleOverlayPopUp.png" title="SC2Particle Animation Overlay Pop-Up"/>
+                <ol>
+                    <li><p><em>Curve Type:</em> is a pulldown to select the animation curve type.</p>
+                        <ul class="glossarry">
+                        <li><p><em>None</em> default and no Overlay applied.  To clear an Overlay, set it to None.</p></li>
+                        <li><p><em>Sin</em> applies a smooth Sine Wave animation offset.</p></li>
+                        <li><p><em>Cos</em> applies a smooth Cosine Wave animation offset.</p></li>
+                        <li><p><em>Saw Tooth</em> applies a linear offset that starts at negative amplitude and increase to positive amplitude over one frequency cycle and then starts again at negative amplitude.</p></li>
+                        <li><p><em>Square Wave</em> offset alternates between negative and positive amplitude.</p></li>
+                        <li><p><em>Random Noise</em> picks a random value from negative amplitude to positive amplitude.</p></li>
+                        <li><p><em>Continuous Noise</em> is a moving random value that will be a similar offset to particles created before and after that moment in time. The nature of this moving average noise type, is that amplitude values need to be 2 to 4 times larger than other Curve Types.</p></li>
+                        </ul>
+                    </li>
+                    <li><p><em>Amplitude:</em> is the offset value to be applied.  An Amplitude value of 1 will yield a value from -1 to +1 that will be added to the particle property at the moment of creation.</p></li>
+                    <li><p><em>K</em> is the active Key frame button.  These buttons will show red when the Amplitude or Frequency has an active key frame at the current time.  Click to add or remove a key frame from the current time.</p></li>
+                    <li><p><em>Frequency:</em> is the number of cycles per second.  The smaller the number, the slower the offset cycling.</p></li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

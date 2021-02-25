@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: SC2Force - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: SC2Force</h1>
+                <p>The <em>SC2Force</em> Node can be found in the <em>Helpers</em> create panel.  It is a helper that can deliver a push or pull physically controlled bodies, such as <em>SC2Physics</em> Shapes, <em>SC2Particles</em> and <em>SC2Ribbons</em>.</p>
+                <h2>Force Field</h2>
+                <div class="group">
+                    <p>The <em>Force field</em> rollout controls the direction, shape, and size of the force node.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Force.png" title="SC2 Force Rollout, responsible for applying movement to Particles, Ribbons and Physics objects."/>
+                    <ol class="compact">
+                        <li><p><em>Type:</em> defines the way the force is applied.
+                            <ul>
+                                <li><em>Directional</em> force is applied along the node's Positive Z axis. This force is cumulative.</li>
+								<li><em>Radial</em> force is applied using the direction from the node's position to the body receiving the force.  Positive is outward.  This force is cumulative.</li>
+                                <li><em>Dampening</em> This is a drag operation that resists the movement of particles. This force does not affect <em>SC2Physics</em> Shapes.</li>       
+                                <li><em>Vortex</em> This is a special rotation field that brings particles into a orbit. Does not work with Box Shape applied.  This force does not affect <em>SC2Physics</em> Shapes, and will override other forces on affected particles.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Shape:</em> defines the physical the force applies to.
+						    <ul>
+                                <li><em>Sphere</em> is a simple spherical shape defined with the <em>Radius</em> value.</li>
+								<li><em>Hemisphere</em> is a half sphere shape defined with <em>Radius</em>.</li>
+                                <li><em>ConeDome</em> shape is special cone shape with length defined as <em>Radius</em> and cone width defined as <em>Angle</em>.</li>       
+                                <li><em>Cylinder</em> defines a shape with <em>Radius</em> and <em>Height</em>.</li>
+								<li><em>Box</em> A box shape with <em>Width</em>, <em>Height</em>, and <em>Length</em>.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Radius</em> or <em>Width</em> is an animatable spinner controlling shape dimensions.  Width is only available with the <em>Box</em> shape.</p></li>
+                        <li><p><em>Height</em> or <em>Angle</em> is an animatable spinner controlling shape dimensions.  Angle is only available when the <em>ConeDome</em> shape is selected.</p></li>                        
+						<li><p><em>Length</em> is an animatable spinner controlling the length of a box shape.</p></li>
+						<li><p><em>Unbounded</em> will make this force affect the entire world scene regardless of dimensions.</p></li>
+                        <li><p><em>Strength</em> is the animatable amount of force to the node can apply.  Default is 1000 and maximum is 10,000.  <em>Vortex</em> forces usually use smaller values from 1 to 100.</p></li>
+                        <li><p><em>Use Falloff</em> will cause the force to have a linear falloff at the outer edge of the shape.  The <em>Box</em> shape does not support falloff.  <em>Dampening</em> and <em>Vortex</em> types do not support falloff.</p></li>
+                        <li><p><em>Use Height Gradient</em> will create a linear falloff of the force from bottom to top of the shape.  <em>Dampening</em> and <em>Vortex</em> types do not support falloff.</p></li>
+                        <li><p><em>Local Channels</em> allows this force to selectively affect only certain particles systems.  Within one model, any particle system with at least one of the same local channels enabled will be affected by this force.  For performance reasons, most particle systems in StarCraft II use only local forces.</p></l6i>
+                        <li><p><em>World Profile</em> is a simple way to populate a list of world channels a force will apply to.  If this is set to <em>Custom</em>, the <em>SC2Force</em> can be made to be local only be removing the World Channels.</p></li>
+                        <li><p><em>World Channels</em> will list the categories of physics types the force will apply to.  Matching channels of <em>SC2Physics</em> Shapes, <em>SC2Particles</em> and <em>SC2Ribbons</em> in the same world scene will be affected by the force.  The <em>Brush</em> channel is specific to apply the force to the custom foliage grass models on terrain.  To remove a channel click the <em>X</em> next to it.  To add a new channel, click the <em>+</em> button.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

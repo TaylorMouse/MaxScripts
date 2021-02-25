@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tool: Behavior Editor - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tool: Behavior Editor</h1>
+				<p>The Behavior Editor controls advanced settings for models and animations.  The editor window houses two closely related editors, the <em>Behavior Editor</em>, which controls advanced game features like ragdolls and turrets, and the <em>Track Set Editor</em>, which allows masking animation to only certain parts of a model.  The Behavior Editor stores its data in the scene on a node of type <em>SC2BehaviorHolder</em>.  It is important not to delete or hide this node.</p>
+				<h2>Common Controls</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_Common.png" title="The upper portion of the Behavior Editor.  This UI is common between all modes."/>
+                    <ol class="compact">
+						<li><p><em>Target Node</em> identifies the <em>SC2BehaviorHolder</em> node in the current Scene that the editor is currently editing.  It is uncommon to have more than one of these in a scene.  If no node is found, one will be automatically created when a Behavior or TrackSet is added.</p></li>
+                        <li><p><em>Show</em> switches the editor between Behavior and Track Set mode.  The <em>List Box</em> will be updated to display the appropriate type of data, and the applicable buttons will be enabled or disabled.</p></li>
+						<li><p><em>Add Track Set</em> will, when in Track Set Mode, add a new <a href="#TrackSet">TrackSet</a> onto the <em>Target Node</em>.  This will appear and be editable in the <em>List Box</em> below.</p></li>
+						<li><p><em>Add IK Leg Behavior</em> will, when in Behavior Mode, add a new <a href="#IKLegBehavior">IK Leg Behavior</a> onto the <em>Target Node</em>.  This will appear and be editable in the <em>List Box</em> below.</p></li>
+						<li><p><em>Add Turret Behavior</em> will, when in Behavior Mode, add a new <a href="#TurretBehavior">Turret Behavior</a> onto the <em>Target Node</em>.  This will appear and be editable in the <em>List Box</em> below.</p></li>
+						<li><p><em>Add Billboard Behavior</em> will, when in Behavior Mode, add a new <a href="#BillboardBehavior">Billboard Behavior</a> onto the <em>Target Node</em>.  This will appear and be editable in the <em>List Box</em> below.</p></li>
+						<li><p><em>Add Physics Joint Behavior</em> will, when in Behavior Mode, add a new <a href="#PhysicsJointBehavior">Physics Joint Behavior</a> onto the <em>Target Node</em>.  This will appear and be editable in the <em>List Box</em> below.</p></li>
+						<li><p><em>Add Bones From Viewport Selection</em> will use the currently selected nodes in the main 3ds Max Scene in the Behavior or Track Set currently selected in the <em>List Box</em>.  This can add multiple nodes at one time, and is the primary mechanism for adding bones to Turrets, Billboards, and TrackSets.</p></li>
+						<li><p><em>Pick Bones From Viewport</em> adds one bone at a time to a Behavior when there are specific validations that must be done.  This is the primary mechanism for adding nodes to IK Leg Behaviors and Physics Joints Behaviors.</p></li>
+						<li><p><em>Select All Bones in Viewport</em> will use the current selection in the <em>List Box</em> to select nodes in the main scene.</p></li>
+						<li><p><em>Add Material or Texmap from Active Material Editor Slot</em> adds a material or texture via material browser. It is important to note that only properties of a single level would be available for enabling. For instance, in order to add the uvOffset of a texture map to a track set, the texture map itself needs to be added, not the material that’s using it.</p></li>
+						<li><p><em>Put Material or Texmap in Active Material Editor Slot</em> will replace the current item selected in 3ds Max's material editor with the material currently selected in the <em>List Box</em>.</p></li>
+						<li><p><em>Delete Selected Node</em> will remove the item currently selected in the <em>List Box</em>.  This will remove behaviors, track sets, or members of either as appropriate.</p></li>
+						<li><p><em>Filter By Selected Bones</em> shows only Behaviors and Track Sets that contain models that are selected in 3ds Max.  While all other Behaviors and Track Sets will remain active, they will not show up in the <em>List Box</em>.  This filter is active if the button appears depressed.</p></li>
+						<li><p><em>Filter By Selected Material</em> shows only Track Sets that contain the <em>SC2 Material</em> or <em>SC2 Bitmap</em> currently selected in the Material Editor.  While all other Track Sets will remain active, they will not show up in the <em>List Box</em>.  This filter is active if the button appears depressed.</p></li>
+						<li><p><em>List Box</em> is the primary overview panel in the Behavior Editor.  Depending on the mode, it will list either Track Sets or Behaviors.  Data is presented in a tree structure, with each type of Behavior controlling the nature of the items within it.  Details of these structures are provided in the modal breakdowns below.  Red items denote a Behavior with an error; tracks assigned may be deleted or no longer valid.  TrackSets can become red if they are not used in any animations.  Clicking items in this box will select them in the Viewport.  Shift or Ctrl Click can be used to add to the selection.</p></li>
+                    </ol>
+                </div>
+				<h2 id="TrackSet">Track Sets</h2>
+				<p>When in Track Set Mode, the Behavior Editor <em>List Box</em> will be updated to contain all TrackSets defined for the given <em>SC2BehaviorHolder</em>.  Items that are checked in this mode will export their animation when assigned to a given Animation in the <a href="Tool_AnimPropFloater.html">Anim Prop Floater</a>.  Unchecked items will be skipped.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_TrackSet.png" title="Details specific to Track Set Mode."/>
+                    <ol class="compact">
+						<li><p><em>Track Set</em> lists all TrackSets in the scene that satisfy <em>Filter By Selected Bones</em> and <em>Filter By Selected Material</em> if either are active.  Names of Track Sets are listed as the second part of the line, and may be edited with the <em>Name (Track Set)</em> text box.</p></li>
+                        <li><p><em>Track Set Member</em> lists all items that belong to a given track set.  TrackSets can contain both Materials and Scene nodes.  A single node may be in multiple Track Sets; the union of their checked channels will be used at export.</p></li>
+						<li><p><em>Track Set Item</em> lists specific channels to use within a node.  Track Sets do not have to control an entire node or material.  It is often beneficial for a given animation to only control a subset of parameters, and this allows this control.  For performance reasons, many parameters are necessarily covariant, and the StarCraft II Art Tools will only let you turn on and off the group.  For example,  X Y and Z rotation will always be considered together.</p></li>
+						<li><p><em>Name (Track Set Info)</em> allows for renaming track sets.  Changes here will automatically update any animations referenced in <em>Used By Animations</em></p></li>
+						<li><p><em>Used By Animation</em> lists all the animations that the currently selected Track Set is referenced by.  This is the corollary to <em>Add (Track Set)</em> in the <a href="Tool_AnimPropFloater.html">Anim Prop Floater</a>.</p></li>
+                    </ol>
+                </div>
+				<h2 id="IKLegBehavior">Inverse Kinematic Behaviors</h2>
+				<p>This behavior attempts to make feet snap to terrain instead of floating above or below ground.  It will use <em>Bone 2 (IK_Leg_Behavior)</em> and the tolerances defined by <em>Max Search Up</em> and <em>Max Search Down</em> to attempt to locate a suitable position for the foot, and then relax all bones between <em>Bone 1 (IK_Leg Behavior)</em> and <em>Bone 2 (IK_Leg_Behavior)</em> so that the joint chain looks natural.  The joint chain must include at least 3 joints, including <em>Bone 1 (IK_Leg_Behavior)</em> and <em>Bone 2 (IK_Leg_Behavior).</em></p>
+				<p>Inverse kinematic (IK) behaviors are specifically coded to support cliff-walking for the Colossus in StarCraft II: Wings of Liberty.  It is not advisable to use this feature in Custom Mods at this point in time.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_IKLeg.png" title="Details specific to Inverse Kinematics Mode."/>
+                    <ol class="compact">
+						<li><p><em>IK_Leg_Behavior</em> lists all the Inverse Kinematic behaviors in the scene that satisfy <em>Filter By Selected Bones</em>.  Names of these behaviors are listed on the second part of the line, and may be edited with the <em>Name (IK_Leg_Behavior)</em> text box.</p></li>
+						<li><p><em>Bone 1 (IK_Leg_Behavior)</em> sets the first bone in the IK joint chain.  This bone, and all children leading to <em>Bone 2 (IK_Leg_Behavior)</em> will partake in the IK behavior.</p></li>
+						<li><p><em>Bone 2 (IK_Leg_Behavior)</em> sets the last bone in the IK joint chain.  The location of this bone is the point that will be used to test for, and resolve, collision with the ground.</p></li>
+                        <li><p><em>Name (IK_Leg_Behavior)</em> allows for renaming the leg behavior.  This name is for organizational purposes only.</p></li>
+						<li><p><em>Max Search Up</em> denotes how far above the location of <em>Bone 2 (IK_Leg_Behavior)</em> the IK solver should look for something to stand on.</p></li>
+						<li><p><em>Max Search Down</em> denotes how far below the location of <em>Bone 2 (IK_Leg_Behavior)</em> the IK solver should look for something to stand on.</p></li>
+						<li><p><em>Max Speed (units/frame)</em> defines the furthest distance <em>Bone 2 (IK_Leg_Behavior)</em> can move in a single frame to try to get to the IK Solver's preferred location, provided one was found.</p></li>
+						<li><p><em>IK Goal Pos Threshold</em> specified how close the solver must get the leg before it is considered close enough to be at the position.  Higher values here prevent jittering, while lower values make for more accurate final contact points.</p></li>
+                    </ol>
+                </div>
+				<h2 id="TurretBehavior">Turret Behaviors</h2>
+				<p>Turret Behaviors allow a subset of bones in a character to point in a direction procedurally.  For example, head and neck bones may be placed in a Turret Behavior so that a character can be told to look at objects dynamically in the Cutscene Editor.  Turret Behaviors have a manipulator per-node to control their alignment.  The Forward Vector of the manipulator will point towards the target location.  The node's orientation will remain relative to the manipulator.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_Turret.png" title="Details specific to Turret Mode."/>
+                    <ol class="compact">
+						<li><p><em>Turret_Behavior</em> is a group of bones that can be enlisted in a <em>Look At Type</em> in the <em>Game UI Data</em>  The name, which is editable by <em>Name (Turret_Behavior)</em>, must match an ID in the <em>Data: Look At Types</em>.</p></li>
+						<li><p><em>Turret Bone Array</em> shows all bones that are in a given <em>Turret_Behavior</em>.<p></li>
+						<li><p><em>Name (Turret_Behavior)</em> defines the ID by which the given Turret Behavior can be accessed.  It must match one of the types defined in a loaded Mods <em>Game UI Data</em> to be considered.  The default list includes:<p>
+							<ul>
+								<li>EyeLeft</li>
+								<li>EyeRight</li>
+								<li>EyeHead</li>
+								<li>Chest</li>
+								<li>Turret_Left</li>
+								<li>Turret_Right</li>
+							</ul>
+						</li>
+                        <li><p><em>Point at a Node</em> enters a picking mode, where selecting a scene object will orient the currently selected turret manipulator towards the chosen target.</p></li>
+						<li><p><em>Align To Local</em> snaps the manipulator to match the local transform of the node.  The Forward Vector will match the Negative Y Axis.</p></li>
+						<li><p><em>Align To World</em> snaps the manipulator to match the scene's world axes at the location of the node.  The Forward Vector will match the Negative Y Axis.</p></li>
+						<li><p><em>Flip Forward</em> reverses the direction of the manipulator's Forward Vector.</p></li>
+						<li><p><em>Flip Up</em> reverses the direction of the manipulator's Up Vector.</p></li>
+						<li><p><em>Use as main turret bone</em> will use the relationship of this turret bone and its target as the basis for all other turret bones with the same <em>Turret Group ID</em>.  By default, every turret bone will align its forward vector directly at the look at target.  If a turret bone has this option set, relative offsets will be used instead.  That is to say, if the Head is the main turret bone, and the chest was also a turret, the chest would point towards a point below wherever the head was looking.  There can only be one main turret bone per turret group.</p></li>
+						<li><p><em>Turret Group ID</em> is a number which defines a group for which there can be a <em>Main Turret Bone</em>.</p></li>
+						<li><p><em>Use Yaw-Rotation (Blue Plane)</em> allows the turret to move freely around its Up Axis.  This range of motion is displayed by the Blue Plane on the manipulator.</p></li>
+						<li><p><em>Limited (Yaw)</em> locks the range of Yaw movement.  If disabled, the turret can move 360 degrees around the axis.</p></li>
+						<li><p><em>Yaw-Weight (%)</em> regulates how completely the controlled node should face the target.  Using smaller values is often useful for reducing the influence down a joint chain, such as in a human neck.</p></li>
+						<li><p><em>Yaw-Limit Min (deg)</em> corresponds to the furthest negative rotation around the turret's Up Axis that is allowed.</p></li>
+						<li><p><em>Yaw-Limit Max (deg)</em> corresponds to the furthest positive rotation around the turret's Up Axis that is allowed.</p></li>
+						<li><p><em>Use Pitch-Rotation (Green Plane)</em> allows the turret to move freely around its Left Axis.  This range of motion is displayed by the Green Plane on the manipulator.</p></li>
+						<li><p><em>Limited (Pitch)</em> locks the range of Pitch movement.  If disabled, the turret can move 360 degrees around the axis.</p></li>
+						<li><p><em>Pitch-Weight (%)</em> regulates how completely the controlled node should face the target.  Using smaller values is often useful for reducing the influence down a joint chain, such as in a human neck.</p></li>
+						<li><p><em>Pitch-Limit Min (deg)</em> corresponds to the furthest negative rotation around the turret's Left Axis that is allowed.</p></li>
+						<li><p><em>Pitch-Limit Max (deg)</em> corresponds to the furthest positive rotation around the turret's Left Axis that is allowed.</p></li>
+						<li><p><em>Presets</em> are common configurations for the above properties.  They will overwrite the values already defined for Yaw and Pitch properties.</p>
+							<ul>
+								<li><em>SquintyEyes</em> have more lateral movement than vertical.</li>
+								<li><em>DefaultEyes</em> are a decent place to start for most human eyes.</li>
+								<li><em>Default</em> is the tool standard, providing hemispherical movement.</li>
+								<li><em>Stiff</em> provides minimal freedom, often a good starting point for the base of the spine.</li>
+								<li><em>Med</em> provides moderate freedom, useful for leading into bones with more freedom.</li>
+								<li><em>Med</em> provides a large amount of freedom, useful for the chest and other high-movement areas.</li>
+							</ul>
+						</li>
+                    </ol>
+                </div>
+				<h2 id="BillboardBehavior">Billboard Behaviors</h2>
+				<p>Billboard Behaviors align a bone in the scene to the camera.  The bone can be set to pivot around the node's local-space axes, the game world-space axes, or freely move to match the camera.  In most configurations, the node's local Z Axis will try to align with the Camera's Up Vector, and the node's local Y Axis will align with the Camera's Forward Vector.  The side facing the Negative Y Axis will face the camera.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_Billboard.png" title="Details specific to Billboard Set Mode."/>
+                    <ol class="compact">
+						<li><p><em>Billboard_behavior</em> lists all Billboard Behaviors that satisfy <em>Filter By Selected Bone</em>.  Names of these behaviors are listed on the second part of the line, and may be edited with the <em>Name (Billboard_behavior)</em> text box.</p></li>
+						<li><p><em>Billboard Bone Array</em> is the list of all bones that share this set of billboard settings.  Each bone pivots on its own position.  If many bones are to pivot together, only their parent should be added.</p></li>
+						<li><p><em>Name (Billboard_behavior)</em> allows for renaming the Billboard Behavior.</p></li>
+						<li><p><em>Billboard Type</em> defines the rotational axis of freedom for the Billboard to pivot around.  If Full is selected, the Yaw, Pitch, and Roll of the node will be freely aligned to the camera.</p>
+							<ul>
+								<li><em>World [X/Y/Z]</em> pivots only on the specified world aligned axis.</li>
+								<li><em>Local [X/Y/Z]</em> pivots only on the specified node local axis.</li>
+								<li><em>Full</em> always points directly at the camera.</li>
+							</ul>
+						</li>
+						<li><p><em>Look At Camera</em> causes the Billboard to turn in towards the center of the camera when off to the sides.  Otherwise the Billboard will align with the orthographic Camera Forward Vector.</p></li>
+                    </ol>
+                </div>
+				<h2 id="PhysicsJointBehavior">Physics Joint Behaviors</h2>
+				<p>Physics Joints connect two <em>SC2Physics</em> nodes to each other.  The Domino Physics System used by StarCraft II is most stable when physics bodies are connected from most massive to least massive.  This Behavior is used to create the "Ragdoll" Death models in StarCraft II: Heart of the Swarm.  Joint Behaviors have a reference frame for each connected body. The reference frames will align as soon as the joint is enabled in the Physics System.  Frames are aligned from the root of any joint hierarchy.  Order of evaluation of siblings is undefined.  It is recommended that reference frames are located within the bounds of their <em>SC2Physics</em> node, for increased stability.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Tool_BehaviorEditor_Joint.png" title="Details specific to Physics Joint Mode."/>
+                    <ol class="compact">
+						<li><p><em>PhysicsJoint_Behavior</em> lists all Physics Joint Behaviors that satisfy <em>Filter By Selected Bone</em>.  Names of these behaviors are listed on the second part of the line, and may be edited with the <em>Name (PhysicsJoint_Behavior)</em> text box.</p></li>
+						<li><p><em>Bone Pair (PhysicsJoint_Behavior)</em> lists the two bones engaged in a Physics Joint.  They must have <em>SC2Physics</em> nodes as children.  When the behavior is selected, reference frames for the joint will be visible in the Viewport.  When resolving the joint, these two bones are moved so that the reference frames are aligned.  Bones are added in the order they are selected in <em>Pick Bones From Viewport</em>.</p></li>
+						<li><p><em>Name (PhysicsJoint_Behavior)</em> allows for renaming the Physics Joint Behavior</p></li>
+						<li><p><em>Joint Type</em> specifies the way a joint should move.  There are several styles to choose from:</p>
+							<ul>
+								<li><em>Spherical</em> allows the joint to move freely about any axis.</li>
+								<li><em>Revolute</em> allows freedom along only a single axis, like a door hinge.</li>
+								<li><em>Cone</em> lets the joint move freely like a <em>Spherical</em> joint, but constrains the movement to only <em>Cone Angle (deg)</em> away from the default position.</li>
+								<li><em>Weld</em> restricts all rotational freedom, locking two physics bodies to each other.  Weld joints resist movement in all directions, but are not perfectly rigid.</li>
+							</ul>
+						</li>
+						
+						<li><p><em>Reset Axis To Default</em> returns the reference frames to their default location, the pivot of the second bone in <em>Bone Pair (PhysicsJoint_Behavior)</em>.</p></li>
+						<li><p><em>Align Pos To Bone1</em> moves the reference frame of the currently selected bone(s) to position of the pivot for the first bone in <em>Bone Pair (PhysicsJoint_Behavior)</em>.  The rotation is unchanged.</p></li>
+						<li><p><em>Align Pos To Bone2</em> moves the reference frame of the currently selected bone(s) to position of the pivot for the second bone in <em>Bone Pair (PhysicsJoint_Behavior)</em>.  The rotation is unchanged.</p></li>
+						<li><p><em>Align Rot To Bone1</em> orients the reference frame of the currently selected bone(s) to the rotation of the pivot for the first bone in <em>Bone Pair (PhysicsJoint_Behavior)</em>.  The position is unchanged.</p></li>
+						<li><p><em>Align Rot To Bone2</em> orients the reference frame of the currently selected bone(s) to the rotation of the pivot for the second bone in <em>Bone Pair (PhysicsJoint_Behavior)</em>.  The position is unchanged.</p></li>
+						<li><p><em>Rotate Forward Axis 90</em> adjusts the rotation of the reference frame along the local Z Axis.  This is most useful for <em>Cone</em> and <em>Revolute</em> <em>Joint Types</em> where it can be used to control the center of the <em>Limit Min</em> and <em>Limit Max</em>.</p></li>
+						<li><p><em>Rotate Up Axis 90</em> adjusts the rotation of the reference frame along the local Y Axis.  This is most useful for <em>Revolute</em> <em>Joint Types</em> where it can be used to quickly reorient the freely moving axis.</p></li>
+						<li><p><em>Cone Angle (deg)</em> defines how far a <em>Cone</em> <em>Joint Type</em> can move from its default position.</p></li>
+						<li><p><em>Enable Limits</em> enforces constraints on <em>Revolute</em> and <em>Cone</em> <em>Joint Types</em> for movement around the local Z Axis.</p></li>
+						<li><p><em>Limit Min (deg)</em> represents the furthest possible negative rotation from the default joint orientation.</p></li>
+						<li><p><em>Limit Max (deg)</em> represents the furthest possible positive rotation from the default joint orientation.</p></li>
+						<li><p><em>Use Shape Collision</em> allows the two connected bodies to collide with each other.  Normally this is undesirable, because the two <em>SC2Physics</em> nodes will always be in contact, and colliding them can produce unexpected results, such as jittering.  Even with this option off, physics bodies that are not directly connected by a Physics Joint Behavior will still collide.</p></li>
+						<li><p><em>Joint Friction</em> causes bodies to lose energy as they rotate along a joint.  This causes their movement to slow.  Disabling this property, or using a low value represents a slippery joint.  Higher values resist movement.</p></li>
+						<li><p><em>Damping Ratio</em> controls the springiness of a <em>Weld</em> <em>Joint Type</em>.  A value of 1 will attempt to reach the proper direction in the shortest time possible.  Lower values may overshoot and wiggle.  Higher values will swing into place slower.</p></li>
+						<li><p><em>Angular Frequency</em> controls the strength of a <em>Weld</em> <em>Joint Type</em>.  Higher values will appear to lock into place quicker and more completely.  Lower values may never reach their target, and may appear limp.</p></li>
+						<li><p><em>Break Threshold</em> *exported but unused* Intended to be between 0-1 to determine joint strength.  0 denotes a fragile joint; a value of 1 is unbreakable.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

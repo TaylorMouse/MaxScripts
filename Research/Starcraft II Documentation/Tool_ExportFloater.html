@@ -1,0 +1,70 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tool: Export Floater - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tool: Export Floater</h1>
+                <div class="group">
+                    <p>The Export Prop Floater is the main user interface for describing how to create M3 files.  It is divided into <em>Export/Commit</em>, which handles the exporting of final meshes, and <em>'Preview'</em> which handles settings for looking at your model in the <em>Cutscene Editor</em>.</p>
+                    <img class="detail focus" src="resource/img/Tool_ExportFloater.png" title="The Export Floater, with every item marked."/>
+                    <ol class="compact">
+                        <li><p><em>Export</em> will prompt the user for a path to export game-ready art file(s) for the current scene.  These can be either m3 (model) or m3a (animation only) files based on the <em>Output (Export)</em> option.  All currently visible objects in the scene that the Star2Exporter plugin knows how to handle will be included.  This button considers all options in the <em>Export/Commit</em> rollout as well as <em>Make DDS Files</em>, <em>Cache DDS Files</em>, and <em>Use Mopaq Textures</em> when exporting.</p></li>
+                        <li><p><em>Export Selected</em> behaves like <em>Export</em> except the exporter will consider only objects in the scene which are both visible and currently selected in the main 3ds Max user interface.</p></li>
+						<li><p><em>Commit</em> is the primary mechanism for creating an m3 and adding it to a mopaq.  Commit will export all visible objects in the scene that the Star2Exporter plugin knows how to handle.  It will consider only options in the <em>Export/Commit</em> rollup.  To get models into game, please see the <a href="Tutorial_CommittingModels.html">Commit Tutorial</a>.  Commit behaves as if <em>Make DDS Files</em> and <em>Use Mopaq Textures</em> are both checked, and <em>Cache DDS Files</em> is clear.</p></li>
+						<li><p><em>Commit Selected</em> behaves like <em>Commit</em> except the exporter will consider only objects in the scene which are both visible and currently selected in the main 3ds Max user interface.</p></li>
+						<li><p><em>Source</em> tells the exporter whether it should consider the whole 3ds Max file as a single m3, or multiple m3s.</p>
+							<ul>
+								<li><em>Scene</em> will export the entire scene as a single model file.  This is the most basic and standard option.  On Export and Commit, the name of the 3ds Max file will be the default name of the resultant m3 file; </li>
+								<li><p><em>Objects</em> is for exporting multiple m3s out of a single 3ds Max file.  Sometimes it is more convenient to work on multiple models in a single scene.  Any exportable node or group containing multiple nodes can be exported as an individual file.  Each exported file is named with the name of the node or group it is exported from.</p>								
+								<p>To prevent unintended files from getting into a mopaq, Committing as Object uses an object validation scheme that would only export nodes or groups with a prefix that matches the name of the 3ds Max file plus certain name suffixes-  four letter cliff position + two digits variation number for cliffs (i.e. maxfilename_ACAC_00, maxfilename_ADAD_03);  two digits variation number for variations (i.e. maxfilename_01, maxfilename_02);  _xtra for a wildcard type (i.e. maxfilename_xtras_scene1, maxfilename_xtras_lights). Any node or group not falling within this naming scheme are ignored.</p>
+							</ul>
+						</li>
+						<li><p><em>Output</em> defines what the contents of the exported file(s) should be.</p>
+							<ul>
+								<li><em>Complete</em> is the most common type of m3 and holds both 3D Model data as well as Animation data, as defined in the <a href="Tool_AnimPropFloater.html">Anim Prop Floater</a>.  If no Animations are defined, the currently active Timeline will be exported as </em>Stand</em>.</li>
+								<li><em>Model</em> exports only 3D Model data but not Animation data.  This is commonly only used when another file will be exported as <em>Anim</em> and they will be paired together in Data.  It is important that both files have identical node names and positions at Frame 0.</li>
+								<li><em>Anim</em> will export only Animation data and enough information about the hierarchy to match it to an m3 at runtime.  These files are denoted with the <em>m3a</em> file extension.  This setting is commonly used to add extra animations to models.  It is important that this file matches the target m3 file in both node names and positions at Frame 0.</li>
+								<li><em>MultiAnim</em> exports each anim as a separate m3a file.  The resulting M3A files will be named maxFilename + "_" + animName.m3a.</li>
+							</ul>
+						</li>
+						<li><p><em>Anim Quality</em> sets the number of samples used when gathering animation.  Lower quality settings take up less memory and yield higher performance.  Higher settings are larger and slower.  <em>Med</em> is generally acceptable for in-game units.  Higher settings are sometimes used for portraits or In-Game Cinematics in StarCraft II.  If there is excessive jittering or sliding in animation, particularly long joint chains, changing this setting may help smooth out the animation.</p></li>
+						<li><p><em>Bone Reduction</em> defines how aggressively the StarCraft II Exporter should try to remove bones when optimizing the model.</p>
+							<ul>
+								<li><em>None</em> will prevent bone reduction.  This may produce a less optimal model, but makes all bones available at runtime.  This is most often used with scenes with <em>Output (Export)</em> set to <em>Model</em>, as this makes sure that all bones are available for animation.</li>
+								<li><em>Med</em> is the default, and the generally suggested option.  This will allow the exporter to optimize away any bones that appear to not contribute to the final animation and deformation of the model.</li>
+								<li><em>High</em> gives the exporter the freedom to optimize bones away if it believes that they do not significantly contribute to the animation.  Skin-weighting is not accounted for, and this can change the look of the deforming model.</li>
+							</ul>
+						</li>
+						<li><p><em>Separate Meshes</em> will keep individual nodes in the scene as separate drawable pieces in the model.  This will usually cause in-game units or doodads to draw significantly slower, and should generally be avoided.  It can, however, be a minor optimization for very large models that the camera can be inside of, such as StoryMode rooms.</p></li>
+						<li><p><em>Subdivide Meshes</em> automatically chops the model along the XY grid.  This option is used mostly with Terrain Objects.  Terrain Objects can be no larger than 800x800 3ds Max Units, or else they will encounter texturing errors.</p></li>
+						<li><p><em>Chunk Size</em> defines the dimensions of each chunk for <em>Subdivide Meshes</em>.  This value is most often at 800, the size of a Terrain Chunk in the StarCraft II Editor.</p></li>
+						<li><p><em>Subdivide Height</em> causes splits from <em>Subdivide Meshes</em> to occur along the Z axis, and not just the X and Y axes.</p></li>
+						<li><p><em>Move Objects To Zero (Export)</em> translates each model root, as defined by <em>Source (Export)</em>, so that its pivot is at the scene origin before exporting.  This allows for working on multiple models in different physical locations in the scene, but for the resulting m3 files to be centered logically.  This is used often in StarCraft II for cliff sets and doodads with multiple variations.</p></li>
+						<li><p><em>Make DDS Files</em> will compress image files assigned to <em>SC2Bitmap</em> textures using BC1 or BC3 compression in the DirectDraw Surface file format.  This way, the model will appear the same in the Previewer as it will in-game.  This option can be slow, and the block compression algorithm can introduce minor artifacts, so it may not be preferable to use the option at all times.  The type of compression is selected automatically by detecting if there is an alpha channel in the source image.</p></li>
+						<li><p><em>Cache DDS Files</em> will make the exporter only recompress DDS files for which it can detect a change in the source image.  This allows <em>Make DDS Files</em> to work faster by skipping unnecessary recompression.</p></li>
+						<li><p><em>Use Mopaq Textures</em> will cause the exporter to not use local source textures when exporting or previewing.  If the textures are not yet available in a loaded mopaq, your model may appear purple.  The exported m3 file is nearly identical to one created with <em>Commit</em>.  Texture paths will be shortened to mopaq-relative paths, and the extension will be changed to DDS if the exporter believes that the image is compressible.  If this option is unchecked, absolute filepaths defined in <em>SC2Bitmap</em> will be used to load textures, and the resultant m3 file may only be usable on the machine on which it was created.</p></li>
+                        <li><p><em>Preview</em> will show the current scene in the Cutscene Editor.  If the StarCraft II Editor is already running, it will try to use the existing editor instance; otherwise a new instance of the StarCraft II Editor will be started.  All currently visible objects in the scene that the Star2Exporter plugin knows how to handle will be included.  This button considers all options in the <em>Preview</em> rollout.  Anything in the <em>Loose Files (Previewer)</em> scene in the Cutscene Editor will be entirely replaced.</p></li>
+						<li><p><em>Preview Selected</em> behaves like <em>Preview</em> except the exporter will consider only objects in the scene which are both visible and currently selected in the main 3ds Max user interface.</p></li>
+						<li><p><em>Preview Add</em> shows the current scene in the Cutscene Editor much like <em>Preview</em>, but does not remove the current contents of the <em>Loose Files (Previewer)</em> cutscene.  If a new scene has not been loaded, the contents of the last <em>Preview</em> operation will be replaced.  In this way, it is possible to load several models in the Cutscene Editor, and then repeatedly <em>Preview Add</em> the model you are currently working on to see it in comparison, without having to replace the other models every time.</p></li>
+						<li><p><em>Preview Add Selected</em> behaves like <em>Preview Add</em> except the exporter will consider only objects in the scene which are both visible and currently selected in the main 3ds Max user interface.</p></li>
+						<li><p><em>Split Lights</em> will export <em>SC2Omni</em> and <em>SC2Spot</em> light nodes as a separate m3 file and load them as a separate item in the Cutscene Editor.  Using this option will enable <em>Update (Split Lights)</em>.</p></li>
+						<li><p><em>Update (Split Lights)</em> will export and update in the Cutscene Editor only the <em>SC2Omni</em> and <em>SC2Spot</em> light types found in the scene.  Sometimes, when working on large files, such as StoryMode sets, it can be advantageous to work only on lights, especially when changes are no longer being made to mesh.  These export times will generally be drastically faster.</p></li>
+						<li><p><em>Split Particles</em> will export <em>SC2Particle</em>, <em>SC2Ribbon</em>, <em>SC2SplineRibbon</em>, and <em>SC2Projector</em> nodes as a separate m3 file and load them as a separate item in the Cutscene Editor.  Using this option will enable <em>Update (Split Particles)</em>.</p></li>
+						<li><p><em>Update (Split Particles)</em> will export and update in the Cutscene Editor only the <em>SC2Particle</em>, <em>SC2Ribbon</em>, <em>SC2SplineRibbon</em>, and <em>SC2Projector</em> effects types found in the scene.  Sometimes, when working on large files, such as StoryMode sets, it can be advantageous to work only on effects, especially when changes are no longer being made to mesh.  These export times will generally be drastically faster.</p></li>
+						<li><p><em>Exporter Version</em> lists the exporter version.  This is useful in diagnosing and addressing issues.  A newer exporter may not be compatible with older versions of the game.  For example, the exporter released with the Heart of the Swarm, will not produce models compatible with replays from the Wings of Liberty 1.5.x patches.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

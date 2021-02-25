@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: ShadowBox- StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: ShadowBox</h1>
+                <p>For complex cinematic shots where tight control of the shadows is desired, adding a <em>ShadowBox</em> will confine the rendered shadow to a smaller area of the scene.  This allows for shadows of higher resolution in desired locations.</p>
+				
+                <h2>ShadowBox Usage</h2>
+				<p>ShadowBox nodes are rarely needed, but when one is present in the scene, the shadow will be limited to the region inside the box improving performance and shadow quality.  This special node is just a Standard Primitive Box with the name <em>ShadowBox</em> applied.  Position, Rotation and Scale can be animated like any other bone.  If more than one ShadowBox is visible, there is no defined preference, and the shadows in the scene may flicker erratically.</p>
+            </div>
+        </div>
+    </body>
+</html>

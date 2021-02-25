@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Creep - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Creep</h1>
+                <p><em>SC2 Creep</em> is a special material type for invisible geometry that can accept creep.  This material will only show when creep touches the model.  It can be used to create shaped tendrils or other surfaces for creep to flow over.  This material is often used as a layer in an <em>SC2 Composite Material</em> to make a specific mesh accept creep.  Alternately, if the whole model should accept creep, the <em>_CreepEngulfable</em> alias can be set in the Actor Data in the StarCraft II Editor.</p>
+                <h2>Creep material</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_Creep.png" title="SC2 Creep's only rollout.  It contains an unused mask texture, and a flag to cause the material to always show, regardless of settings."/>
+                    <ol class="compact">
+                        <li><p><em>Creep Mask Texture</em> *Unused*.  This texture is currently unused in game, but is exported and tracked.  The behavior of this slot may change at a later date, and it is not recommended that any texture be assigned to this slot.</p></li>
+                        <li><p><em>Creep required on Low End</em> forces the material to draw, even on Low graphics settings.  Normally extra creep materials are turned off to save performance.  However, for gameplay critical elements, like buildable ground doodads, this flag may be necessary.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

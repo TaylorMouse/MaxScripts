@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 04: Commit Models - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 04: Commit Models</h1>
+                <img src="resource/img/Progress_0004_Commit.png" title="An image showing the progress achieved during this tutorial: 3ds Max to in-game."/>
+                <p>SC2ArtTools supports adding art assets directly to a StarCraft II custom Mod including model, animation and compressed textures.  These art assets will be available to any map that is dependent on this new custom Mod.  This Tutorial contains the basic steps to get art into the game and it is not meant to be an exhaustive tutorial on how to use the editor.  For more information on using the StarCraft II Editor, there are many excellent online and community resources, such as the <a href="http://us.battle.net/sc2/en/game/maps-and-mods/">Official Guides</a>, <a href="http://www.sc2mapster.com/">SC2 Mapster</a>, the <a href="http://us.battle.net/sc2/en/forum/topic/4217173395">Battle.net Forums</a>, and <a href="http://www.teamliquid.net/forum/index.php?show_part=44">Team Liquid</a>.</p>
+				
+				<h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Before we start, you must have a StarCraft II license and <a href="http://battle.net">Battle.net</a> account to run the StarCraft II editor.  If you do not have a character, please also create one by logging into StarCraft II and following the prompts.</p>
+                    </li>
+                </ol>
+                <h2>Create a new Mod</h2>
+                <ol>
+                    <li value="2">
+                        <p>Let's get started.  Open The StarCraft II 2.0.3 Editor (or newer).  Select <em>File &gt; New</em> and then the Checkbox <em>Mod</em>.  This opens another window allowing other mods, but we will just hit <em>OK</em>.  The editor will open a new empty untitled Mod.  </p>
+                        <img class="zoom" src="resource/img/CommittingModels_0000_Initial.png" title="The New Mod dialog on The StarCraft II Editor"/>
+                    </li>
+                    <li id="SaveMod">
+                        <p>We need to save the Mod with a new name.  In the StarCraft II editor, Select <em>File &gt; Save</em> and navigate to where your StarCraft II Mod Directory is.  For 64-bit Windows users, this is likely <em>C:\Program Files (x86)\StarCraft II\Mods\</em>.  Let's name the Mod <em>TutorialWaterbat.sc2mod</em>.  At this point we need to actually close the Mod to allow 3ds Max to write to it.  This can be done by either closing the Editor completely, or using <em>File &gt; Close</em> in the Terrain Editor.</p>
+                        <img class="zoom" src="resource/img/CommittingModels_0001_SavingMod.png" title="StarCraft II Editor Save Dialog "/>
+                    </li>
+                </ol>
+                
+                <h2>Commit to the Mod</h2>
+				<ol>
+					<li value="4">
+						<p>Now you are ready to commit art to the Mod.  Open <em>'Waterbat_Tutorial05_Complete.max'</em> in 3ds Max.  This file contains meshes, materials, animation, helper objects and more.  It is ready to be exported as an asset in StarCraft II.  During the model creation step, the “preview to Cutscene Editor” functionality also exports to game format. However, for the sake of speed, it skips some important steps.  Committing the art to a Mod also converts all the textures to the Direct Draw Surface (DDS) format, performs DXT compression on them, and fixes up relative texture paths in the model.  Once this is done, the model and textures will load correctly in the game.
+						</p>
+						<img class="zoom" src="resource/img/CommittingModels_0002_LoadModel.png" title="Final Waterbat Model Loaded in 3ds Max"/>
+					</li>
+					<li>
+						<p>In 3ds Max, select from the main menu <em>SC2ArtTools &gt; Commit &gt; Commit</em>.  A browser will pop-up requesting a path to a Mod.  Please use the same path and Mod name created in <a href="#SaveMod">Step 3</a>.  Example <em>C:\Program Files (x86)\StarCraft II\Mods\TutorialWaterbat.sc2mod</em>.  The Log Floater will report all the mesh and texture conversions then end with 'model committed successfully'.  Please note that the model name is always the same as the 3ds Max file.</p>
+						
+						<p>If you are able to view contents of the assets in the Mod directly it should look like this:</p>
+						<ul>
+							<li>Base.SC2Assets\Assets\Models\Waterbat_Tutorial05_Complete.m3<br/>
+							Base.SC2Assets\Assets\Textures\Decal_StarToolsTutorial_0000_01.dds<br/>
+							Base.SC2Assets\Assets\Textures\Reflection_StarTools.dds<br/>
+							Base.SC2Assets\Assets\Textures\WaterBat_Diff.dds<br/>
+							Base.SC2Assets\Assets\Textures\WaterBat_Emis.dds<br/>
+							Base.SC2Assets\Assets\Textures\WaterBat_Envio.dds<br/>
+							Base.SC2Assets\Assets\Textures\WaterBat_Norm.dds<br/>
+							Base.SC2Assets\Assets\Textures\WaterBat_Spec.dds</li>
+						</ul>
+						<img class="zoom" src="resource/img/CommittingModels_0003_CommitModel.png" title="StarCraft II Commit"/>
+					</li>
+                </ol>
+				
+				<h2>Load the Mod in the Editor</h2>
+				<ol>
+					<li value="6">
+						<p>Now we are ready to create a map using the new Mod.  In the StarCraft II Editor, select <em>File &gt; New</em> and then select <em>Arcade Map</em>.  When you see the dependency selection screen, select <em>Custom</em> and <em>Modify</em>.  On the next screen press <em>Add Other</em>, then select <em>TutorialWaterBat.SC2Mod</em> and hit <em>OK</em>.  <em>Mods/TutorialWaterBat.SC2Mod</em> should now be in the Document Dependencies window, select <em>OK</em> once more.  With that, your newly created art will be available in the map.</p>
+						<img class="zoom" src="resource/img/CommittingModels_0004_CreateArcadeMap.png" title="StarCraft II Editor Create Arcade Map"/>
+					</li>
+                </ol>				
+                
+                <h2>Set up Data</h2>
+                <ol>
+                    <li value="7">
+                        <p>For the quickest way possible to see our Waterbat in the game, all we will do is redirect the Marauder model data to use the new Waterbat model.  To do this, open <em>Modules &gt; Data</em> in the StarCraft II Editor main menu.  Once in the Data Module, open the <em>Models tab</em> by pressing the <em>'+'</em> tab, then <em>'Edit Art And Sound Data &gt; Models'</em>  In the search field type Marauder, which will give you all the models with IDs that contain the string <em>'Marauder'</em>.  Select the one named <em>'Marauder'</em> and then edit the field <em>(Basic) Art: Model</em> by double-clicking it.  This will bring up a mini-preview and model path.  Edit the model by selecting <em>Browse</em>.  Search for </em>'Waterbat'</em>, select the <em>'Waterbat_Tutorial05_Complete.m3'</em> model file and press <em>OK</em>.  The mini preview should now show the waterbat model.  Press <em>OK</em> again and the <em>(Basic) Art: Model</em> should now point to <em>'Waterbat_Tutorial05_Complete.m3'</em>.</p>
+                        <img class="zoom" src="resource/img/CommittingModels_0005_ReplaceArtData.png" title="Replacing the unit art to Waterbat" />
+						<img class="zoom" src="resource/img/CommittingModels_0006_ReplaceArtData2.png" title="Replacing the unit art to Waterbat" />
+                    </li>
+
+                </ol>
+				<h2>Create a map to test the Waterbat</h2>
+                <ol>
+                    <li value="8">
+                        <p>In the Terrain Editor Module, select <em>Layer &gt; Units</em> and place a few Marauder on the map.  Since the Marauder data has been changed to use the Waterbat art, you will see the Waterbat mesh, animation and textures.</p>   
+                        <img class="zoom" src="resource/img/CommittingModels_0007_PlaceUnitInMap.png" title="Place the new Waterbat unit on the map." />
+                    </li>
+
+                </ol>
+				<h2>Final Result</h2>
+                <ol>
+                    <li value="9">
+                        <p>Use the <em>Test Document</em> function to test the map. Once the game loads, you would see your Waterbats and be able to control it in the game. Note that only the Unit model is changed, the Death model will pop back to the Marauder.  Portrait art is also unaffected.  It is possible to update wireframes and portrait models using these same methods or even make new units from scratch completely.</p>
+                        <img class="zoom" src="resource/img/CommittingModels_0008_FinalResult.png" title="At this point there should be a Waterbat running around the map in place of the Marauder." />
+                    </li>					
+					
+                </ol>
+                
+            </div>
+        </div>
+    </body>
+</html>

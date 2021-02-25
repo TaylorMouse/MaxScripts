@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Effect: Spline Ribbon - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Effect: Spline Ribbon</h1>
+                <p>The <em>SC2SplineRibbon</em> Node, found in the <em>Particle Systems</em> create panel, generates a special kind of ribbon, that follows a bezier curve between the start and end points.  In StarCraft II these ribbons are used for dynamic tubes, arcing lightning, and the stretchy part of the spine crawler.</p>
+                <h2>Emission</h2>
+                <div class="group">
+                    <p>The Emission rollout defines properties for the overall look of the ribbon.  This includes the smoothness, shape, length, and direction the ribbon will take on.  These values define the creation of each segment of the ribbon.  They can often be animated to control the overall shape of the ribbon.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Emission.png" title="SC2 Ribbon's Emission Rollout, responsible for the rate of creation of each segment of the ribbon."/>
+                    <ol class="compact">
+                        <li><p><em>Shape</em> defines the geometry of the Ribbon.
+                            <ul>
+                                <li><em>Planar billboarded</em> always faces the camera.</li>
+                                <li><em>Planar</em> chooses a best-guess for ribbon direction based on control point locations</li>
+                                <li><em>Cylinder</em> is a prism down the ribbon.</li>
+                                <li><em>Star</em> allows for indents in the cylinder.</li>
+                            </ul>
+                        </p></li>
+                        <li><p><em>Edges</em> declares how many sides a cylinder should have, or how many points for a star.</p></li>
+                        <li><p><em>Inner Radius</em> sets, as a percentage, how deep the indents are for a star-shaped ribbon.  100% is the degenerate case, yielding a cylinder.  0% means the inner points of the star collapse to the center of the ribbon.</p></li>
+                        <li><p><em>Max segs/sec</em> is the emission rate for the ribbon and has a direct impact on the performance characteristics of the ribbon.  Higher numbers will make the ribbon smoother, but more expensive to simulate and draw.  The estimated polygon count is generated below, though the actual count may be inaccurate for a <em>Length based</em> ribbon.</p></li>
+                        <li><p><em>Lifespan</em> defines how the spline ribbon is culled.
+							<ul>
+								<li><em>Time Based</em> will make the ribbon appear as soon as it is present in the game, and last until it has been alive the number of game seconds defined in the <em>Lifetime</em> field.  This is most useful in cases where a model is birthed and the destroyed rapidly.</li>
+								<li><em>Infinite</em> keeps the Spline Ribbon indefinitely, as if it were model geometry.</p></li>
+							</ul>
+						</li>
+                        <li><p><em>Lifetime (checkbox)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Lifetime (field)</em> is the maximum number of in-game seconds that a <em>Time Based</em> ribbon will be visible for.</p></li>
+                        <li><p><em>Local Time</em> toggles the ribbon between simulating in real time or synced with the animation.  If the ribbon should simulate in "real-time" no matter what, this checkbox should remain unchecked.  Check it if the ribbon should adjust to match the animation speed.</p></li>
+                        <li><p><em>Pre-pump</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Yaw</em> leans the first bezier control point of the ribbon along its local X-axis. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Pitch</em> leans the first bezier control point of the ribbon along its local Y-axis. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Speed</em> sets the distance of the first bezier control point of the ribbon. ( The button to the right may be used to add procedural overlay noise to this field. )</p></li>
+                        <li><p><em>Inherit Parent Velocity</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>% (Inherit Parent Velocity)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Active</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                    </ol>
+                </div>
+                <h2>Per-element Parameters</h2>
+                <div class="group">
+                    <p>Per-element parameters are unique for every segment along the ribbon.  They generally define properties that change over the lifetime of a segment, and are useful for changing the look and feel along the length of the ribbon.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Perelement.png" title="SC2 Ribbon's Element Parameters, the values that change over time for every segment."/>
+                    <ol class="compact">
+                        <li><p><em>Start (Color)</em> defines the color of the ribbon at its start-point.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Color)</em>, if enabled, defines the color of the ribbon at its mid-point.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Color)</em>, if enabled, defines the color of the ribbon at its end-point.</p></li>
+                        <li><p><em>Mid Time (Color)</em> is the percentage of the ribbon's length that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this ribbon that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Color)</em> *unused* this is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Smoothing (Color & Alpha)</em> *unused* this is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Start (Alpha)</em> defines the opacity (from 0-255) of the ribbon at its start-point.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Alpha)</em>, if enabled, defines the opacity (from 0-255) of the ribbon at its mid-point.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Alpha)</em>, if enabled, defines the opacity (from 0-255) of the ribbon at its end-point.</p></li>
+                        <li><p><em>Mid Time (Alpha)</em> is the percentage of the ribbon's length that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this ribbon that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Alpha)</em> *unused* this is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Start (Size)</em> defines the width of the ribbon polygons at its start-point.  It will interpolate from this value to either of the subsequent values, if they are enabled.</p></li>
+                        <li><p><em>Mid (Size)</em>, if enabled, defines the width of the ribbon polygons at its mid-point.  It is exactly this value at <em>Mid Time</em>.</p></li>
+                        <li><p><em>End (Size)</em>, if enabled, defines the width of the ribbon polygons at its end-point.</p></li>
+                        <li><p><em>Mid Time (Size)</em> is the percentage of the ribbon's length that it should strike the <em>Mid</em> value.  The <em>Shared</em> button to the right, if depressed, will keep this value in sync with all other <em>Mid Time</em> values in this ribbon that have the <em>Shared</em> button depressed.</p></li>
+                        <li><p><em>Hold Time (Size)</em> *unused* this is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Smoothing</em> *unused* this is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Start (Rotation)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Mid (Rotation)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>End (Rotation)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Mid Time (Rotation)</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Force CPU Simulation</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Accurate GPU Tangents</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                    </ol>
+                </div>
+                <h2>Misc</h2>
+                <div class="group">
+                    <p>Misc values are scattered in use-case.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Misc.png" title="SC2 Ribbon's Miscellaneous properties."/>
+                    <ol class="compact">
+                        <li><p><em>World Space</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Accept Lighting</em> *unused* This is a stub from shared particle UI.</p></li>
+                        <li><p><em>Overlay Offset</em> adjusts the phase for the procedural overlay noise.  If the noise for two ribbons is too synchronized, adjusting this value can make them look more natural.</p></li>
+                        <li><p><em>LOD Cut</em> denotes which graphical setting level the Ribbon will no longer be displayed at.  If critical for gameplay, leaving this at <em>'None'</em> is prudent.  Otherwise, it is useful for performance scaling.</p></li>
+                        <li><p><em>LOD Reduction</em> denotes which graphical setting at which the ribbon will start using fewer segments.  For each setting-level the user is at below this setting, 25% of the segments will be culled to preserve performance.</p></li>
+                        <li><p><em>Scale Time by Parent Model</em> determines whether or not the ribbon should simulate faster or slower when the model is told to play an animation faster or slower.  If this checkbox is off, the ribbon will simulate in real-time seconds instead of game seconds.</p></li>
+                        <li><p><em>Force CPU Simulation</em> *unused*  This is a stub from shared particle UI.</p></li>
+                        <li><p><em>UV2 Rand Offset</em> *unused*  This is a stub from shared particle UI.</p></li>
+                    </ol>
+                </div>
+                <h2>Physics</h2>
+                <div class="group">
+                    <p>The start and end points of a spline ribbon simulate like particles or standard ribbon segments.  They follow a basic physical model.  Unlike particles or ribbon segments, however, they cannot collide.  These properties control the inputs into the simulation, and are uniform across both the start and end point.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Physics.png" title="SC2 Ribbon's Physics values, which govern the simulation of each segment of the ribbon."/>
+                    <ol class="compact">
+                        <li><p><em>Mass</em> *unused*  This is a stub from shared particle UI.</p></li>
+                        <li><p><em>Gravity</em> is the acceleration along the Up-Vector for any given element.</p></li>
+                        <li><p><em>Mass times size multiplier</em> *unused*.  This is a stub from shared ribbon UI.</p></li>
+                        <li><p><em>Multiply by map gravity</em> tells the ribbon to factor in the gravity in the map for its calculations.  If it is important for a ribbon to look exactly one way, leave this off.  If it is preferred that the ribbon looks like it has mass and integrates into the environment, this should be on.</p></li>
+                        <li><p><em>Drag</em> *unused*  This is a stub from shared particle UI.</p></li>
+                    </ol>
+                </div>
+                <h2>Noise</h2>
+                <div class="group">
+                    <p>Noise is a post-simulation change to the appearance of the ribbon.  It is used to add seemingly random variation to the ribbon, while still allowing the user to operate on simple, editable, and understandable values for the rest of the ribbon.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Noise.png" title="SC2 Ribbon's noise properties, which control the randomization of the ribbon to add visual interest."/>
+                    <ol class="compact">
+                        <li><p><em>Frequency</em> regulates the rate of change in the noise pattern.  Higher values will have more varied noise, while lower values will induce less change over the course of the system.</p></li>
+                        <li><p><em>Amplitude</em> scales the effect of noise on the system.  The higher the number, the further from an element's original point it can be pushed.  Note that noise is applied after tangents are generated, and therefore, high amplitudes can potentially create skewed lighting results.</p></li>
+                        <li><p><em>Speed</em> alters the speed at which the offset values travel through the noise field.  A value of 0 will have static noise, while higher values will animate the noise more and more quickly.</p></li>
+                        <li><p><em>Edge</em> mutes the noise closer to the emitter.  A value of 0, will have points being pushed immediately after being emitted, while a value of .5 will make points not receive the full amplitude of the noise until halfway down the length of the ribbon.</p></li>
+                    </ol>
+                </div>
+                <h2>Forcefield Selection</h2>
+                <div class="group">
+                    <p>The Forcefield rollout is used to govern the interaction between <a href="Node_SC2Force.html">SC2Force</a> nodes and the ribbon start and end points.  Interactions between spline ribbons and forces are not well defined, and may cause the spline ribbon to not show up.  <em>Using this rollout is highly discouraged.</em></p>
+                    <img class="detail focus" src="resource/img/Node_SC2SplineRibbon_Forcefield.png" title="SC2 Ribbon's reaction to various types of forces in the game world."/>
+                    <ol class="compact">
+                        <li><p><em>Local Channels</em> lists the mask for particle/force interaction.  Elements from this system will interact only with <em>SC2Force</em> nodes that have at least one of the same channels enabled.</p></li>
+                        <li><p><em>World Profile</em> is a dropdown contain common sets of World Channels, to quickly choose common profiles.  This is more useful from the perspective of the force, rather than the receiver.</p></li>
+                        <li><p><em>World Channels</em> behave like <em>Local Channels</em> but across multiple objects.  For example, a flag fluttering in the wind would be enlisted in the <em>Wind</em> channel, and a nuclear explosion would use the <em>Wind</em> channel as well.  The result is that the explosion would push around the flag.  If they were not both in wind, the flag would not move.  This is for both artistic reasons and performance.  Common usage of the channels can be seen in the <em>World Profile</em> drop down.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

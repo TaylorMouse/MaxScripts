@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Displacement - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Displacement</h1>
+                <p>The <em>SC2 Displacement Material</em> is used to create shockwave, heatwave, glass, shield, and other distortion effects.  Displacement materials are often used to emphasize short, powerful burst effects in StarCraft II, like weapon impacts.  The displacement effect is artistic in nature, and does not follow a direct physical model.</p>
+                <h2>Displacement</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_Displace.png" title="SC2 Displacement's only rollout.  It controls the direction and intensity of the distortion effect"/>
+                    <ol class="compact">
+                        <li><p><em>Priority</em> defines the sorting relationship between this material and other transparent materials in the model file.  Within a given model, materials are drawn in order from highest priority value to lowest. Sorting for materials of equal priority is undefined.  Priorities have no effect across multiple models.</p></li>
+                        <li><p><em>Strength (Value)</em> amplifies or reduces the effect of the distortion.  Values of greater magnitude result in more extreme distortion.  Negative values are valid and reverse the effect.</p></li>
+                        <li><p><em>Normal map</em> perturbs the distortion effect per-pixel by using a tangent-space normal map.  An <em>SC2 Bitmap</em> must be used.</p></li>
+                        <li><p><em>Strength (Map)</em> masks out the intensity of the distortion effect.  This should be an <em>SC2 Bitmap</em> set to use only a single channel: R, G, B, or A.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

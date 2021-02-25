@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Texmap Types: SC2 Bitmap - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Texmap Types: SC2 Bitmap</h1>
+                <p><em>SC2 Bitmap</em> is the core texture type for the StarCraft II Art Tools.  All textures should be assigned as TGA or DDS files through this bitmap type.  Conversion from TGA to game-ready DDS files is handled automatically through the <em>Commit</em> process if necessary.  Most numeric fields accept animation.  It is important to recognize that StarCraft II models resolve textures by base filename only even across multiple mopaqs.  This means that texture names should be unique, unless they are intended to be shared between models, otherwise they will overwrite and conflict with each other.</p>
+                
+                <h2>Coordinates</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Coordinates.png" title="Rollout for setting the way to apply the texture to the surface."/>
+                    <ol class="compact">
+                        <li><p><em>Mapping</em> specifies the coordinates with which the texture is sampled when drawing.  While almost all settings have a use, <em>Explicit UV 1</em> is by far the most common.</p>
+                            <h5>Explicit UV Types</h5>
+                            <ul>
+                                <li>
+                                    <p>This family of mapping types match up directly with the <em>Map Channel</em> settings in any UV Modifier.  Any mesh a material is applied to must provide the selected UV Channel.  <em>Explicit UV #</em> corresponds to <em>#:map</em> in the <em>Tools &gt; Channel Info...</em> dialog.  There may be errors on some video cards if a non-existent channel is used, or <em>Num Faces</em> for the channel does not match the number for the <em>mesh</em> channel.</p>
+                                    <ul>
+                                        <li><p><em>Explicit UV 1</em> is the most common mapping channel.</li>
+                                        <li><p><em>Explicit UV 2</em> is conventionally used for defining Decals in StarCraft II.</p></li>
+                                        <li><p><em>Explicit UV 3</em> is an extra UV Channel that can be used when necessary.  This channel is often used for warp-in effects or story-mode light maps in StarCraft II.</p></li>
+                                        <li><p><em>Explicit UV 4</em> is an extra utility channel.  Using too many UV channels can exhaust certain shader resources.  Using this channel may not yield valid results on all graphics configurations.</p></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <h5>Environment Types</h5>
+                            <ul>
+                                <li>
+                                    <p>These mapping methods use the surface normal to lookup into either a cube or sphere map.  Cube maps should be provided as a DDS file assuming Y-Up and declaring DDSCAPS2_CUBEMAP in the header.  These mapping types are only supported on the <em>Environment</em> slot in <em>SC2 Standard Material</em>.</p>
+                                    <ul>
+                                        <li><p><em>Reflective Cubic Env</em> reflects the view vector across the surface normal then uses the result to do a tex3D lookup on the provided texture.  This is used to simulate a reflective surface.</p></li>
+                                        <li><p><em>Reflective Spherical Env</em> reflects the view vector across the surface normal then uses the X and Y components of the resultant vector to do a lookup into the provided texture.  This is often used to approximate a simple glossy surface.</p></li>
+                                        <li><p><em>Cubic Environment</em> uses the surface normal to perform a direct tex3D lookup on the provided cube map. This can be used to seamlessly map a sphere, or present a fall skydome, but carries additional overhead beyond an explicit UV map.</p></li>
+                                        <li><p><em>Spherical Environment</em> uses the world X (side) and Z (up) coordinates surface normal to perform a direct lookup into the defined texture.</p></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <h5>Projective Types</h5>
+                            <ul>
+                                <li>
+                                    <p>Projective mappings use the mesh's coordinates on the given plane to perform the texture lookup.  The mesh does not require any explicit mapping, but there may be streaking when viewed from an unexpected angle.  Projective mapping occurs after skinning transforms, so animated meshes may experience warping.</p>
+                                    <ul>
+                                        <li><p><em>Planar Local Z</em> is a top-down mapping that moves along with the origin of the model.</p></li>
+                                        <li><p><em>Planar World Z</em> is a top-down mapping that is stationary with respect to the world.</p></li>
+                                        <li><p><em>Planar Local X</em> projects the texture from the <em>Left</em> or <em>Right</em> views in 3ds Max.</p></li>
+                                        <li><p><em>Planar Local Y</em> projects the texture from the <em>Front</em> or <em>Back</em> views in 3ds Max.</p></li>
+                                        <li><p><em>Planar World X</em> projects the texture from the side from standard game view.</p></li>
+                                        <li><p><em>Planar World Y</em> projects the texture along the forward axis from standard game view.</p></li>
+                                        <li><p><em>Screen Space</em> makes a texture appear stationary with respect to the camera.  This is stretched to match the current resolution and aspect ratio.</p></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <h5>Atlas Types</h5>
+                            <ul>
+                                <li>
+                                    <p>Triplanar atlas mappings are special mapping types, used primarily for Cliffs in StarCraft II.  The provided texture is queried once for each primary axis.  The atlas is provided as two textures, one for both sides, and another for the top.  The side texture should have the suffix _00, while the texture for the top should share the same root name, but be suffixed with _01 (eg: SC2_AiurCliff_00.tga and SC2_AiurCliff_01.tga). Triplanar Atlasing is a relatively expensive technique and should be used sparingly.  Triplanar mapping occurs after skinning transforms, so animated meshes may experience warping.</p>
+                                    <ul>
+                                        <li><p><em>Tri Planar Local</em> will project local to the origin of the model.</p></li>
+                                        <li><p><em>Tri Planar World</em> is a stationary projection in world space.</p></li>
+                                        <li><p><em>Tri Planar World Local Z</em> is the primary mapping method for Cliff materials in StarCraft II.  The vertical component of the projection is local to the model.  This makes it so that cliffs react properly to changes in the height of the terrain.</p></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><p><em>Offset (UV)</em> allows positioning or scrolling UV coordinates in relation to the original 0 to 1 space.  This offset is independent of tiling parameters.  Positive values move the image up and to the right.</p></li>
+                        <li><p><em>Tiling (UV)</em> scales the UV coordinates such that it tiles the defined number of times in relation to the original 0 to 1 UV Space.  The origin of the scaling operation is at .5, .5 in UV space.</p></li>
+                        <li><p><em>Tile (UV)</em> defines whether to repeat the texture when querying beyond 0 to 1 space, or to clamp the query to the border pixels of the texture.</p></li>
+                        <li><p><em>Angle (UVW)</em> performs a full rotational transform on the UV space.  The W value for the UV plane is assumed to be 1, as currently the W value is not exported.  The W field is the most commonly used value, as this visually spins the texture around the center of the default mapping space.</p></li>
+                        <li><p><em>Offset (XYZ)</em> is available only when using Triplanar mapping.  This pushes the projections around.  For Cliff materials, the Z value normally set to 800, to seat the texture against the bottom of the standard 8 in-game unit high cliffs that line unplayable low ground.  This value is a plain addition to the query point, so positive values appear to move the texture downward.</p></li>
+                        <li><p><em>Scale (XYZ)</em> is available only when using Triplanar mapping.  These values are most often set to .075 for cliffs so that they tile over a period of approximately 13 in-game units, as most of the tallest cliffs in StarCraft II span 12 units, and this provides some clearance for texture bleeding.</p></li>                        
+                    </ol>
+                </div>
+                
+                <h2>Color Operations</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Color.png" title="This rollout manipulates the color properties of the texture."/>
+                    <ol class="compact">
+                        <li><p><em>Channel</em> selects which channels of the texture to use.  This allows for packing of multiple types of textures in a single map, or reusing channels as necessary.  <em>SC2 Bitmap</em> always returns a 4-component RGBA color.  For single-channel values, it is as-if their single value is replicated for all 4 channels.  This behavior is notable because certain layers expect a single mask value, and these are generally pulled from the resulting A channel.  For example, for the <em>Diffuse</em> layer, or an <em>Emissive</em> layer set to <em>Team Color Add</em>, the alpha channel is used to control the amount of Team Color that should show.</p>
+                            <ul>
+                                <li><p><em>Use RGB</em> delivers the basic color channels of the texture.  The A channel is assumed to be 1.</p></li>
+                                <li><p><em>Use RGBA</em> returns all four channels of the texture exactly as authored.</p></li>
+                                <li><p><em>Use R</em> uses only the red channel of the texture.</p></li>
+                                <li><p><em>Use G</em> uses only the green channel.  For simple single-channel masks, G is commonly used because texture compressors often favor fidelity in the green channel.  It is less likely to see compression artifacts.</p></li>
+                                <li><p><em>Use B</em> uses only the blue channel.</p></li>
+                                <li><p><em>Use A</em> uses only the alpha channel.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Invert</em> performs the math operation 1-color before delivering the result to shader.  This happens before the multiply, add, and clamp operations but after Team Color is applied.</p></li>
+                        <li><p><em>Clamp</em> restrains the result values to the 0 to 1 range, and prevents negative or overbright values.  This occurs after invert, multiply, and add operations, but before any <em>Fresnel</em> operations.</p></li>
+                        <li><p><em>RGB Multiply</em> applies a direct multiplication on the color values.  This occurs after inversion but before add and clamp.</p></li>
+                        <li><p><em>RGB Add</em> offsets the color value by the specified value.  This occurs after inversion and multiplication, but before clamp.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Bitmap Parameters</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Bitmap.png" title="Rollout for specifying and viewing the image file for the texture."/>
+                    <ol class="compact">
+                        <li><p><em>Bitmap</em> selects and displays the filepath to the currently assigned texture.  This texture should either be in TGA or DDS format.  OGG Theora videos may also be used, but this is processor-intensive, and should be used sparingly, because it negatively affects low-performance computers.  The 3ds Max bitmap-path resolution rules are honored by <em>SC2 Bitmap</em>, so images in the same folder as the max file should still be valid, even if the path is invalid.  However, it is strongly recommended that the target of texture path always be a valid texture.  Images dimensions should be a power-of-two size; eg: 128, 256, 512, 1024, and 2048.</p></li>
+                        <li><p><em>Reload</em> forcibly refreshes the 3ds Max view of the image.  This should occur automatically most of the time on a texture change.</p></li>
+                        <li><p><em>View</em> opens a window to preview the image within 3ds Max.</p></li>
+                        <li><p><em>Render-to-texture source</em> specifies a channel to receive a texture generated by the game.  If the game provides a texture in this channel, it will override the texture provided by <em>Bitmap</em>.  These channels can be set up in either the Cutscene Editor, or Triggers.  They are most often used for video panels and similar effects in StarCraft II.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Fresnel</h2>
+                <p>Fresnel settings control the appearance of the texture based on the normal direction of the surface.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Fresnel.png" title="Settings for shaping the current SC2 Bitmap based on the normal direction of the surface."/>
+                    <ol class="compact">
+                        <li><p><em>Fresnel mode</em></p>
+                            <ul>
+                                <li><p><em>None</em> disables the effect.  All the parameters in this rollout become unused.</p></li>
+                                <li><p><em>Standard</em> makes the texture favor surfaces pointing perpendicular to the camera direction.  This has a visual effect of highlighting the outer edges of a model.</p></li>
+                                <li><p><em>Inverted</em> masks the texture so it is most visible when the surface normal is directly facing the camera.  This has a visual effect of highlighting the core of a model.</p></li>
+                                <li><p><em>Constant Standard</em> calculates the mask by using the surface normal and a single arbitrary axis.  By default this is the world Z axis, but it can be reoriented using the <em>Rotation</em> field.  This favors surfaces pointing perpendicular the defined axis.</p></li>
+                                <li><p><em>Constant Inverted</em> calculates the mask by using the surface normal and a single arbitrary axis.  By default this is the world Z axis, but it can be reoriented using the <em>Rotation</em> field.  The texture appears on surfaces facing towards the defined axis.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Fresnel exponent</em> controls the falloff of the fresnel effect by applying a power curve.  This occurs before min and max operations, and as such, the values of <em>Fresnel Min</em> and <em>Fresnel Max</em> may be relative to a non-linear term.  Changing this field, may change their apparent values.</p></li>
+                        <li><p><em>Fresnel min</em> may have two different meetings depending on the value of the <em>Clamp Position</em> parameter.  When <em>Clamp Position</em> is enabled, this value represents the point along the fresnel falloff where the texture will no longer be visible.  When clamping is disabled, this value represents the minimum brightness of the texture after the fresnel term.</p></li>
+                        <li><p><em>Fresnel max</em> may have two different meetings depending on the value of the <em>Clamp Position</em> parameter.  When <em>Clamp Position</em> is enabled, this value represents the point along the fresnel falloff where the texture will be fully visible.  When clamping is disabled, this value represents the maximum brightness of the texture after the fresnel term.</p></li>
+                        <li><p><em>Clamp position</em> changes the behavior of the fresnel effect's brightness.  When disabled, the texture fades from a minimum intensity to a maximum intensity, as defined by <em>Fresnel Min</em> and <em>Fresnel Max</em>.  When enabled, the texture is instead faded in from 0 to 1 from the points where the fresnel brightness would have been clamped by the same values.  Enabling clamp is useful when the texture is intended to disappear completely from certain angles.</p></li>
+                        <li><p><em>Do not mirror</em> prevents the effect from showing up on both sides of the mesh.  While this is not usually noticeable on a view-aligned fresnel effect, it can be an undesirable artifact on the <em>Constant</em> variants.</p></li>
+                        <li><p><em>Local transform</em> makes the fresnel effect occur in local space.  The <em>Rotation</em> and <em>Mask</em> effects are rotated with the model.  This can be useful if the effect, for example, should be aligned with a cylinder, no matter which way the cylinder is rotated.</p></li>
+                        <li><p><em>Rotation</em> realigns the vector used to calculate the fresnel effect.  For the <em>Constant</em> fresnel variants the default vector is facing along the Z axis.  In relation to the default view, the first parameter yaws the effect left and right.  The second parameter pitches the effect up and down.</p></li>
+                        <li><p><em>Mask</em> restricts movement of a non-constant fresnel vector along certain axes.  For example, a value of <em>1.0</em> in the third component would completely prevent the fresnel effect from moving up and down as the camera angle changes.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Animation</h2>
+                <p>Textures can be animated using one of two methods.  The user can provide either an OGG Theora video in the <em>Bitmap</em> slot, which will enable the <em>AVI</em> parameters of this rollout.  Full video processing can be very expensive, and should be used sparingly.  Alternately a "flipbook" TGA providing a regular grid of animated images can be used.  For the TGA, the first frame is in the top left, and the order continues from left to right, top to bottom.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Texmap_SC2Bitmap_Animation.png" title="For special, animated texture, this rollout can be used to control which frame is being played."/>
+                    <ol class="compact">
+                        <li><p><em>Play (AVI)</em> causes the video to progress forward when enabled.  When disabled, the video will pause, but not return to the <em>Start frame</em>.  This parameter can be animated.  Unlike flipbooks, AVIs are fire and forget.  They progress on their own and the current frame cannot be explicitly chosen.</p></li>
+                        <li><p><em>Restart (AVI)</em> will, when transitioning from unchecked to checked, cause the video to return the <em>Start frame</em>.</p></li>
+                        <li><p><em>SyncTiming (AVI)</em> makes the video progress forward one frame per frame of animation in the model.  Normally the video attempts to progress in real time.</p></li>
+                        <li><p><em>Framerate (AVI)</em> sets how many frames per second the video is intended to play at.</p></li>
+                        <li><p><em>Start frame (AVI)</em> specifies the first frame of the video to use when playing back.  This is also the destination frame after a <em>Restart (AVI)</em>.</p></li>
+                        <li><p><em>Stop frame (AVI)</em> specifies the frame on which the <em>Loop</em> action should occur.  A value of <em>-1</em> here will use the last frame of the video.</p></li>
+                        <li><p><em>Loop (AVI)</em> determines what action should be done when the video reaches its last frame.  A value of <em>Loop</em> will restart at <em>Start frame (AVI)</em>.  A value of <em>Hold</em> will present the frame defined by <em>Stop frame (avi)</em> until explicitly restarted.</p></li>
+                        <li><p><em>Current frame (Flipbook)</em> sets the frame to display.  This parameter is almost always animated when used.  The total number of frames is defined by <em>Rows (Flipbook)</em> multiplied by <em>Columns (Flipbook)</em>.  When this number exceeds the total number of frames in the flipbook, it will loop back to the first frame, provided that the <em>Tile</em> parameters of the bitmap are enabled.</p></li>
+                        <li><p><em>Rows (Flipbook)</em> defines the number of images that appear vertically in a flipbook texture.</p></li>
+                        <li><p><em>Columns (Flipbook)</em> defines the number of images that appear horizontally in a flipbook texture.</p></li>
+                        <li><p><em>Use Particle Flipbooks (Flipbook)</em> enables the <em>Flipbook</em> rollout of an <em>SC2 Particle System</em>.  Without this flag, particle flipbooks will not function properly.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

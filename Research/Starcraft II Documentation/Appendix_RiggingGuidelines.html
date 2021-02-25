@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Animation Guidelines - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Animation Guidelines</h1>
+                <p>Rigs for models for StarCraft II can be very flexible.  As long as the data can be distilled to a value on a controller at a time, the Exporter will try its best to acquire and export that value.  Transforms, Material Properties, and Properties on StarCraft II specific Nodes can all be animated.</p>
+                
+                <h2 id="Bones">Bones</h2>
+                <ul>
+                    <li>
+                        <p>The case-insensitive prefix "bone_" can be applied to an otherwise exportable geometry to make it export as a bone only.  The geometry on it will be ignored.</p>
+                    </li>
+                    <li>
+                        <p>The presence of the case-insensitive text "foot" in a bone object name will tag the hierarchy of bones leading up to it to be compressed less aggressively.  This can be used to prevent foot-sliding artifacts from animation compression.</p>
+                    </li>
+                    <li>
+                        <p>Any transform in a hierarchy can potentially become a bone at runtime.  The StarCraft II Exporter reserves the right to collapse away bones it deems unnecessary.</p>
+                    </li>
+                    <li>
+                        <p>The <em>boneScaleType</em> property on 3ds Max bones is not supported, and must be set to <em>#none</em> for all bones if you want to accurately see what your mesh will look like in game while inside 3ds Max.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="SkinWeights">Skin Weights</h2>
+                <ul>
+                    <li>
+                        <p>Nodes in Max can be animated directly.  StarCraft II does not require an explicit skeletal hierarchy.</p>
+                    </li>
+                    <li>
+                        <p>Geometry can be linked to a control bone as an explicit rigid bind.  The exporter will collapse unanimated transforms where it deems it reasonable.</p>
+                    </li>
+                    <li>
+                        <p>The mesh is assumed to be at bind pose at Frame 0.</p>
+                    </li>
+                    <li>
+                        <p>Skin Modifiers can be used as well, but with a maximum of 4 influences per vertex.  In the case of more than 4 influences, the 4 largest weights will be used.</p>
+                    </li>
+
+                    <li>
+                        <p>Skin weights are always normalized.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="Controllers">Controllers</h2>
+                <ul>
+                    <li>
+                        <p>Controllers for Node transforms and animatable parameters on StarCraft II Nodes and Materials will be exported.</p>
+                    </li>
+                    <li>
+                        <p>Any controller that can be consistently queried at an arbitrary time should work with the StarCraft II Exporter. The "at time" MaxScript command can be used to check this behavior.</p>
+                    </li>
+                    <li>
+                        <p>All controllers are frame-sampled at export if keyframes cannot be properly resolved.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="Animation">Animation</h2>
+                <ul>
+                    <li>
+                        <p>Frame 0 must be clean.  It should be static and at bind pose.  Odd deformation and scaling issues can occur if this is not the case.</p>
+                    </li>
+                    <li>
+                        <p>Because Frame 0 must be clean, all animations should occur in positive frame rangers.</p>
+                    </li>
+                    <li>
+                        <p id="#NoOverlap">No two animations are allowed to have overlapping frame ranges, and no two animations should ever share a starting or ending frame.  Many tools are liable to break, and data may be lost, if this restriction is not honored.</p>
+                    </li>
+                    <li>
+                        <p>No transform can be animated to have a scale of 0.  This will produce invalid animations and the Exporter will complain.</p>
+                    </li>
+                    <li>
+                        <p>Looping animations should avoid large, identifiable movements during the first few frames.  When a new animation is triggered, the animation system overlays it on top of the existing animation.  Large motions can often bleed through, producing unwanted visual effects.  Fade times can be defined in Data to counteract this when desired.</p>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

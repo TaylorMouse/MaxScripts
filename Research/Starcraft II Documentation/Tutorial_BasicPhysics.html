@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 06: Physics - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 06: Physics</h1>
+                <img src="resource/img/Progress_0006_BasicPhysics.png" title="An image showing the progress achieved during this tutorial: A WaterBalloon mesh to physics driven falling WaterBalloons in Cutscene Editor"/>
+                <p><em>StarCraft II</em> uses the <em>'Domino Physics Engine'</em> for driving some of the explosion debris and ragdoll deaths that are in the game.  This tutorial introduces you to setting up physics objects that fall from the air like explosion debris.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'WaterBalloonDrop_Tutorial01_Start.max'</em>.  It is basically same as the file at the end of the   <em>'Basic Particles'</em> tutorial except the viewport is zoomed out more.  We will use the WaterBalloon mesh as the starting point for this tutorial.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for the WaterBalloonDrop_Tutorial01_Start.max."/>
+                    </li value="2">
+                </ol>
+                <h2>Physics Object Creation</h2>
+                <ol>
+                    <li value="2">
+                        <p>We will start by creating a <em>'SC2Physics'</em> helper.  On export, any node in 3ds Max with a <em>'SC2Physics'</em> helper linked to it would be converted into a physics object usable for the Domino Physics Engine.  The button for creating a <em>'SC2Physics'</em> helper is located in the <em>'Create'</em> panel, under <em>'Helpers/Standard'</em>.  Press the <em>'SC2Physics'</em> button, change <em>'Shape Type'</em> to <em>'Sphere'</em> and <em>'Radius'</em> to <em>'13.5'</em>.</p> 
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0001_NewSC2PhysicsNode.png" title="In the Create Panel, under 'Helpers' you will find the SC2Physics helpers."/>
+                    </li>					
+                    <li>
+                        <p> Next, left-click and drag in the viewport until the sphere that represents the <em>'SC2Physics'</em> helper is centered around the <em>'WaterBalloon'</em> mesh as shown.  Release the left mouse button and a <em>'SC2Physics'</em> helper is created.  If the  <em>'SC2Physics'</em> helper still isn't aligned with the <em>'WaterBalloon'</em> mesh, just reposition by moving it.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0002_CreateAndAlign.png" title="Click in the viewport to create a SC2Physics helpers." />
+                    </li>
+					<li>
+                        <p>We now need to show the exporter which node the <em>'SC2Physics'</em> helper should represent, which in our case is the <em>'WaterBalloon'</em> mesh.  To do that, link the <em>'SC2Physics'</em> helper to the <em>'WaterBalloon'</em> mesh.  </p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0003_Linking.png" title="Link the SC2Physics helper to the WaterBalloon mesh." />
+                    </li>
+					<li>
+                        <p>We should also lift the WaterBalloon further up into the air so it has some room to fall.  Do so by selecting the <em>WaterBalloon</em> mesh, right-click on the <em>'Select and Move'</em> button and type in <em>'100'</em> for the <em>'Z-axis'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0004_Position.png" title="The initial state of the 3ds Max scene for the WaterBalloon."/>
+                    </li>
+					<li>
+                        <p>Go to <em>'SC2ArtTools &gt; Export &gt; Preview'</em> and launch the <em>Cutscene Editor</em> to preview the model.  In the Cutscene Editor, the WaterBalloon is playing its 'Stand' animation but it isn't falling.  What could be wrong?</p>		
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0000_NotFalling.png" title="In the Cutscene Editor, the WaterBalloon is not falling." />
+					</li>
+					<li>	
+						<p>Let's confirm that the WaterBalloon has been converted into a physics object.  In the Cutscene Editor, toggle On <em>'Render &gt; Show Geometry &gt; Physics'</em>.  A blue sphere, which is the exported representation of the <em>'SC2Physics'</em> helper from 3ds Max, is now visible and it is rotating along with the WaterBalloon.  If the WaterBalloon is a physics object, why then isn't it falling? The answer lies in the fact that it has yet to be assigned the correct <em>Physics State</em>.</p>						
+						<img class="zoom" src="resource/img/BasicPhysics_Preview_0001_RenderPhysicsShape.png" title="Show physics shape in the Cutscene Editor" /><br/>
+						<img class="zoom" src="resource/img/BasicPhysics_Preview_0002_BluePhysicsShape.png" title="There is a blue Physics shape.  Why doesn't it work?" />
+                    </li>
+                </ol>
+                <h2>Physics State</h2>
+                <ol>
+                    <li value="8" id="Physics State">
+                        <p class="caption">In <em>StarCraft II</em>, a physics object could be in one of three physics states: <em>Static</em> which is an object that does not move or react to physics, but other physics can react to it; <em>Active Kinematic</em> which does not react to physics, instead, it is moved by keyframed animation and used solely to cause reaction in other physics objects; <em>Active Dynamic</em> which can both react and act on other physics objects.  By default a newly created <em>'SC2Physics'</em> helper is <em>Active Kinematic</em>.  In order for our WaterBalloon to react to physics, we would need to change it to <em>Active Dynamic</em>.</p>
+						<p>Back in 3ds Max, with the <em>'SC2Physics'</em> helper selected, in the <em>'Modify'</em> panel, scroll down to the <em>'Simulation Properties'</em> rollout.  Turn off <em>'Inherit Physics State'</em> and make sure the radio button is on <em>'Active'</em>.  The <em>'Key'</em> check button should also be depressed which indicates that it is in <em>Dynamic</em> physics state.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0005_DynamicState.png" title="Set the SC2Physics helper to Dynamic Physics State." />
+                    </li>
+					<li>
+                        <p>Preview again.  The WaterBalloon should fall from the air as soon the Cutscene Editor is updated.  If the ground plane isn't already showing in the Cutscene Editor, you can display it by checking toggle On <em>'Render &gt; Show Ground &gt; Terrain'</em>.  With the ground plane showing, the WaterBalloon should collide with it and come to a stop.  For this WaterBalloon though, it may be more appropriate if it bounces a little before coming to a stop.  To do that, we will give it a different <em>'Physics Material'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0003_ShowGround.png" title="Make sure the ground in displayed in the Cutscene Editor." /><br/>
+						<img class="zoom" src="resource/img/BasicPhysics_Preview_0004_CollideGround.png" title="The WaterBallon collides with the ground and stop." />
+                    </li>
+                </ol>
+				<h2>Physics Materials</h2>
+				<ol>
+                    <li value="10" id="PhysicsMaterials">
+                        <p class="caption">To get the WaterBalloon to bounce more, we would assign a <em>Physics Material</em> with a higher <em>Restitution</em> value to it.  With the <em>'SC2Physics'</em> helper selected, in the create panel, scroll to the <em>Physics Material</em> section and change the material presets in the dropdown box to <em>'Rubber'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0006_PhysicsMaterials.png" title="Assign Rubber as the Physics Material." />
+                    </li>
+					<li>
+                        <p>After another Preview, you would see in the Cutscene Editor that the WaterBalloon bounces a few times before coming to a rest.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0005_Bounce.png" title="The WaterBallon collides with the ground and bounces a few times." />
+                    </li>
+                </ol>
+				
+				<h2>Collision Filter</h2>
+				<ol>
+                    <li value="12" id="CollisionFilter">
+                        <p class="caption">Now let's see what happens if we add another WaterBalloon.  In 3ds Max, double-click on the WaterBalloon to select it and all the parts linked to it including the particles and <em>'SC2Physics'</em> helper.  Shift-move everything up along the <em>'Z-axis'</em> to make a copy.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0007_Copy.png" title="Make a copy of the WaterBalloon and all the parts linked to." />
+                    </li>
+					<li>
+                        <p>Preview and there are now two WaterBalloons falling from the air.  However, when they cross paths, they are going through each other.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0006_Intersects.png" title="The two WaterBalloons intersects each other." />
+                    </li>
+					<li>
+                        <p>The reason this is happening is because by default, <em>'SC2Physics'</em> helpers are created with only the <em>'Collidable'</em> <em>Collision Filter</em> enabled.  This is faster in performance, but to have these two <em>Dynamic</em> physics objects interact with each other, we need to enable the <em>'Stackable'</em> <em>Collision Filter</em>.  Go through the two <em>'SC2Physics'</em> helpers and check the <em>'Stackable'</em> checkbox in the <em>'Collision Filter'</em> section.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Viewport_0008_Stackable.png" title="Enable the 'Stackable' Collision Filter for both SC2Physics helpers." />
+                    </li>
+					<li>
+                        <p>Preview once again and the two WaterBalloons should now bounce off of each other as well as the ground.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0007_DynamicBounce.png" title="The two WaterBalloons intersects each other but instead bounces off of each other." />
+                    </li>
+					<li>
+                        <p>If you like, experiment with different <em>Physics Materials</em> as in <a href="#PhysicsMaterials">Step 10</a> and make a few more copies of the WaterBalloon by repeating <a href="#CollisionFilter">Step 11</a>.  A max file with ten copies of the WaterBalloons can be found in <em>WaterBalloonDrop_Tutorial02_Final.max</em>.</p>
+                        <img class="zoom" src="resource/img/BasicPhysics_Preview_0008_Final.png" title="Result of previewing WaterBalloonDrop_Tutorial02_Final.max." />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

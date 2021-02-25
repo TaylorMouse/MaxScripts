@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Lights: SC2 Omni - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Lights: SC2 Omni</h1>
+                <p><em>SC2 Omni</em> is one of the two basic local light sources that can be created in the StarCraft II engine.  They can be placed in any model either through the <em>Create Panel</em> under the <em>Lights</em> tab in the <em>Standard</em> category or by using the menu item <em>SC2ArtTools &gt; Cameras / Lights &gt; Create SC2 OmniLight</em>. Omni lights emit light in all directions, and do not support shadowing.  StarCraft II uses a deferred renderer, and can support dozens of local light sources in a scene if artistically desired.  Local light sources are disabled completely on <em>Medium</em> and <em>Low</em> settings for performance reasons.</p>
+                <h2>Parameters</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Node_SC2OmniLight_Properties.png" title="The SC2 Omni Parameter rollout."/>
+                    <ol class="compact">
+                        <li>
+                            <p><em>Color</em> is the diffuse color of the light source.  It influences both diffuse and specular phenomena.  The dynamic range of this color can be further affected by the <em>Multiplier</em> parameter.</p>
+                            </li>
+						<li>
+                            <p><em>Multiplier</em> modifies the brightness of the light.  This value acts as an intensity value for <em>Color</em>.</p>
+						</li>
+						<li>
+                            <p><em>Attenuation Start</em> defines the distance from the center of the light that the lighting effect will remain at full intensity.  After this point, the intensity of the light begins to dwindle.</p>
+						</li>
+						<li>
+                            <p><em>Attenuation End</em> defines the distance where the light ceases to have any visible effect.</p>
+						</li>
+						<li>
+                            <p><em>Affected by AO</em> masks the light intensity by the Ambient Occlusion contributions in the scene.  This is only active on higher settings, and is used mostly on lights that portray large, ambient, or bounce light sources.  Strong, direct light sources do not typically use this setting.</p>
+						</li>
+						<li>
+                            <p><em>Light opaque objects</em> allows the light to affect materials set to use <em>Opaque</em> blending modes.  This is highly optimized by StarCraft II's deferred renderer, and is on by default.  There is no limit to the number of lights that can strike an opaque surface.</p>
+						</li>
+						<li>
+                            <p><em>Light Transparent objects</em>, if enabled, will show lighting on materials that use <em>Blend</em> and other non-opaque blending modes.  This bypasses the deferred renderer and can be costly. There are limits to the number of lights that can hit any given transparent surface; using excessive numbers of lights can cause flickering.  To use this setting, the receiving material must also be marked to <em>Enable local lights on transparencies</em>.</p>
+						</li>
+						<li>
+                            <p><em>Specular</em> enables specular lighting effects from this light.  This is most common for strong, direct light sources.  Leaving this feature off where possible improves performance.  This feature is only enabled on <em>Ultra</em> settings.</p>
+						</li>
+						<li>
+                            <p><em>Specular Color</em> is separate color for specular lighting effects.  Artistically, this is usually covariant with <em>Color</em>, though it may diverge if desired.</p>
+						</li>
+						<li>
+                            <p><em>Specular Multiplier</em> is a separate multiplier for specular lighting effects.  Artistically, this is usually covariant with <em>Color</em>, though it may diverge if desired.  Higher values cause more pronounced effects.  It is not advisable to use extreme values here, because specular lighting is also tuned inside material settings, and extreme values in the light can cause visual divergence between two otherwise similar materials.</p>
+						</li>
+						<li>
+                            <p><em>Light LOD Cut</em> denotes the graphical setting level where the light will no longer be displayed. Note that all local lights cut out at <em>Medium</em> settings regardless of this setting.  This feature is not currently active, but may be activated at some point in the future.</p>
+						</li>
+                    </ol>
+                    <img class="zoom" src="resource/img/Node_SC2OmniLight_Diagram.png" title="Diagram of 'Attenuation Start' and 'Attenuation End' as they are shown in 3ds Max."/>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

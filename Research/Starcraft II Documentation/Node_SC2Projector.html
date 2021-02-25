@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Effect: Projector - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Effect: Projector</h1>
+                <div class="group">
+                    <p>The <em>SC2Projector</em> Node, found in the <em>Particle Systems</em> create panel, is used for applying a material to a particular part of existing geometry.  These are often referred to as <em>Splats</em> throughout StarCraft II.  They are used for spell effects, blast marks, waypoints, terrain decoration, and more.  They accept materials just like regular geometry and particle effects, and cast their material onto any geometry they intersect, provided that geometry <em>Accepts Splats</em>.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Projector.png" title="The rollout for an SC2 Projector, with every item marked."/>
+                    <ol class="compact">
+                        <li><p><em>'Orthonormal'</em> (Mutually Exclusive with Perspective) makes the Projector behave like a box.  It will be the same width no matter how close the projector is to the target surface.</p></li>
+                        <li><p><em>'Width'</em> is the width of the box for an orthonormal projector.  This corresponds to the horizontal axis of textures used with the projector.</p></li>
+                        <li><p><em>'Height'</em> is the height of the box for an orthonormal projector.  This corresponds to the vertical axis of textures used with the projector.</p></li>
+                        <li><p><em>'Depth'</em> is the length of the box.  This is used to control how far a surface can be from the projector and still receive its effects.</p></li>
+                        <li><p><em>'Perspective'</em> (Mutually Exclusive with Orthonormal) makes the Projector behave like a camera.  The closer the projector is to the surface, the smaller the effect will be.</p></li>
+                        <li><p><em>'Fov'</em> represents the angle (in degrees) that defines the vertical bounds of the projector</p></li>
+                        <li><p><em>'AspectRatio'</em> is the ratio of the width of the projector to the height of it.  A larger number will make the projector wider along the texture's horizontal axis.</p></li>
+                        <li><p><em>'Near'</em> denotes the distance from the projector's origin where the Projector's material will begin to show.</p></li>
+                        <li><p><em>'Far'</em> denotes the distance from the projector's origin that the material will cease to draw.</p></li>
+                        <li><p><em>'Start' (Alpha Over Time)</em> defines the opacity (from 0-255) of the projector when it first spawns, at the beginning of the <em>'Attack'</em> phase.</p></li>
+                        <li><p><em>'Mid' (Alpha Over Time)</em> defines the opacity (from 0-255) of the projector during the middle of its lifetime, during the <em>'hold'</em> phase.</p></li>
+                        <li><p><em>'End' (Alpha Over Time)</em> defines the opacity (from 0-255) of the projector at the end of its lifetime, at the completion of the <em>'decay'</em> phase.</p></li>
+                        <li><p><em>'Attack' (Splat Lifetimes)</em> the amount of time it takes the splat to fade in after being spawned.  At the end of this time, the splat will be at the <em>'Mid'</em> opacity.  The <em>'To'</em> checkbox can be used to allow this to be a random time within the specified range.</p></li>
+                        <li><p><em>'Hold' (Splat Lifetimes)</em> the amount of time a splat is alive after being spawned by an event.  Throughout this time, the splat will be at the <em>'Mid'</em> opacity.  The <em>'To'</em> checkbox can be used to allow this to be a random time within the specified range.  After this time has elapsed for event-driven splats, the projector will automatically cease to be alive begin to decay.</p></li>
+                        <li><p><em>'Decay' (Splat Lifetimes)</em> the amount of time it takes the splat to fade out once no longer <em>'Alive'</em>.  At the end of this time, the splat will be at the <em>'End'</em> opacity.  The <em>'To'</em> checkbox can be used to allow this to be a random time within the specified range.</p></li>
+                        <li><p><em>'Infinite'</em> makes the <em>'Hold'</em> time extend infinitely, preventing the Projector from ever disappearing.</p></li>
+                        <li><p><em>'Use attenuation plane'</em> makes it so that the splat will fade out as the surface gets further from the projection source.  When off, the projector will be at full opacity across its entire length.</p></li>
+                        <li><p><em>'Attenuation starts at % distance'</em> pushes the start of the attenuation further from the projection source, making the splat display at full opacity for more of its range.  0 is a standard linear attenuation from the source.  100% would be equivalent to not using attenuation at all.</p></li>
+                        <li><p><em>'Alive'</em> makes the Projector on by default.  Most static splats will have this enabled.  This may be off in the case of dynamically generated splats.  Turning off this value will trigger the splat to fade out as defined by <em>'Decay' (Splat Lifetimes)</em>.</p></li>
+                        <li><p><em>'Static Position'</em> Forces the splat to remain in the same location it spawned at.  If the splat should stick in its location after creation, even if the parent model moves, use this flag.</p></li>
+                        <li><p><em>'Splat Layer'</em> denotes the general sorting group of the Projector.  This is used to sort overlapping splats so that everything looks correct.  Note that Projectors that use <a href="Material_SC2SplatTerrainBake.html">SC2 SplatTerrainBake</a> respect relative ordering with other projectors using that material type, but all draw "below" splats using any other material type.  The sort order of projectors in one layer is undefined, but the sort order between layers is well defined.  The descriptions for the values below show them in order, where the first entry draws on top of all others, and the last entry is below all others.</p>
+                            <ul>
+                                <li><p><em>'Material UI Layer'</em> is used for in-world effects that are part of the user interface.  This includes selection circles and similar effects.</p></li>
+                                <li><p><em>'Power Layer'</em>  contains rarely active effects such as the Protoss power grid that should be above most other splats, but below UI.</p></li>
+                                <li><p><em>'AOE Layer'</em> conventionally holds AOE cursors and some special spell effects.</p></li>                                
+                                <li><p><em>'Building Layer'</em> is most often used for the dark shadow that occurs under buildings.</p></li>
+                                <li><p><em>'Layer 3'</em> is a generic layer that occurs above creep, that is open for use as the user sees fit.  Spell effects, blast marks, or any other general case splats usually occur on a generic layer, and are adjusted freely between them to correct visual artifacts.</p></li>
+                                <li><p><em>'Layer 2'</em> is a generic layer that occurs above creep, that is open for use as the user sees fit.  Spell effects, blast marks, or any other general case splats usually occur on a generic layer, and are adjusted freely between them to correct visual artifacts.</p></li>
+                                <li><p><em>'Layer 1'</em> is a generic layer that occurs above creep, that is open for use as the user sees fit.  Spell effects, blast marks, or any other general case splats usually occur on a generic layer, and are adjusted freely between them to correct visual artifacts.</p></li>
+                                <li><p><em>'Layer 0'</em> is a generic layer that occurs above creep, that is open for use as the user sees fit.  Spell effects, blast marks, or any other general case splats usually occur on a generic layer, and are adjusted freely between them to correct visual artifacts.</p></li>
+                                <li><p><em>'Under Creep Layer'</em> is a general use layer that occurs below creep.  It is most often used for effects that appear above roads but below creep.</p></li>
+                                <li><p><em>'Hardtile Layer'</em> is the most common layer for visual additions like paint, grunge, or damage that appear to be part of the terrain texture.  Roads are also drawn on this layer.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>'LOD Cut'</em> denotes which graphical setting level the Projector will no longer be displayed at.  If critical for gameplay, leaving this at <em>'None'</em> is prudent.  Otherwise, it is useful for performance scaling.</p></li>
+                        <li><p><em>'LOD Reduction'</em> denotes which graphical setting the Projector can potentially be not shown at if there are too many splats on screen.  It is more critical to be judicious with allowing splats to disappear here, as it is best to leave room available for gameplay-critical splats.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

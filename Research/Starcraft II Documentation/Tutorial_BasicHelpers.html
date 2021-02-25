@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 03: Helper Objects - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>            
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 03: Helpers Objects</h1>
+                <img src="resource/img/Progress_0003_BasicHelpers.png" title="Going from a 3ds Max file of a rigged Waterbat to a model in the game with all necessary Helper Objects."/>
+                <p>All Units in <em>StarCraft II</em> require some <em>helper objects</em> for them to function properly.  These helper objects are created in <em>3ds Max</em> and exported as part of a model file(.m3).  In this tutorial, you will be introduced to three essential types- <em>HitTest Volumes</em>, <em>Target Volumes</em>, and <em>Attachment Points</em>.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_Tutorial04_Animated.max'</em>.  It contains a completely rigged model that is ready for helper objects.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene of a rigged Waterbat."/>
+                    </li>
+                </ol>
+				
+				<h2>HitTest Volumes</h2>
+				<p><a href="Node_HitTest.html">HitTest Volumes</a> are primitive volumes used for selection hit-testing.  There are two different types- <a href="Node_HitTest.html#HitTestTight">HitTestTight</a> and <a href="Node_HitTest.html#HitTestFuzzy">HitTestFuzzy</a>.  The first type is used for <em>drag selection</em> while the second is used for <em>click selection</em>.  Both types can be made from either a <em>Sphere</em>, <em>Box</em>, or <em>Capsule</em> primitive shape in 3ds Max.</p>
+                <ol>
+                    <li value="2">
+                        <p>For <em>HitTestTight</em> volume of the Waterbat, we will be using a <em>Capsule</em> primitive which is found in the <em>'Create'</em> panel, under <em>'Geometry/Extended Primitive'</em>.  Each model may only have one <em>HitTestTight</em> volume and it should represent most of the main body of a model without any extremities like horns and such.  Create a <em>Capsule</em> with radius of <em>35.0</em>, height of <em>115.0</em>, and positioned at <em>(0.0, 4.0, -10.0)</em>.  Name it <em>'HitTestTight'</em> which tells the exporter that this is a special primitive to be used as the <em>HitTestTight</em> volume.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0001_Capsule.png" title="Locate and press the button for creating a capsule primitive." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0002_HitTestTight.png" title="Create a capsule at the shown size at shown position and rename it 'HitTestTight'.  Note: the color of a new shape is random, so your capsule may be a different color." />
+                    </li>
+					<li>
+                        <p>Link the <em>'HitTestTight'</em> primitive to the <em>'Root'</em> bone so that it moves along with animations.  If necessary, zoom in and switch to wireframe mode temporarily to make it easier to link to the box shaped <em>'Root'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0003_HitTestTightLinked.png" title="Link the HitTestTight to the 'Root' bone." />
+                    </li>
+					<li>
+                        <p>To verify that the <em>Capsule</em> primitive does export as a <em>HitTestTight</em> volume, preview the file and turn on <em>'Render &gt; Show Geometry &gt; Hit Test &gt; Tight'</em>.  A <em>blue</em> capsule representative of the capsule created in 3ds Max should now be displayed.</p>
+						<img class="zoom" src="resource/img/BasicHelpers_Preview_0000_ShowHitTestTight.png" title="Preview and toggle 'Render &gt; Show Geometry &gt; Hit Test &gt; Tight'." /><br/>
+                        <img class="zoom" src="resource/img/BasicHelpers_Preview_0001_HitTestTight.png" title="The HitTestTight volume is displayed as a blue capsule." />
+                    </li>
+                    <li>
+                        <p>Next, we are going to add some primitives for <em>HitTestFuzzy</em> volumes.  Unlike <em>HitTestTight</em> volume, there can be more than one <em>HitTestFuzzy</em> volume per model file.  Their combined volumes should cover all visible meshes of the model across all animations.  For this tutorial, we will add three <em>Capsule</em> primitives as <em>HitTestFuzzy</em> volumes.  In 3ds Max, start by creating a new <em>Capsule</em> primitive with <em>58.0</em> radius, <em>138.0</em> height, at position of <em>(0.0, 2.0, -13.0)</em>.  This will cover most of the main body including the feet during all the animations.  Name it <em>'HitTestFuzzy'</em> so that it will export as a <em>HitTestFuzzy</em> volume.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0004_HitTestFuzzy.png" title="Create a capsule at the shown size at shown position and rename it 'HitTestFuzzy'.  Note: the color of a new shape is random, so your capsule may be a different color."/>
+                    </li>
+					<li>
+                        <p>Link the <em>'HitTestFuzzy'</em> primitive to the <em>'Root'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0005_HitTestFuzzyLinked.png" title="Link HitTestFuzzy to the 'Root' bone." />
+                    </li>
+					<li>
+                        <p>Since the Waterbat's arms can stick out pretty far during animations, we are going to make <em>HitTestFuzzy</em> volumes for each of them.  Create another <em>Capsule</em> primitive with <em>28.0</em> radius, <em>80.0</em> height, positioned at <em>(-40.0, 4.0, 10.0)</em>.  Name it <em>'HitTestFuzzy01'</em>.  This one will be used for the <em>right arm</em> so link it to the <em>'BoneForeArmR'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0006_HitTestFuzzy01.png" title="Create a capsule at the shown size at shown position and rename it 'HitTestFuzzy01'.  Note: the color of a new shape is random, so your capsule may be a different color."/><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0007_HitTestFuzzy01Linked.png" title="Link HitTestFuzzy01 to the 'BoneForeArmR' bone."/>
+                    </li>
+					<li>
+                        <p>Instead of creating another <em>Capsule</em> primitive from scratch, we can duplicate <em>'HitTestFuzzy01'</em> for the <em>left arm</em>.  Shift-move <em>'HitTestFuzzy01'</em> along the <em>x-axis</em> to <em>(40.0, 4.0, 10.0)</em> to create a copy.  It should be named <em>'HitTestFuzzy02'</em>.  Since this is for the <em>left arm</em>, link it to the <em>'BoneForeArmL'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0008_HitTestFuzzy02.png" title="Shift-move HitTestFuzzy01 to the left side to create 'HitTestFuzzy02'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0009_HitTestFuzzy02Linked.png" title="Link HitTestFuzzy02 to the 'BoneForeArmL' bone." />
+                    </li>
+					<li>
+                        <p>Preview the file to check for <em>HitTestFuzzy</em> volumes.  Turn on <em>'Render &gt; Show Geometry &gt; Hit Test &gt; Fuzzy'</em>.  The Cutscene Editor should show the three <em>green</em> <em>HitTestFuzzy</em> volumes.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Preview_0003_ShowHitTestFuzzy.png" title="Preview and toggle 'Render &gt; Show Geometry &gt; Hit Test &gt; Fuzzy'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Preview_0004_HitTestFuzzy.png" title="The HitTestFuzzy volumes are shown as green capsules." />
+                    </li>
+					<li>
+                        <p>By now, the <em>3ds Max</em> viewport is pretty cluttered with all the HitTest Volumes.  We can fix that by using <em>'SC2ArtTools &gt; Display &gt; Collapse SC2 Helpers'</em> to make them display as wireframe boxes.   </p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0010_HelpersCollapsedToggled.png" title="Toggle 'SC2ArtTools &gt; Display &gt; Hit Test &gt; Collapse SC2 Helpers'" /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0011_HelpersCollapsed.png" title="The viewport is less cluttered and easier to work with." />
+                    </li>
+                </ol>
+                
+                <h2>Target Volumes</h2>
+				<p><a href="Node_AttachmentVolume.html">Target Volumes</a> are also primitive volumes but instead of selection, they are used for placing <em>impact effects</em> on the surface of a unit.  More than one is allowed per model file.  The combined surfaces should approximate the visible surfaces of the animated model such that impact effects would always appear to be on the surface and not floating nor sunken into the visible meshes.</p>
+                <ol>
+                    <li value="11">
+                        <p class="caption">For a smaller ground unit like the <em>Waterbat</em>, one <em>Target Volumes</em> that cover his upper body should suffice since nothing would shoot at his feet from below.  We will use the <em>Sphere</em> primitive found in the <em>'Create'</em> panel, under <em>'Geometry/Standard Primitive'</em></p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0012_Sphere.png" title="Locate and press the button for creating a sphere primitive." />
+                    </li>
+					<li>
+                        <p class="caption">Create a <em>Sphere</em> primitive with <em>38.0</em> radius at position of <em>(1.0, 5.0, 75.0)</em>.  Name this <em>'Vol_Target'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0013_TargetVolume.png" title="Create a sphere at the shown size at shown position and rename it 'Vol_Target'.  Note: the color of a new shape is random, so your capsule may be a different color." />
+                    </li>
+					<li>
+                        <p class="caption">To cover the large shoulder pads, we can actually scale the <em>Sphere</em> primitive along the <em>x-axis</em>.  Both <em>HitTest Volumes</em> and <em>Target Volumes</em> support <em>non-uniform scaling</em> but it should only be done along <em>local axis</em>.  Press the <em>Scale</em> button, and choose <em>Local</em> for <em>Reference Coordinate System</em>.  Scale up the <em>Sphere</em> to about the width of the shoulders as shown.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0014_TargetVolumeScale.png" title="Scale the sphere along local x-axis to cover the shoulders." />
+                    </li>
+					<li>
+                        <p>Link the <em>'Vol_Target'</em> primitive to the <em>'BoneBack02'</em> bone so it would move with the upper body.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0015_TargetVolumeLinked.png" title="Link 'Vol_Target' to the 'BoneBack02' bone." />
+                    </li>
+					<li>
+                        <p>Preview again to check the <em>Vol_Target</em> volume.  Turn on <em>'Render &gt; Show Geometry &gt; Attachment Volumes'</em>.  It should show up as a <em>Dark Blue</em> sphere in the Cutscene Editor.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Preview_0005_ShowAttachmentVols.png" title="Preview and toggle 'Render &gt; Show Geometry &gt; Attachment Volumes'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Preview_0006_AttachmentVols.png" title="The Attachment Volume  is shown as a dark blue ellipsoid." />
+                    </li>
+					<li>
+                        <p>In <em>3ds Max</em>, use <em>'SC2ArtTools &gt; Display &gt; Collapse SC2 Helpers'</em> again to unclutter the viewport again before moving on to the next section.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0016_HelpersCollapsedToggled.png" title="Toggle 'SC2ArtTools &gt; Display &gt; Hit Test &gt; Collapse SC2 Helpers'" /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0017_HelpersCollapsed.png" title="The 'Vol_Target' is displayed as a wireframe box." />
+                    </li>
+                </ol>
+                
+                <h2>Attachment Points</h2>
+                <p><a href="Node_SC2AttachPt.html">Attachment Points</a> mark locations in 3d space at which the game can attach effects, UI items, etc.  Each Attachment Point is given a specific name indicating its purpose.  Some examples of these are locations for gun flashes or timers UI that shows up above a unit.  Attachment Points are added in 3ds Max as <em>SC2AttachPt</em> helpers.</p>
+                <ol>
+                    <li value="17">
+                        <p>First, we are going to create three Attachment Points every <em>StarCraft II</em> unit or doodads must have- <em>Ref_Origin</em>, <em>Ref_Center</em>, and <em>Ref_Overhead</em>.  In the <em>'Create'</em> panel, under <em>'Helpers/Standard'</em>, press the <em>SC2AttachPt</em> button and then left-click in the viewport to create a <em>SC2AttachPt</em> helper.  Since we have used <em>'Collapse SC2 Helpers'</em> earlier, the new <em>SC2AttachPt</em> may be difficult to see.  Go to <em>'SC2ArtTools &gt; Display &gt; Expand Attachment pts'</em> to make it more visible.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0018_SC2AttachPt.png" title="Click in a viewport to create a SC2AttachPt." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0019_SC2AttachPtShow.png" title="Toggle 'SC2ArtTools &gt; Display &gt; Expand Attachment pts'" />
+                    </li>
+                    <li>
+                        <p>By default, the <em>SC2AttachPt</em> helper is just a generic helper node that wouldn't get exported as a <em>StarCraft II</em> Attachment Point.  For that to happen, we need to specify the type of attachment point it represents.  To do that, make sure the newly created <em>SC2AttachPt</em> helper is still selected and switch to the <em>'Modify'</em> panel.  Press the <em>Change Type</em> button and a combo-box dialogue would appear listing all the choices for different types of attachment points.  Choose <em>'Ref_Origin'</em> from the list then hit <em>OK</em>.  The new <em>SC2AttachPt</em> helper should now be <em>'Ref_Origin'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0020_RefOrigin.png" title="Change attachment point type to 'Ref_Origin'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0021_RefOriginName.png" title="The name of the SC2AttachPt has been changed to 'Ref_Origin'." />
+                    </li>
+					<li>
+                        <p>As the name implies, the <em>'Ref_Origin'</em> attachment point is used for attaching objects to the origin of a model.  To ensure that the attachment point is at the origin(0, 0, 0), use the <em>'Transform Type-In'</em> by right-clicking on the <em>'Select and Move'</em> button, then enter 0 for x, y, and z.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0022_RefOriginPos.png" title="Make sure 'Ref_Origin' is at (0, 0, 0)." />
+                    </li>
+					<li>
+                        <p>Instead of making the <em>Ref_Center</em>, and <em>Ref_Overhead</em> attachment points manually, there is actually an auto generation tool for the essential attachment points.  It only creates the missing essential attachment points, so it would skip the <em>'Ref_Origin'</em> that was already created earlier.  Under <em>'SC2ArtTools &gt; Helpers'</em>, invoke the <em>'Add Base Attachment Points'</em> function.  Both a <em>Ref_Center</em> and <em>Ref_Overhead</em> should be automatically added as a result.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0023_AddBaseAttPts.png" title="Use 'SC2ArtTools &gt; Helpers &gt; Add Base Attachment Points'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0024_BaseAttPts.png" title="'Ref_Center' and 'Ref_Overhead' were added automatically as a result." />
+                    </li>
+					<li>
+                        <p>Select and link the <em>'Ref_Center'</em> primitive to the <em>'Root'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0025_RefCenterLined.png" title="Link 'Ref_Center' to the 'Root' bone." />
+                    </li>
+					<li>
+                        <p>Since the <em>Waterbat</em> is a unit that can attack out of its two cannons, we also need to mark the locations where the cannons fire so we can attach effects to them.  For that, we need to place two weapon attachment points, one for the right cannon and the other for the left.  Create another <em>SC2AttachPt</em>, and change the type to <em>Ref_Weapon Right</em>.  Align the <em>Ref_Weapon Right</em> helper to the tip of the right cannon with the short end of the triangle pointing downward as shown, then link it to the <em>'BoneHandR'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0026_RefWeaponRight.png" title="Create a 'Ref_Weapon Right' SC2AttachPt as shown." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0027_RefWeaponRightLinked.png" title="Link 'Ref_Weapon Right' to the 'BoneHandR' bone." />
+						
+                    </li>
+					<li>
+                        <p>Repeat the previous step for the left cannon and change the type to <em>Ref_Weapon Left</em> and link it to the <em>'BoneHandL'</em> bone.</p>
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0028_RefWeaponLeft.png" title="Add a 'Ref_Weapon Left' SC2AttachPt as shown." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0029_RefWeaponLeftLinked.png" title="Link 'Ref_Weapon Left' to the 'BoneHandL' bone." />
+						
+                    </li>
+					<li>
+                        <p>The last attachment point we are going to add for the Waterbat is the head attachment point.  Create a <em>'Ref_Head'</em> type <em>SC2AttachPt</em> helper, then align it to the head and link it to the <em>BoneHead</em> bone.</p> 
+                        <img class="zoom" src="resource/img/BasicHelpers_Viewport_0030_RefHead.png" title="Add a 'Ref_Head' SC2AttachPt as shown." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Viewport_0031_RefHeadLinked.png" title="Link 'Ref_Weapon Left' to the 'BoneHead' bone." />
+                    </li>
+					<li>
+                        <p>Preview once more to check the <em>Attachment Points</em>.  Turn on <em>'Render &gt; Show Geometry &gt; Attachment Points'</em>.  There should now be a few <em>green</em> triangles representing the <em>Attachment Points</em> in the Cutscene Editor.  You may notice one extra attachment point that you did not make.  There is no need to worry, that one was auto-created to mark the position of the <em>Target Volume</em> you have created earlier.</p>						
+                        <img class="zoom" src="resource/img/BasicHelpers_Preview_0007_ShowAttachmentPts.png" title="Preview and toggle 'Render &gt; ShowGeometry &gt; Attachment Points'." /><br/>
+						<img class="zoom" src="resource/img/BasicHelpers_Preview_0008_AttachmentPts.png" title="The Attachment Points are shown as green triangles." />
+                    </li>					
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

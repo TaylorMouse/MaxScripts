@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Node: Helpers: Physics - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Node: Helpers: Physics</h1>
+                <p>The <em>SC2Physics</em> Node, found in the <em>Standard Helpers</em> create panel, is used to assign physics properties to any node it is linked to. Any node with SC2Physics nodes linked to it would export as a rigid body physics object that can drive or be driven by the Domino Physics Engine in StarCraft II.</p>
+                <h2>Shape Properties</h2>
+                <div class="group">
+                    <p>The Shape Properties rollout is where shape type, dimension, and physical properties are defined.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Physics_Shape.png" title="SC2Physics Shape Properties Rollout"/>
+                    <ol class="compact">
+                        <li><p><em>Shape Type</em> defines the geometry of the physic shape.
+                            <ul>
+                                <li><em>Box</em> is rectangular shape with height, length and width. It is useful for building and flat ground surfaces.</li>
+                                <li><em>Sphere</em> is round ball shape and the cheapest to use performance wise.</li>
+                                <li><em>Capsule</em> is basically a cylinder with two spherical ends. It is the second cheapest to use.</li>
+                                <li><em>Cylinder</em> is an extruded circle that can be used for wheels, columns, etc.</li>
+								<li><em>ConvexHull</em> is a shape without any concave indents. ConvexHulls are auto-generated from user defined geometry. </li>
+                                <li><em>Mesh</em> may have both convex and concave areas and thus can resemble the shape of any object the closest. However, it is very expensive performance wise.</li>								
+                            </ul>
+                        </p></li>
+                        <li><p><em>Radius</em> is used for the radius of Sphere, Capsule and Cylinder shape.</p></li>
+                        <li><p><em>Height</em> is used for the height of Box, Capsule and Cylinder shape.</p></li>
+                        <li><p><em>Length</em> is used for the Length of the Box shape.</p></li>
+                        <li><p><em>Width</em> is used for the width of Box shape.</p></li>
+                        <li><p><em>Verts Count</em> is the maximum number of vertices used when generating a Convex Hull. It is the max vertices before adjacent polygons are flattened which can add additional vertices.</p></li>
+                        <li><p><em>Planar Angle</em> is the maximum angle at which adjacent polygons are flattened into a single polygon when generating a Convex hull.</p></li>
+                        <li><p><em>Pick Mesh</em> is only enabled when the Shape Type is Convex Hull or Mesh. Once pressed, it allows selection of a geometry node to be used to generate the Convex Hull or as the Mesh. The selected geometry node is untouched, instead, its geometry is stored as an internal mesh by the SC2Physics node.</p></li>
+                        <li><p><em>Add Mesh</em> is only enabled after a mesh has already been defined via the Pick Mesh button. It allows appending of additional meshes.</p></li>
+						<li><p><em>Edit Custom Mesh</em> is only enabled after a mesh has already been defined. When pressed, it turns the defined mesh into an EditablePoly which could be further altered. When changes are done, un-pressing this button would update the internal mesh.</p></li>
+                        <li><p><em>Physics Materials</em> from Heavy Metal, Bone, to Dirt, etc., can be chosen from this dropdown list. Each contains predefined physical material properties that describes how it should behave such as bounce, float, accelerate, etc... On impact, each type also triggers sound and effects unique to that material type. </p></li>
+                        <li><p><em>Use Custom Mat Props</em>, if enabled, allows overriding the default values from the selected Physics Material Type for this physics object. For instance, to get a more bouncy "Heavy Metal", choose "Heavy Metal" as the Physics Material Type, then enable "Use Custom Props Values" and increase the Restitution value.</p></li>
+                        <li><p><em>Density</em> is used to calculate the mass and buoyancy of an object. The higher this number is, the quicker an object accelerates and more difficult to stop. This also determines if and how much an object floats in liquids- the higher the number, the more it would float.</p></li>
+                        <li><p><em>Friction</em> dictates how easily two objects can slide along each other’s surface. When in contact with another surface, an object with higher friction would be more difficult to move and come to a stop faster.</p></li>
+                        <li><p><em>Restitution</em> determines if and how much a physics object bounces after impact. The higher the number, the more it would bounce.</p></li>
+                        <li><p><em>Linear Damp</em> is how quickly the velocity of an object decays. The higher the number, the faster an object slows down once there is no more force applied to it.</p></li>
+                        <li><p><em>Angular Damp</em> is how quickly the rotation of an object decays. The higher the number, the faster an object stops rotating once there is no more force applied to it.</p></li>
+                    </ol>
+                </div>
+                <h2>Simulation Properties</h2>
+                <div class="group">
+                    <p>Parameters in the Simulation Properties rollout defines how the physics object should behave within the physics system.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Physics_Simulation.png" title="SC2Physics Simulation Properties Rollout"/>
+                    <ol class="compact">
+                        <li><p><em>Inherit Physics State</em> determines if the Physics State of this physics object is inherited from its parent. A physics object at the top of a hierarchy with "Inherit Physics State" enabled defaults to Active Kinematic.</p></li>
+                        <li><p><em>Physics State</em> is only enabled if the Inherit Physics State is off. The Physics State of a physics object can be Static, Active Kinematic, or Active Dynamic.
+							<ul>
+                                <li><em>Static</em> physics objects do not move. They only exist to allow Dynamic objects to collide and hence react to them. It is the best performance and should be used whenever an object isn't meant to move such as the ground or buildings.</li>
+                                <li><em>Active</em> physics objects can be either Kinematic or Dynamic, depending on their current Active State. A Kinematic physics object is not altered by the physics system but is used to push other Dynamic objects. On the other hand, the movement of a Dynamic physics object is solely determined by the physics system as a result of collision with Static, Kinematic, or other Dynamic physics objects.</li>
+                            </ul>
+						</p></li>						
+                        <li><p><em>Active State</em> is an animatable value that can switch an Active Physics Object between Kinematic and Dynamic state at any time. A pressed-in "Key" button indicates the physics Object is Dynamic, otherwise it is Kinematic. </p></li>
+                        <li><p><em>Blend Out</em> Not yet implemented</p></li>
+                        <li><p><em>Ignore Event Simulate</em> causes this physics object to ignore "Simulate" events. A "Simulate" event is a way to force all Active Kinematic physics object within a model file to become Active Dynamic. In cases where an object should always be keyframed driven and push other physics object, this flag prevents it from becoming Dynamic when a "Simulate" event is triggered.</p></li>
+                        <li><p><em>Gravity Scale</em> defines how quickly an Active Dynamic physics object accelerates downwards toward the ground. Gravity is basically a constant force downwards.</p></li>
+                        <li><p><em>Lod</em> is used to limit the number of physics objects that are calculated by the Domino Physics Engine at any given time thus ensuring good frame rate. Basically, when good frame rate is at risk, only physics objects that are deemed necessary are simulated.
+							<ul>
+                                <li><em>Always On</em> objects are always simulated regardless of frame rate.</li>
+                                <li><em>Priority</em>, when enabled, allows a Priority number to be set. The higher the Priority number a physics object has, the more likely it would be simulated even when good frame rate is at risk.</li>
+                            </ul>
+							</p></li>
+                        <li><p><em>Collidable</em>, if checked, means that the physics object would interact with the terrain, Dynamic objects that are "Stackable", and static/Kinematic objects that are "Collidable".</p></li>
+                        <li><p><em>Stackable</em>, if checked, means that the physics object would interact with the terrain, Dynamic objects that are "Stackable"/"Collidable", and static/Kinematic objects that are "Collidable".</p></li>
+                        <li><p><em>Walkable</em>, if checked, allows units to path on it. This only influences pathing, an object with this enabled but not "Collidable" would still fall through the ground. A bridge, for instance, needs to be both "Collidable" and "Walkable" for units to walk on top of it.</p></li>
+                    </ol>
+                </div>
+                <h2>Force Field Channels</h2>
+                <div class="group">
+                    <p>The Force Field rollout is used to govern the interaction between <em>SC2Force</em> nodes and physics objects.  These alter the movement a physics objects by pushing it around and making it react to the world around it.</p>
+                    <img class="detail focus" src="resource/img/Node_SC2Physics_ForceField.png" title="SC2Physics Force Field Channels Rollout"/>
+                    <ol class="compact">
+                        <li><p><em>Local Channels</em> lists the mask for physics object/force interaction within a single m3 file.  A physics object only interacts with <em>SC2Force</em> nodes that have at least one of the same channels enabled.</p></li>
+                        <li><p><em>World Channels</em> behave like <em>Local Channels</em> but across multiple m3 files. For example, a flag fluttering in the wind would be enlisted in the <em>Wind</em> channel, and a nuclear explosion would use the <em>Wind</em> channel as well.  The result is that the explosion would push around the flag.  If they were not both in wind, the flag would not move.  This is for both artistic reasons and performance.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

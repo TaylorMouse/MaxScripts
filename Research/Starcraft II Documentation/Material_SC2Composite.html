@@ -1,0 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Composite - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Composite</h1>
+                <p><em>SC2 Composite</em> is a special proxy material.  It does not draw itself, but it allows the application of multiple materials to a single mesh.  It is not recommended for use on in-game units, because it is incompatible with cloaking.  It is not compatible with all material types.  <em>SC2 Standard</em>, <em>SC2 Terrain</em>, <em>SC2 Creep</em>, and <em>SC2 Displacement</em> are supported.  The sorting of layers is intricate.</p>
+                <p>If the first enabled material is opaque, then all layers are drawn in order, from top to bottom with two exceptions.  <em>SC2 Terrain</em> is always drawn first.  <em>SC2 Creep</em> is always drawn last.</p>
+                <p>If the first enabled material is <em>Blend</em>, or uses an <em>Opacity</em> less than <em>1</em>, then a more complex sort is used.  <em>SC2 Terrain</em> is drawn first.  Second, all <em>Opaque</em> materials are drawn, from top to bottom.  <em>SC2 Creep</em> layers then draw.  Finally, any alpha blending materials are drawn along with all other transparent materials in the model.  They are all sorted together, using the <em>Priority</em> defined in the composite.</p>
+                <h2>Composite</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_Composite.png" title="Layer list for SC2 Composite Material.  Many sub-materials can be specified and they are layered on top of each other using a single mesh."/>
+                    <ol class="compact">
+                        <li><p><em>Priority</em> defines the sorting relationship between all transparent material layers in this composite and other transparent materials in the model file.  Within a given model, materials are drawn in order from highest priority value to lowest. Sorting for materials of equal priority is undefined.  Priorities have no effect across multiple models.  Priority is only used if <em>Material 1</em> is not considered <em>Opaque</em>.</p></li>
+                        <li><p><em>Enabled</em> defines if the material should be exported.  Layers with this value unchecked are skipped.</p></li>
+                        <li><p><em>Material</em> specifies an instance of an <em>SC2 Standard</em>, <em>SC2 Terrain</em>, <em>SC2 Creep</em>, or <em>SC2 Displacement</em> material to use a layer in the composite.  Layers are sorted roughly top to bottom, where a lower number draws first.</p></li>
+                        <li><p><em>Opacity</em> allows adjustment for layer opacity.  If an otherwise opaque material uses a value of less than <em>1</em> it will be drawn as if it is alpha blend.  This parameter can be animated.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

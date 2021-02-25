@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Fuzzy Matching - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Fuzzy Matching</h1>
+                <p>The animation system uses a semantic based system to request the best animation for a given situation.  <a href="Appendix_AnimationProps.html">Animation Tokens</a> are put together to form <a href="Appendix_AnimationNames.html">Animation Names</a>, and when an animation is requested in game, the Fuzzy Match system will use a model's animation that is the closest match for the given request.  This allows an animator to incrementally refine the animation quality for an in-game model by providing more and more specific animations, or allows a model with relatively few animations to still function in game.</p>
+                
+                <h2>Rules</h2>
+                <ul>
+                    <li>
+                        <h3>The first token is required.</h3>
+                        <p>To ensure that only contextually proper animations are used, the first token is used to define the most important part of the animation.  If the first token cannot be found, no animation is used, rather than playing a potentially incorrect animation.</p>
+                    </li>
+                    <li>
+                        <h3>In Art, token order does not matter.</h3>
+                        <p>Two animations with the same tokens, but in different orders, will always evaluate exactly the same to the fuzzy match system.  The only way to improve matching is to provide more specific tokens in the animation name.  It is worth noting that order may still matter for the <a href="Appendix_AnimationPriorities.html">Animation Priority</a> system.</p>
+                    </li>
+                    <li>
+                        <h3>In Data, token order denotes the relative importance.</h3>
+                        <p>An Animation with a match on an earlier token will always be favored over any number of matches on later tokens.  This lets the caller guarantee they get the animations closest to their intentions, while still being able to request animations with the right flavor if they exist.</p>
+                    </li>
+                    <li>
+                        <h3>Tokens in the Animation Name, but not in the request, are less favored.</h3>
+                        <p>Every token in an animation name but not in the query adds weight against using that animation.  This results in the system favoring shorter, generic animations, over longer names that are generally some other, more specific animation.<p>
+                    </li>
+                </ul>
+                
+                <h2>Examples</h2>
+                <p>Below are examples, where the header item is the animation requested from the game, and the subsequent animations are those provided by the model.  The <em>emphasized</em> Animation Name indicates the best match according to the Fuzzy Match system.</p>
+
+                <h3>Stand Cover Ready</h3>
+                <ul>
+                    <li>Stand Cover<li>
+                    <li><em>Stand Cover Ready</em><li>
+                </ul>
+                <p>Here, both animations are good matches, but <em>Stand Cover Ready</em> is a more exact match.</p>
+                
+                <h3>Stand Cover Ready</h3>
+                <ul>
+                    <li><em>Stand Cover</em><li>
+                    <li>Stand Cover Talk<li>
+                </ul>
+                <p>The shorter animation name is favored here, because the <em>Talk</em> token is a mismatch.</p>
+                
+                <h3>Stand Talk Ready</h3>
+                <ul>
+                    <li>Stand Ready<li>
+                    <li><em>Stand Talk</em><li>
+                </ul>
+                <p><em>Talk</em> is earlier in the query, and therefore more important than <em>Ready</em>, so the animation that provides <em>Talk</em> is used.</p>
+                
+                <h3>Stand Angry Talk</h3>
+                <ul>
+                    <li><em>Stand Cover Ready Fidget</em><li>
+                    <li>Angry Talk<li>
+                </ul>
+                <p>Because the first token, <em>Stand</em> is required, the system will not use the seemingly good match, <em>Angry Talk</em>, even though the only other option has fewer matching tokens and more mismatching tokens</p>
+                
+                <h3>Stand Talk Cover Ready Fidget</h3>
+                <ul>
+                    <li>Stand Cover Ready Fidget<li>
+                    <li><em>Stand Talk</em><li>
+                </ul>
+                <p>Even though the first animation has a higher number of matches, <em>Talk</em> is still a more important token than any of them.  As such, the animation that provides it will be used.</p>
+                
+                <h3>Stand Cover Ready</h3>
+                <ul>
+                    <li><em>Stand Cover</em><li>
+                    <li><em>Stand Cover 01</em><li>
+                </ul>
+                <p>Both animations score equally, because <em>Stand Cover</em> implicitly has the variation token <em>00</em>.  Because the two animations are equivalent except for the variation tokens, the engine will choose one at random every time it needs to play an animation.</p>
+                
+                <h3>Stand Talk</h3>
+                <ul>
+                    <li><em>Stand Ready Talk</em><li>
+                    <li><em>Stand Cover Talk</em><li>
+                </ul>
+                <p>In this case, both animations satisfy the query equally.  One will be chosen arbitrarily, though it will be consistently chosen.</p>
+                
+                
+            </div>
+        </div>
+    </body>
+</html>

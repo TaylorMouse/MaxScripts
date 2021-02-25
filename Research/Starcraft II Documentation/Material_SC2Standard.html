@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 Standard - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 Standard</h1>
+                <p><em>SC2 Standard</em> is the primary material for art assets in the StarCraft II Engine.  The vast majority of assets will only need this material type.  The material is organized into several layers which are managed by the various shader presets.  Using presets reduces the strain on the GPU, and provides predictable results across different graphics settings.  <em>SC2 Bitmap</em> or <em>SC2 Color</em> texmaps can be used in all layer slots.</p>
+                <h2>Material Basic Parameters</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_Basic.png" title="SC2 Standard's Basic Parameter rollout.  This contains most of the render setting configuration for the material."/>
+                    <ol class="compact">
+                        <li><p><em>Preset</em></p>
+                            <ul>
+                                <li><p><em>Specular</em> is the most common setting for environmental models and characters.  It provides the simplest, fastest drawing set of layers:</p>
+                                    <ul>
+                                        <li>Diffuse, Normal, Height, Decal, Specular, Gloss, Emissive, Light Map, Ambient Occ</li>
+                                    </ul>
+                                </li>
+                                <li><p><em>Emissive</em></p>
+                                    <ul>
+                                        <li>Diffuse, Normal, Height, Decal, Specular, Gloss, Emissive, <em>Emissive 2</em>, Light Map, Ambient Occ</li>
+                                    </ul>
+                                </li>
+                                <li><p><em>Environment</em></p>
+                                    <ul>
+                                        <li>Diffuse, Normal, Height, Decal, Specular, Gloss, Emissive, <em>Environment</em>, <em>Envio Mask</em>, Light Map, Ambient Occ</li>
+                                    </ul>
+                                </li>
+                                <li><p><em>Mask</em> is the most common setting for materials used on <em>SC2 Particle</em> and <em>SC2 Projector</em> nodes.  It provides two alpha mask textures that can be used to define transparency.</p>
+                                    <ul>
+                                        <li>Diffuse, Normal, Height, Decal, Specular, Gloss, Emissive, <em>Alpha Mask</em>, <em>Alpha Mask</em>, Light Map, Ambient Occ</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><p><em>Blend Mode</em></p>
+                            <ul>
+                                <li><p><em>Opaque</em> draws any pixel with an alpha value above <em>Alpha Threshold</em> completely to the screen.  These pixels will affect depth based effects such as depth of field, and will have per-pixel sorting.</p></li>
+                                <li><p><em>Add</em> renders this material additively onto the scene.  This is most often used for fire, energy, and other sorts of bright particle effects.</p></li>
+                                <li><p><em>Mod</em> multiplies the material's color against the current color on screen.  This will usually yield a darkening effect.</p></li>
+                                <li><p><em>Mod2x</em> multiplies the material's color against the current color on screen, and doubles the result.  For value darker than 128-grey, this will yield darkening, while brighter values will cause an increase in brightness.  This is most often used with special particle effects where additive effects are desired but color saturation is important.</p></li>
+                                <li><p><em>Blend</em> uses the resultant alpha values to perform a linear blend of this material onto the scene.  Alpha sorting is done on a per-model basis, and there may be sorting issues with this mode.  This setting is most often used with smokey particle effects.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Alpha Test Threshold</em> sets the minimum output alpha value for this material, such that it will still draw.  If the alpha maps, combined with any external alpha, like particle alpha, or vertex alpha is below this threshold, the pixel will not draw.   This will exclude the pixel from all drawing, including shadows.</p></li>
+                        <li><p><em>Priority</em> defines the sorting relationship between this material and other transparent materials in the model file.  Within a given model, materials are drawn in order from highest priority value to lowest. Sorting for materials of equal priority is undefined.  Priorities have no effect across multiple models.</p></li>
+                        <li><p><em>Depth Blend Falloff</em> extends the distance over which particle effects fade out when they get close to a solid object.  To reduce visual clipping artifacts, particle effects in StarCraft II fade out as they get close to another surface.  Increasing this value causes the blend to happen over a wider range.  <em>Disable Soft (Depth Blend)</em> can bypass this effect when no depth blend is desired.</p></li>
+                        <li><p><em>Hit Test</em> allows the polygons with this material to be used for fine grained per-pixel hit testing.  If a polygon does not seem like a physical part of a model, it may be appropriate to turn off this flag.</p></li>
+                        <li><p><em>2-Sided</em> turns off face culling on the GPU for this material.  The back-facing side will show up, but the lighting will be the same as the front-face.</p></li>
+                        <li><p><em>Double Lambert</em> causes the material to use a harsher lighting gradient.  Terrain in StarCraft II uses this setting, so for a doodad to blend seamlessly to the terrain, this setting may be necessary.</p></li>
+                        <li><p><em>Unlit</em> turns off shading on this material.  The diffuse texture will show through full-bright, and specular will not be calculated.</p></li>
+                        <li><p><em>Accept Splats</em> enlists polygons that use this material for use by <em>SC2 Projector</em> nodes.  Projectors, also known as 'splats', will show up on materials with this flag.</p></li>
+                        <li><p><em>Only (Accept Splats)</em> causes the material to not draw, and only be used in splat generation.  Splats can sometimes be processor intensive on complex meshes, or the mesh itself may be unsuitable for receiving splats.  This option can be used to generate custom splat-only geometry in those cases.</p></li>
+                        <li><p><em>No Fog</em> causes the height based fog on the map to not affect meshes that use this material.</p></li>
+                        <li><p><em>Use Vertex Color</em> multiplies vertex color applied to the mesh vertices against the final output color of the material, tinting towards the defined color.</p></li>
+                        <li><p><em>Use Vertex Alpha</em> multiplies the vertex alpha applied to the mesh vertices against the final output alpha of the material, making the surface more transparent.  An export warning will be emitted, and vertex alpha will not be exported unless a vertex color is also defined, though it need not be used by the material.</p></li>
+                        <li><p><em>Export Vertex RGBA</em> exports the vertex color attributes of the mesh, even if the assigned material does not use it.  This is useful for cliff meshes where the tileset material may need to use Vertex Alpha for blending.  This is also useful for Meshes used as emitters for <em>SC2 Particle</em> nodes, where the Red vertex color channel regulates emission probability.</p></li>
+                        <li><p><em>Receive Shadows</em> causes shadows to show up on this material.  This is often disabled for gameplay elements like beacons or additive particle effects.</p></li>
+                        <li><p><em>Disable Soft (Depth Blend)</em> opts out of the softening depth blend for materials that would otherwise use them, like particle effects.  For adjusting this effect, rather than disabling it entirely, use <em>Depth Blend Falloff</em></p></li>
+                        <li><p><em>Specular Highlights</em> selects one of many presets for the size of bright highlights caused by reflected light on the material.  This effect is colored by the <em>Specular</em> texture slot.  The value of the preset is shown in <em>Exponent (Specular Highlights)</em>.  If this value is set to <em>Custom</em> the <em>Exponent</em> field can be manually edited.</p></li>
+                        <li><p><em>Exponent (Specular Highlights)</em> either shows the current value of the <em>Specular Highlights</em> preset as a diagnostic, or allows for direct manipulation of the value.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Passes</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_Passes.png" title="SC2 Standard's list of Passes.  Toggling these checkboxes will cause the material to draw or not draw in certain situations."/>
+                    <ol class="compact">
+                        <li><p><em>Draw Geometry</em> causes the geometry to be drawn in the main scene pass. If this flag is not checked, then it will be drawn normally.  This is used at times in StarCraft II for defining mesh emitters for <em>SC2 Particle</em> nodes, or creating shadow-casting-only geometry.</p></li>
+                        <li><p><em>Z Fill Pass</em> causes the geometry to be drawn in a special pass that happens after Opaque objects are drawn, but before transparencies.  This writes to the depth buffer without writing color, and will cull any transparencies behind it.  This can make a complex transparent mesh appear more "solid".</p></li>
+                        <li><p><em>Cast Shadows</em> writes all pixels of the material with an output alpha value higher than <em>Alpha Test Threshold</em> to the shadow buffer.  These shadows will appear on all materials marked to <em>Receive Shadows</em>.</p></li>
+                        <li><p><em>Transparent Shadows</em> writes the output of this material to the translucent shadows buffer.  This tints the color of shadows cast by this material.  This is only enabled on Ultra settings and above.  The effects can be seen on the shadows of minerals and the crystal on top of the Protoss Nexus.  It is valid for a material to cast transparent shadows but not regular shadows if it is visually appropriate.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Material Texture Parameters</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_Textures.png" title="The list of texture slots for SC2 Standard.  These get toggled on and off by the 'Preset' parameter, and are the most direct control over the look of the material."/>
+                    <ol class="compact">
+                        <li><p><em>Diffuse</em> defines the main color of the material.  The RGB channels of this map control the Lambertian response to any lights that touch the surface.  For models that use Team Color, the alpha channel is used to control where Team Color is present.  Black in the Alpha channel results in the surface appearing with full Team Color.</p></li>
+                        <li><p><em>Normal</em> provides a tangent-space normal map for per-pixel lighting.  If a DDS is provided in this slot, it must be compressed using the BC3N (DXT5N) format.  Any TGA file in this slot will compress using BC3N automatically when using <em>Commit</em>.</p></li>
+                        <li><p><em>Height map</em> provides a single-channel height map for parallax occlusion.  This is only active on Ultra settings.  It provides per-pixel depth offsets, and is used in particular special effects, such as the Nuke.  This is a costly effect and is used only in cases where it has a large impact.</p></li>
+                        <li><p><em>Parallax height</em> scales the intensity of the map defined in <em>Height Map</em>.</p></li>
+                        <li><p><em>Decal</em> provides a secondary diffuse map that is composited over the first diffuse map.  The alpha channel is used to control the blending operation.  By convention, in StarCraft II this layer is used for faction decals.  These textures will be named in the format (Replacement Token)_(Race)_(Decal ID Number)_(Decal Variant).  EG: Decal_Terran_0000_01.</p></li>
+                        <li><p><em>Alpha (Decal)</em> adjusts the opacity of the texture provided by <em>Decal</em>.</p></li>
+                        <li><p><em>Specular</em> colors per pixel reflective light, as controlled by <em>Specular Highlights</em>.</p></li>
+                        <li><p><em>Gloss</em> allows for a single-channel texture to define the size of <em>Specular Highlights</em> per-pixel.  White values will result in the specular highlight size defined.  Darker values will allow for a progressively wider highlight.  It is unlikely that any pixel in this map should yield pure black, as that will result in a degenerate specular highlight.</p></li>
+                        <li><p><em>Emissive</em> introduces a color into the material that is unaffected by shading.  This is used for parts of the surface that should appear as if they are casting light.  This texture will be amplified by <em>Emissive Multiplier</em>.</p></li>
+                        <li><p><em>Alpha (Emissive)</em> adjusts the opacity of the texture provided by <em>Emissive</em>.</p></li>
+                        <li><p><em>Blend Mode (Emissive)</em></p>
+                            <ul>
+                                <li><p><em>Add</em> composites the layer additively, resulting in a brighter result.</p></li>
+                                <li><p><em>Blend</em> composites the layer using linear interpolation, replacing the original color with the target color.</p></li>
+                                <li><p><em>Team Color Add</em> uses a single channel layer color to determine the amount of Team Color to blend in additively.</p></li>
+                                <li><p><em>Mod</em> multiplies the resulting color and the previous layer color, likely darkening it.</p></li>
+                                <li><p><em>Mod2x</em> multiplies and the resulting color and the previous layer color, then doubles the brightness. Values darker then 128-grey in the source texture will result in a darkening effect.  Brighter values will result in a lightening effect.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Emissive 2</em> introduces a color into the material that is unaffected by shading.  This is used for parts of the surface that should appear as if they are casting light.  This texture will be amplified by <em>Emissive Multiplier</em>.</p></li>
+                        <li><p><em>Alpha (Emissive 2)</em> adjusts the opacity of the texture provided by <em>Emissive 2</em>.</p></li>
+                        <li><p><em>Blend Mode (Emissive 2)</em></p>
+                            <ul>
+                                <li><p><em>Add</em> composites the layer additively, resulting in a brighter result.</p></li>
+                                <li><p><em>Blend</em> composites the layer using linear interpolation, replacing the original color with the target color.</p></li>
+                                <li><p><em>Team Color Add</em> uses a single channel layer color to determine the amount of Team Color to blend in additively.</p></li>
+                                <li><p><em>Mod</em> multiplies the resulting color and the previous layer color, likely darkening it.</p></li>
+                                <li><p><em>Mod2x</em> multiplies and the resulting color and the previous layer color, then doubles the brightness. Values darker then 128-grey in the source texture will result in a darkening effect.  Brighter values will result in a lightening effect.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Environment</em> allows the definition of an environment lighting texture.  This layer requires an <em>Environment Type</em> Mapping in the provided <em>SC2 Bitmap</em>.  This feature is typically used for semi-reflective surfaces.</p></li>
+                        <li><p><em>Alpha (Enviroment)</em> reduces the brightness of <em>Environment</em>.</p></li>
+                        <li><p><em>Envio Mask</em> allows for a single-channel mask to reduce the intensity of <em>Environment</em> per-pixel.</p></li>
+                        <li><p><em>Blend Mode (Environment)</em></p>
+                            <ul>
+                                <li><p><em>Add</em> composites the layer additively, resulting in a brighter result.</p></li>
+                                <li><p><em>Blend</em> composites the layer using linear interpolation, replacing the original color with the target color.</p></li>
+                                <li><p><em>Mod</em> multiplies the resulting color and the previous layer color, likely darkening it.</p></li>
+                                <li><p><em>Mod2x</em> multiplies and the resulting color and the previous layer color, then doubles the brightness. Values darker then 128-grey in the source texture will result in a darkening effect.  Brighter values will result in a lightening effect.</p></li>
+                            </ul>
+                        </li>
+                        <li><p><em>Alpha Mask</em> defines a map to control the opacity of the material.  If the alpha value from this slot, multiplied by the alpha value from the <em>Alpha Mask 2</em> slot, and any other alpha sources, such as vertex alpha results in a value lower than <em>Alpha Threshold</em>, the pixel will not be drawn.</p></li>
+                        <li><p><em>Alpha Mask 2</em> defines a map to control the opacity of the material.  If the alpha value from this slot, multiplied by the alpha value from the <em>Alpha Mask</em> slot, and any other alpha sources, such as vertex alpha results in a value lower than <em>Alpha Threshold</em>, the pixel will not be drawn. Note that for performance reasons, the cloaking shader does not consider this map when determining its alpha.</p></li>
+                        <li><p><em>Lightmap</em> defines alternate baked lighting for Low settings.  This most often used on storymode sets.</p></li>
+                        <li><p><em>Ambient Occ</em> defines a single channel ambient occlusion value to be used on High and above graphics settings.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>HDR</h2>
+                <p>For some parts of the StarCraft II graphics pipeline, it can be important to define overbright values.  These values have significant contributions to bloom effects and other parts of the final image.  These HDR multipliers help increase the intensity of the final output colors for channels that benefit from this control.</p>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_HDR.png" title="Extra multipliers for High Dynamic Range colors."/>
+                    <ol class="compact">
+                        <li><p><em>Specular Multiplier</em> can be used to increase or reduce the final output value for Specular Lighting.  This has no effect for settings that do not use specular lighting.</p></li>
+                        <li><p><em>Emissive Multiplier</em> can be used to increase or reduce the final output value for Emissive values.   This value is often used to increase the intensity of particle effects.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Misc</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_Misc.png" title="Extra render settings for special cases.  These are not as common as the options in 'Basic Parameters' so they are moved out the of way of the user."/>
+                    <ol class="compact">
+                        <li><p><em>Decal Lighting</em> causes a material to draw in a special pass after opaque objects.  This will write to a special buffer, so that <em>SC2 Omni</em> and <em>SC2 Spot</em> light types treat it as if it is part of the opaque objects behind it.  This is a cheaper alternative to <em>Enable local lights on transparencies</em> when the object is extremely close to the surface, such as with <em>SC2 Projector</em> nodes.</p></li>
+                        <li><p><em>Transparency affects depth-based effects</em> turns on depth writes for a transparent material.  Normally, these materials do not write to depth, because it can cause visual artifacts.  However, in some cases, transparent objects should affect phenomena such as Depth of Field.  This option is useful in such cases.</p></li>
+                        <li><p><em>Enable local lights on transparencies</em> allows transparencies to accept light contribution from <em>SC2 Omni</em> and <em>SC2 Spot</em> lights.  Under normal circumstances, transparencies only receive the global lights from the map.</p></li>
+                        <li><p><em>Hair layer sorting</em> *unsupported*.  At one time in StarCraft II, polygons for hair were exported in a certain order, so that there were fewer sorting errors.  This method was dropped in favor of more opaque hair, and explicit control of sort order using <em>Priority</em>.  This option exists for legacy purposes, but should not be used.</p></li>
+                        <li><p><em>Exclude from highlighting</em> prevents a mesh from being highlighted, even if it is part of a model that is highlighted.  This is used often in story mode, where a point of interest may be part of a larger model.</p></li>
+                        <li><p><em>Background object</em> hints to the renderer that this model is intended to be drawn behind all other objects.  This may yield performance improvements.  This flag can be set on all opaque meshes in a model by declaring it to be a Skybox model in the Data Editor.</p></li>
+                        <li><p><em>Clamp output</em> prevents overbright and negative color outputs from the shader.  This may have adverse effects on values that should have a high dynamic range, but can prevent some visual artifacts.</p></li>
+                    </ol>
+                </div>
+                
+                <h2>Compatibility</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SC2Standard_Compatibility.png" title="Rollout for handling problems that are specific to various settings.  In general, this lets certain settings turn on for 'Low' when they are required for gameplay."/>
+                    <ol class="compact">
+                        <li><p><em>Decal required on low end</em> forces the decal layer to show even on Low settings, where it may be turned off for performance reasons.  This should be used when seeing the decal layer is critical to gameplay.</p></li>
+                        <li><p><em>Emissive required on low end</em> forces the emissive layer to show even on Low settings, where it may be turned off for performance reasons.  This should be used when seeing the emissive layer is critical to gameplay, such as being the sole provider of Team Color.</p></li>
+                        <li><p><em>Specular required on low end</em> *unused*.  Reserved as a suggestion that low end machines should still use the <em>Specular</em> layer.  This is, however, currently unused in an effort to protect the framerate of lower end machines.</p></li>
+                        <li><p><em>Z-fill required on low end</em> forces the material to still draw in the Z-fill pass, even on Low settings.  Using this pass incurs extra overhead, so it is preferable to avoid it.  However, in cases where gameplay would be affected, or the visual artifact is too egregious, this flag should be enabled.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

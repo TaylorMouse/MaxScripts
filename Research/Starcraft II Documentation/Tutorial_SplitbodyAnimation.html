@@ -1,0 +1,90 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Advance Tutorial: Splitbody Animation - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Advance Tutorial: Splitbody Animation</h1>
+                <img src="resource/img/Progress_0007_Splitbody.png" title="An image showing the progress achieved during this tutorial: The Waterbat's 'Attack' animation is changed into a Splitbody animation that can be played along with the 'Walk' animation to create a walking attack animation."/>
+                <p>The StarCraft II animation system has the capability to play different animation on different tracks of a model at the same time.  For instance, a "Walk" animation can be played on the rotation tracks of the body and legs while the arms can be playing an 'Attack' animation.  This is called 'Splitbody Animation'.  To demonstrate this type of animation, we will change the 'Walk' animation of the Waterbat into a Splitbody Animation so that it could walk with his arms in the attack position.  </p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_SplitBodyAnimations_Tutorial01_Start.max'</em>.  It contains the Waterbat with the 'Walk' and 'Attack' animations needed for this tutorial.</p>
+                        <img class="zoom" src="resource/img/Splitbody_Viewport_0000_Initial.png" title="The 'Walk' animation in Waterbat_SplitBodyAnimations_Tutorial01_Start.max."/></br>
+						<img class="zoom" src="resource/img/Splitbody_Viewport_0001_Initial.png" title="The 'Attack' animation in Waterbat_SplitBodyAnimations_Tutorial01_Start.max."/>
+                    </li>
+                </ol>
+                <h2>Create a Track Set</h2>
+				<p>The first thing we are going to do is create a <em>Track Set</em> which is basically a collection of tracks which can be assigned to any number of animations.  By default, every track is considered to be in a <em>'Default Track Set'</em> that is assigned to every animation.  We will make a new track set using the "Track Sets Editor".</p>
+                <ol>
+                    <li value="2">
+                        <p>Open the <em>Anim Props Floater</em>, and press the <em>'Open Track Sets Editor'</em> button to open the Track Sets Editor.</p> 
+                        <img class="zoom" src="resource/img/Splitbody_AnimProps_0001_OpenTracksetEditor.png" title="Open the Track Sets Editor."/>
+                    </li>					
+                    <li>
+                        <p>In the Track Sets Editor floater that opens, press the <em>'Add a Track Set'</em> button and name the newly created track set to <em>'LowerBody'</em>.</p>
+                        <img class="zoom" src="resource/img/Splitbody_TrackSetEditor_0001_NewTrackSet.png" title="Create a new Track Set and name it 'LowerBody'." />
+                    </li>
+					<li>
+                        <p>Select all the lower body bones as shown.  With the "LowerBody" track set still selected, press the <em>'Add Bones From Viewport Selection'</em> button.  A <em>'+'</em> button should now be available next the "LowerBody" track set, and pressing it expands the list of bones that have been assigned to it.  </p>
+                        <img class="zoom" src="resource/img/Splitbody_Viewport_0002_SelectBones.png" title="Select the lower body bones."/></br>
+						<img class="zoom" src="resource/img/Splitbody_TrackSetEditor_0002_AssignBones.png" title="Add the lower body bones as members of the 'LowerBody' Track Set." />
+						<img class="zoom" src="resource/img/Splitbody_TrackSetEditor_0003_BonesExpanded.png" title="Expanded bone list" />
+                    </li>					
+					<li>
+                        <p>Likewise, clicking the <em>'+'</em> buttons next to the assigned bones should show animatable tracks available for each of them.  Since we only need the "position" and "rotation" track for the <em>Root</em>, uncheck the "scale" track for it.  For all other bones, uncheck everything other than "rotation".</p>
+                        <img class="zoom" src="resource/img/Splitbody_TrackSetEditor_0004_UnusedTracksOff.png" title="Turn off unnecessary tracks." />
+                    </li>
+                </ol>
+                <h2>Assigning Track Set to Animation</h2>
+                <ol>
+                    <li value="6">
+                        <p class="caption">Now that we have the 'LowerBody' track set, we will need to assign it to the 'Walk' animation.  In the Anim Props Floater, Select <em>'Walk'</em> from the animation list, then press the <em>Add</em> button on the <em>SubAnim Tracks rollout</em>.  In the pop-up that appears, select the <em>'LowerBody'</em> track set from the combo-box, then click 'OK'.  The 'LowerBody' track set should now be on the 'Anim Track Set' list for the 'Walk' animation.</p>
+                        <img class="zoom" src="resource/img/Splitbody_AnimProps_0002_AssignTrackset.png" title="Add the 'LowerBody' as subanim tracks for the 'Walk' animation." />
+						<img class="zoom" src="resource/img/Splitbody_AnimProps_0003_TracksetAssigned.png" title="The 'LowerBody' track set should shows up on the 'Anim Track Set' list for the 'Walk' animation." />
+                    </li>
+					<li>
+                        <p>Use <em>'SC2ArtTools &gt; Export &gt; Preview'</em> and launch the <a href="#">Cutscene Editor</a> to preview the file.  The Waterbat appears in the Cutscene Editor playing its "Stand" animation.  In order to play the 'Attack' animation simultaneously with the 'Walk' animation, they need to be played in two different animation layers.  First, change the "Stand" animation to 'Walk'.  Then, right-Click on the Waterbat in the list and choose <em>"Add Animation Layer"</em> from the pop-up menu to create a new layer.  Change the animation of the second layer to 'Attack' and drag the beginning of the 'Attack' animation block to the right so that it starts later.  We want the Waterbat to start walking first and then lift his arms to attack.</p>		
+                        <img class="zoom" src="resource/img/Splitbody_Viewport_0003_Preview.png" title="Preview the file." /></br>
+						<img class="zoom" src="resource/img/Splitbody_Preview_0000_NewLayer.png" title="Add a new animation layer." /></br>
+						<img class="zoom" src="resource/img/Splitbody_Preview_0001_Layers.png" title="Set the animation layers to play the 'Walk' and 'Attack'." /></br>
+					</li>
+					<li>
+                        <p>Press <em>Play</em> in the Cutscene Editor.  The Waterbat starts out walking but when the timeline gets to the 'Attack' block, his entire body switches to the 'Attack' animation which isn't what we want.  Instead, we want the rest of his body besides the arms to continue playing 'Walk'.  To do that, we need to assign Animation Track Priorities to the track sets.</p>		
+                        <img class="zoom" src="resource/img/Splitbody_Preview_0002_Playback.png" title="The result of playing the two animation layers together- 'Walk' stops playing on the legs when 'Attack' starts which is incorrect." />
+					</li>
+                </ol>
+				<h2>Animation Track Priority</h2>
+                <ol>
+                    <li value="9">
+                        <p class="caption">When multiple animations are played at the same time, each track would playback the animation it has the highest priority in.  The animation priority for a given animation can be found on an animation block as a number in parenthesis.  In this case, the 'Walk' animation block shows a priority of (5) while 'Attack' has priority of (9) which is why every track in the 'Attack' animation is overwriting the 'Walk' tracks.  Note that, these are the default priority assigned to each animation by name.  A list of default animation priorities can be found on the <a href="Appendix_AnimationPriorities.html">Animation Priorities Appendix</a>.					
+						</p>
+                        <img class="zoom" src="resource/img/Splitbody_Preview_0003_PriorityNumbers.png" title="The priority for 'Walk' is (5) and 'Attack' is (9)." />
+                    </li>
+					<li>
+                        <p>In order for the tracks of the lower body to play 'Walk' instead of 'Attack', their priority while playing 'Walk' needs to be changed to higher than for 'Attack' which is (9).  This can be done by altering the priority of the 'LowerBody' track set for the 'Walk' animation.  In the Anim Props Floater, make sure the 'Walk' animation and 'LowerBody' track set are selected, then set the <em>priority</em> to <em>'10'</em>.</p>
+                        <img class="zoom" src="resource/img/Splitbody_AnimProps_0004_SetPriority.png" title="Set the 'Attack' animation's 'Default Track Set' to priority of '4'." />
+					</li>					
+					<li>
+                        <p>Let's check our work again.  This time, instead of using 'Preview', invoke <em>'SC2ArtTools &gt; Export &gt; Preview Add'</em> which would update the Cutscene Editor without resetting it.  This way, we can reuse the animation layers we have already setup.</p>		
+                        <img class="zoom" src="resource/img/Splitbody_Viewport_0004_PreviewAdd.png" title="Use 'Preview Add' to update the Waterbat to the Cutscene Editor." />
+					</li>
+					<li>
+                        <p>Once the Cutscene Editor is updated, the Waterbat should now be walking with his arms pointing forward in the attack pose when the timeline reaches the 'Attack' animation block.</p>	
+                        <img class="zoom" src="resource/img/Splitbody_Preview_0004_WalkAttack.png" title="In the Cutscene Editor, the Waterbat now walks with his arms in the attack position." />
+					</li>
+                </ol>				
+            </div>
+        </div>
+    </body>
+</html>

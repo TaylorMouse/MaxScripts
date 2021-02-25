@@ -1,0 +1,49 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tool: Anim Prop Floater - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tool: Anim Prop Floater</h1>
+                <div class="group">
+                    <p>The Anim Prop Floater is the primary mechanism for defining animations and animation properties for StarCraft II in 3DS Max.  It has three major sections:  The uppermost section deals primarily with which parts of the animation to export; the <em>'Properties'</em> section deals with how the engine will display the animation; and the <em>'SubAnim Tracks'</em> rollout helps control which parts of the model the animation will affect.</p>
+                    <img class="detail focus" src="resource/img/Tool_AnimPropFloater.png" title="The Anim Prop Floater, with every item marked."/>
+                    <ol class="compact">
+                        <li><p><em>'Goto Time Zero'</em> changes both the current frame, and the start of the current 3DS Max Time Slider range to Frame 0.  This allows logical changes to the mesh and other non-animatable features of the model.</p></li>
+                        <li><p><em>'Animation Set Picker'</em> controls how Animations can be grouped together and/or disabled.  This dropdown allows you to pick from possible sets of animations.  Type directly in the box to add a new set based on the current.  Hit the <em>'X'</em> to the right to remove the (non-default) current animation set.</p></li>
+                        <li><p><em>'Animation Picker'</em> lists the names of all Animations defined for the currently active Animation Set.  Clicking an animation name here will make it the active animation for the Anim Prop Floater, and all Animation specific properties will be applied to it. If <em>'Update Timeline'</em> is active, the timeline will also be set to the Animation Start and End frames.  If a non-default Animation Set is active, there may be checkboxes available to enable and disable animations for that Animation Set.  The currently active animation for the entire Anim Prop Floater is the highlighted item in this list.</p></li>
+                        <li><p><em>'New' (Anim)</em> defines a new Animation for the scene.  Clicking this button will bring up a window to pick the name, start frame, and length of the animation.</p></li>
+                        <li><p><em>'Remove' (Anim)</em> scrubs the properties for the currently active Animation.  This will remove the Anim Prop Floater's data for that entry from the scene, the animation on the model, however, will remain unchanged.</p></li>
+                        <li><p><em>'Rename' (Anim)</em> prompts the user to redefine the name of the currently active animation.</p></li>
+                        <li><p><em>'Duplicate'</em> copies the properties of the current animation, including name and length, and defines another Animation after all other Animations in the scene.  This will also copy all the existing animation on the model in addition to the Anim Prop Data.</p></li>
+                        <li><p><em>'Invert ck'</em> flips the state of all checkboxes in the Animation Picker if a non-default Animation Set is active.  This inverts the mask of animations that will be exported.</p></li>
+                        <li><p><em>'Update Timeline'</em> toggles whether or not selecting an Animation in the Animation Picker will change the 3DS Max timeline to match the animation.</p></li>
+                        <li><p><em>'Sort By Time'</em> toggles whether the Animation Picker is sorted by start time or alphabetically.</p></li>
+                        <li><p><em>'Start'</em> denotes the starting frame of the currently active animation.  Changing this field will change the Anim Prop Data.  The Anim Prop Floater will restrict you from overlapping animations when using this field.</p></li>
+                        <li><p><em>'End'</em>  denotes the ending frame of the currently active animation.  Changing this field will change the animation data.  The Anim Prop Floater will restrict you from overlapping animations when using this field.</p></li>
+                        <li><p><em>'Set Start/End To Slider Range'</em> forcibly replaces the currently active Animation's start and end times with that of 3DS Max's current playback range.  This is potentially dangerous, as you can violate the <a href="Appendix_RiggingGuidelines.html#NoOverlap">no-overlapping-animations restriction</a> if you are not careful.</p></li>
+                        <li><p><em>'Rarity'</em> is the weight at which an animation will be favored amongst other variants.  All weights are summed and normalized for selection, rather than a straight percentage.</p></li>
+                        <li><p><em>'MoveSpeed'</em> is used by the Cutscene Editor to automatically propel the model forward when <em>'Toggle Walk'</em> is on.  This lets your quickly iterate on walk-cycles.</p></li>
+                        <li><p><em>'Non-Looping'</em> causes the animation to only play a single time.</p></li>
+                        <li><p><em>'Open Track Sets Editor'</em> opens the <a href="Tool_BehaviorEditor.html">Behavior Editor</a> in Track Set Mode, where you can create and edit track sets, which restrict the Animation to parts of the model.</p></li>
+                        <li><p><em>'Start On Model Creation'</em>, if checked, causes an animation to start playing as soon as the related model is created in the game. This isn't used much anymore and exist only as a legacy function. The job of starting animations on model creation are now mostly handled by <a href="Tutorial_GlobalLoopAnimation.html">Global Loop Animations</a>.</p></li>
+                        <li><p><em>'Anim Track Sets'</em> lists Track Sets the animation will play back on.  "Default Track Set" is the set of every animation track not specified in a custom Track Set.  The animation will not use Track Sets that are defined, but are not present in this list.</p></li>
+                        <li><p><em>'Add' (Track Set)</em> allows the user to pick Track Sets defined in the Track Set Editor for the animation to play back on.</p></li>
+                        <li><p><em>'Remove' (Track Set)</em> removes the currently selected Track Set from the Anim Track Sets list.</p></li>
+                        <li><p><em>'Rename' (Track Set)</em> allows the user to change the currently selected Track Set to another.</p></li>
+                        <li><p><em>'Priority'</em> sets priority of the selected track set for the selected animation. The label next to the spinner shows the original default priority for the selected animation when not altered by user.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

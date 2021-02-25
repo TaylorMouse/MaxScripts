@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Materials: Material Types: SC2 SplatTerrainBake - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Materials: Material Types: SC2 SplatTerrainBake</h1>
+                <p>Splats can be drawn with a special optimization that bakes their textures into the terrain.   Applying the <em>SC2 SplatTerrainBake</em> material enables this optimization.  This is a relatively large optimization employed by doodads like roads in StarCraft II.  In order to draw like terrain, this material has many restrictions: specular color must be monochromatic; features such as emissive are not present; material/bitmap parameters may not be edited or animated; and the splat itself should not be animated.  Splats using this material type will only affect terrain.</p>
+                <h2>Splat Terrain Bake</h2>
+                <div class="group">
+                    <img class="detail focus" src="resource/img/Material_SplatTerrainBake.png" title="The only Rollup for the splat terrain bake material"/>
+                    <ol class="compact">
+                        <li><p><em>Diffuse</em> supplies the texture for the basic color of the splat.  This property must be an <em>SC2 Bitmap</em>.  Only the filepath is considered.  The RGB channels will be used directly, and the alpha channel is implicitly the opacity of the entire splat.</p></li>
+                        <li><p><em>Normal</em> supplies a tangent space normal map to be blended into the terrain on higher settings.  Only the filepath is considered.</p></li>
+                        <li><p><em>Specular</em> supplies a specular intensity path to be blended with the terrain.  Only the filepath is considered.  The output color is the approximate average luminosity of the RGB color channels of the texture.</p></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

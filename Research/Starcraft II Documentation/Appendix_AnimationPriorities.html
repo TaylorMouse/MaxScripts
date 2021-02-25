@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Animation Priority - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Animation Priority</h1>
+                <h2>Overview</h2>
+                <p>StarCraft II animations play with given priorities.  That is to say <em>GLStand</em> will always show up instead of <em>Stand</em> in game if both are playing.  All valid <a href="Appendix_AnimationProps.html">Animation Tokens</a> will generate playable animations, but their relative importance is described by the Animation Priority System.  Animation Names are matched against a list of <a href="http://en.wikipedia.org/wiki/Regular_expression">Regular Expressions</a>, in order, to determine their desired priority.  When two animations play, the animation with the higher priority will be the one that is visible.  The list of regular expressions for Anim Priorities at the time of shipping StarCraft II: Heart of the Swarm are described below.</p>
+                
+				<h2>Animation Priority Expressions</h2>
+                <ul class="glossary">
+                    <li>"^Attack.*" 9</li>
+					<li>"^Birth.*" 7</li>
+					<li>"^Build.*" 8</li>
+					<li>"^Burrow.*" 8</li>
+					<li>"^Burrow.*" 8</li>
+					<li>"^Unburrow.*" 8</li>
+					<li>"^Click.*" 3</li>
+					<li>"^Cover.*" 4</li>
+					<li>"^Death.*" 11</li>
+					<li>"^Dead.*" 11</li>
+					<li>".*Fidget.*" 7</li>
+					<li>"^Flail.*" 8</li>
+					<li>"^Gather.*" 8</li>
+					<li>"^GL.*" 12</li>
+					<li>"^Highlight.*" 11</li>
+					<li>"^Hover.*" 6</li>
+					<li>"^Jump.*" 8</li>
+					<li>"^Kill.*" 8</li>
+					<li>"^Lighting.*" 11</li>
+					<li>"^Land.*" 8</li>
+					<li>"^Morph.*" 8</li>
+					<li>"^Pickup.*" 4</li>
+					<li>"^Ready.*" 5</li>
+					<li>"^Reload.*" 8</li>
+					<li>"^Run.*" 6</li>
+					<li>"^Silentkill.*" 8</li>
+					<li>"^Spell.*" 9</li>
+					<li>"^Stand Victory" 7</li>
+					<li>"^Stand Dance" 7</li>
+					<li>"^Stand Channel Start" 8</li>
+					<li>"^Stand Channel" 6</li>
+					<li>"^Stand Channel End" 8</li>
+					<li>"^Stand Cover Ready Talk" 6</li>
+					<li>"^Stand Attached Start" 6</li>
+					<li>"^Stand Attached End" 6</li>
+					<li>"^Stand Burrow Start" 8</li>
+					<li>"^Stand Burrow End" 8</li>
+					<li>"^Stand Burrow" 6</li>
+					<li>"^Stand Listen.*" 4</li>
+					<li>"^Stand Morph" 6</li>
+					<li>"^Stand Start" 4</li>
+					<li>"^Stand Unpowered Start" 10</li>
+					<li>"^Stand Unpowered End" 10</li>
+					<li>"^Stand Unpowered" 8</li>
+					<li>"^Stand Work Start" 8</li>
+					<li>"^Stand Work End" 8</li>
+					<li>"^Stand Work" 6</li>
+					<li>"^Stand.*" 3</li>
+					<li>"^Thrown.*" 11</li>
+					<li>"^Walk Start" 6</li>
+					<li>"^Walk Start Left" 6</li>
+					<li>"^Walk Start Right" 6</li>
+					<li>"^Walk End" 6</li>
+					<li>"^Walk.*" 5</li>
+					<li>"^Talk.*" 4</li>
+					<li>"^Corrupted.*" 6</li>
+					<li>"^Work.*" 6</li>
+					<li>"^Fly Start" 6</li>
+					<li>"^Fly End" 6</li>
+					<li>"^Fly" 5</li>
+					<li>"^Dialog.*" 10</li>
+					<li>"^AngryEyes" 12</li>
+					<li>"^ClosedEyes" 13</li>
+					<li>"^FearEyes" 12</li>
+					<li>"^HappyEyes" 12</li>
+					<li>"^NeutralEyes" 12</li>
+					<li>"^SadEyes" 12</li>
+					<li>"^SeriousEyes" 12</li>
+					<li>"^SurpriseEyes" 12</li>
+					<li>"^Eye Glow" 11</li>
+					<li>"^Eye Detect.*" 12</li>
+					<li>"^Eye Blink" 12</li>
+					<li>".*" 5</li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Tutorial 01: Materials - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Tutorial 01: Materials</h1>
+                <img src="resource/img/Progress_0001_BasicMaterial.png" title="An image showing the progress achieved during this tutorial: a grey mesh taken to a textured mesh in the Cutscene Editor"/>
+                <p>StarCraft II uses a flexible material system to control how 3D assets appear in game.  This tutorial provides an overview of the basic features with the intent of teaching you the necessary tools to get your custom models and textures to show up in game.  We will take a model from simple grey mesh and loose textures to a model capable of being viewed inside of StarCraft II.</p>
+                <h2>Getting Started</h2>
+                <ol>
+                    <li>
+                        <p>Open <em>'Waterbat_Tutorial01_Mesh.max'</em>.  It should appear as grey mesh and the scene should be generally empty.  This will be the starting point for this tutorial.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0000_Initial.png" title="The initial state of the 3ds Max scene for the Waterbat."/>
+                    </li>
+                </ol>
+                
+                <h2>Basic Material Setup</h2>
+                <ol>
+                    <li value="2">
+                        <p class="caption">We need to apply a StarCraft II Material to our mesh before we will be able to do anything fun, like see it in game.  Open the Compact Material Editor, which can be accessed through <em>'Rendering &gt; Material Editor &gt; Compact Material Editor'</em> menu item.  Click the "Standard" button in the top right of the Material Properties.  You will be presented with a list of possible Material Types to use.  From this list select, <em>'Materials &gt; Standard &gt; SC2 Standard Material'</em>.  This is the most common Material Type for an asset in StarCraft II.  Hit <em>'OK'</em>.</p>
+                        <img class="zoom"src="resource/img/BasicMaterial_MatEdit_0000_Material_EditType.png" title="Click the top right button that says 'Standard' to change the Material Type." />
+                        <img class="zoom minor" src="resource/img/BasicMaterial_MatEdit_0001_Material_SelectType.png" title="Find 'SC2 Standard Material' in the list." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">When you return to the Material Editor, you should be looking at an image similar to this with <em>'SC2 Standard'</em> where <em>'Standard'</em> once was.  In the rollout for SC2 Standard, scroll down to <em>'Material Texture Parameters'</em>, and click the button to the right of <em>'Diffuse . . . . .'</em> to begin editing the Diffuse Texture, the basic color information for your asset.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0002_Material_Blank.png" title="The Material Editor should be changed to new layout, that of the SC2 Standard Material" />
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0004_Material_EditDiffuseMap.png" title="The Diffuse map slot is the first slot in the Material Texture Parameters section." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">The subsequent of dialog will be that of SC2 Bitmap, the custom Bitmap type for StarCraft II compatible images in 3ds Max.  Click the button to the right of <em>'Bitmap:'</em> to pick the exact texture file to use.  You should be prompted with a file browser.  Find and select <em>'Waterbat_Diff.tga'</em>.  Then scroll down to the <em>'Color Operations'</em> rollout, and change the dropdown to <em>'Use RGB'</em>.  This will disable the Alpha Channel in the texture, which is what we want for now.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0005_Bitmap_PickFile.png" title="In 'Bitmap Parameters' the 'Bitmap' button will allow you to pick your texture file." />
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0006_Bitmap_NoTeamColor.png" title="Select 'Use RGB' to disable Team Color." />
+                    </li>
+                    
+                    <li>
+                       <p>Make sure your material is properly applied to the model.  At this point, if you enable <em>'Show Map in Viewport'</em> for the Diffuse Texture, your viewport should have a colored mesh showing.</p>
+                       <img class="zoom" src="resource/img/BasicMaterial_Viewport_0003_WithTexture.png" title="The Waterbat model will now be a wonderful shade of Blue." />
+                    </li>
+                </ol>
+                
+                <h2>Previewing Your Model</h2>
+                <ol>
+                    <li value="6">
+                        <p>The StarCraft II Art Tools allow for quick previewing in the StarCraft II Editor from 3ds Max.  If you have the StarCraft II Editor running, you can export your model directly into the Cutscene Editor Module.  To do this, open the StarCraft II Editor.  Then in 3ds Max, use the <em>'SC2ArtTools &gt; Export &gt; Preview'</em> menu item.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0004_Preview.png" title="Go to the SC2ArtTools Menu, select Export, Then Preview to send your model to the StarCraft II Editor." />
+                    </li>
+                    <li>
+                        <p>If all went well, you should see a window pop up with the text <em>Preview Succeeded</em>.  If there were warnings or errors on export, your model might not work in game.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0005_PreviewSuccessful.png" title="The exporter should let you know that the operation was successful in its log window." />
+                        </li>
+                    <li>
+                        <p>If you tab over to the StarCraft II Editor now, you should see a small Waterbat on top of whatever your default tileset is.  Use the<em>'Shift+F'</em> hotkey to Zoom in on your model.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Preview_0000_FirstPreview.png" title="The Cutscene Editor Module of the StarCraft II Editor should now be showing your model." /><br/>
+                    </li>
+                    <li>
+                        <p>The Cutscene Editor has a selection model that is extremely helpful when making cutscenes, but can be distracting for quick model previews.  If you would like to toggle the selection highlight, navigate to the menu item <em>'Render &gt; Show Selection Highlight'</em> and set it on or off based on your preference.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Preview_0003_SelectionHighlight.png" title="Go to 'Render &gt; Show Selection Highlight' if you wish to toggle selection highlighting" />
+                    </li>
+                </ol>
+                
+                <h2>Common Textures</h2>
+                <p>To understand the following steps, it is important to understand the way most Unit Textures are set up in StarCraft II.  A detailed breakdown of a common setup for StarCraft II is available in <a class="nobreak" href="Appendix_WaterbatTextureSetup.html">Appendix: Waterbat Texture Setup</a>.</p>
+                <ol>
+                    <li value="10">
+                        <p>To enable Team Color, we need to return to the Diffuse Texture's rollout and enable the Alpha Channel by scrolling to <em>Color Operations</em> and selecting <em>RGBA</em> in the dropdown.  If you were to <em>Preview</em> now, you should now see Team color on your model.  If your model becomes a solid color, it likely indicates a problem in your texture's Alpha Channel.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0007_Bitmap_TeamColor.png" title="Select 'Use RGBA' to enable Team Color." />
+                        <img src="resource/img/BasicMaterial_Preview_0002_TeamColor.png" title="The Waterbat should now have Red Team Color on his shoulder pads and head." />
+                    </li>
+                    
+                    <li>
+                        <p>The Normal map enables extra surface detail and takes full advantage of StarCraft II's per-pixel lighting pipeline.  In <em>'Material Texture Parameters'</em> click the texture button to the right of <em>'Normal . . . . .'</em> then pick a <em>Waterbat_Norm.tga</em> in the same manner as done for the Diffuse Texture.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0008_Material_EditNormalMap.png" title="Click the button to the right of 'Normal . . . . .' to select a normal map."/>
+                        <img src="resource/img/BasicMaterial_Preview_0004_NormalMap.png" title="The Waterbat will have more detail, but it won't yet have its shine." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">While the Normal map will alter the diffuse lighting, it has a more profound effect for specular lighting.  We enable specular highlights by clicking the button to the right of <em>'Specular . . . .'</em> and picking a texture. For the Waterbat we want <em>'Waterbat_Spec.tga'</em>.  We will then want to set <em>'Use RGB'</em> in the dropdown in <em>'Color Operations'</em>, because we want to ignore the emissive mask in the alpha channel of this texture.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0009_Material_EditSpecularMap.png" title="Click the button to the right of 'Specular . . . .' to select a specular map."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0010_Bitmap_SpecularCOlor.png" title="We want to mask the Specular map to only RGB and ignore the A channel, because that contains the emissive."/>
+                    </li>
+                    
+                    <li>
+                        <p>At this point if you <em>'Preview'</em> and Preview your model again, you would start to see highlights that will move and glint with the camera, but we can make them look better.</p>
+                        <img src="resource/img/BasicMaterial_Preview_0005_Specular.png" title="There should now be highlights, but they might not look too good." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">To get the most out of our specular lighting, we will want to adjust the Glossiness and the Intensity of our highlight.  To edit how glossy the surface looks, go to the <em>'Material Basic Parameters'</em> rollout, and change the <em>'Specular Highlights'</em> dropdown.  For the Waterbat, we want a value of <em>'Small'</em>, but you can pick whatever you think looks best.  The highlight might not be bright enough to be noticeable.  To get a really punchy highlight like most of StarCraft II, scroll down to the <em>'HDR'</em> rollout and set <em>'Specular Multiplier'</em> to <em>'2.5'</em>.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0011_Material_SpecularPower.png" title="The Specular Highlight Dropdown controls how tight the highlights will be in game."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0012_Material_SpecularIntensity.png" title="The Specular Multiplier field controls how bright the highlight is."/>
+                    </li>
+                    
+                    <li>
+                        <p>At this point if you <em>'Preview'</em> your model again, you should see a far more detailed Waterbat standing before you.</p>
+                        <img src="resource/img/BasicMaterial_Preview_0006_RefinedSpecular.png" title="With these refined specular properties, the Waterbat should be starting to look pretty sharp." />
+                    </li>
+                </ol>
+                
+                <h2>Extra Features</h2>
+                <ol>
+                    <li value="16">
+                        <p class="caption">To improve the look of the Waterbat, especially in shadow, we're going to add an Emissive map and an Environment map.  The default Material loadout doesn't support these features, so we must enable them.  In the <em>'Material Basic Parameters'</em> rollout, clicking on the dropdown in the top-left that likely reads <em>'Specular'</em> and changing that to <em>'Environment'</em> will enable both of these features.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0013_Material_Features.png" title="By Changing the configuration of the Material to 'Environment' we gain access to more features."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0014_Material_EnabledFeatures.png" title="Specifically, Emissive and Environment maps become available."/>
+                    </li>
+                    
+                    <li>
+                        <p class="caption">Enable emissive by clicking the button to the right of <em>'Emissive . . . .'</em>.  You will want to pick <em>'Waterbat_Emis.tga'</em>.  Because we will be using Team Color to alter the emissive color, we need to mask this down to a single channel.  In <em>'Color Operations'</em> we now need to choose <em>'Use R'</em> to grab only the Red Channel of the texture and ignore the rest.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0015_Material_EditEmissiveMap.png" title="Click the button to the right of 'Emissive . . . .' to edit the emissive map.  You will pick Waterbat_Emis.tga this time."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0016_Bitmap_EmissiveChannel.png" title="Set the Channel mask to Use R only."/>
+                    </li>
+                    
+                    <li>
+                        <p class="caption">Below the Emissive Texture Slot there is a dropdown that likely reads <em>'Add'</em>.  By changing this to <em>'Team Color Add'</em>, the unit's glow will be tinted with the team color, which is a common feature for many of the units in StarCraft II.  The emissive as-is will likely not be bright enough, so by going to the <em>'HDR'</em> rollout, and setting <em>'Emissive Multiplier'</em> to something higher, like <em>'2.5'</em>, it will show up more.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0017_Material_TeamColorEmissive.png" title="Select Team Color Add to tint the emissive."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0018_Material_EmissiveIntensity.png" title="Set 'Emissive Multipler' to 2.5 make the emissive brighter."/>
+                    </li>
+                    
+                    <li>
+                        <p><em>'Preview'</em> again and the Waterbat should have small glowing details, such as the top of the water tanks.  If you press the number keys, such as <em>'2'</em> through<em>'0'</em>, the team color for the Waterbat will change and you can see what it looks like in colors like blue, purple, orange, and more.  <em>'1'</em> will return you to the default Red Color.  This should give you a sense of how well different players will be able to see your unit.</p>
+                        <img src="resource/img/BasicMaterial_Preview_0007_TeamColorEmissive.png" title="Bits like the backpack should now be glowing." />
+                        <img src="resource/img/BasicMaterial_Preview_0008_TeamColorChange.png" title="Team colors can be quickly cycled to other colors, such as Blue, to see what your unit will look like for many different players." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">Environment maps are a method of adding a simulated reflection to your material.  They can be either a regular image or a Cubic map.  Cubic maps require a little extra processing, but provide better reflections.  One has been provided as part of this tutorial.  Click the button to the right of <em>'Environment . . . . .'</em> to edit the map, and set it to use <em>'Reflect_StarTools.dds'</em>.  It is important to note that any texture with the token "Reflect" in it will get replaced on every in-game SC2Map with that SC2Map's reflection map.  In <em>'Coordinates'</em> for <em>'Mapping'</em> you must select <em>'Reflective Cubic Env'</em> if you are using a Cubic map.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0019_Material_EditEnvironmentMap.png" title="Click the button to the right of 'Environment . . . . .' to edit the environment map."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0020_Bitmap_CubicMapping.png" title="You must select Reflective Cubic Env for your Cubemap."/>
+                    </li>
+                    
+                    <li>
+                        <p>If you were to <em>'Preview'</em> now, your Waterbat would appear more than a little shiny.  You can now see how the Environment map behaves, but it looks a little ridiculous.</p>
+                        <img src="resource/img/BasicMaterial_Preview_0009_UnmaskedEnvironment.png" title="The Waterbat will likely be a bit too shiny now." />
+                    </li>
+                    
+                    <li>
+                        <p class="caption">To mute the Environment map we use an Environment Mask.  Click the button to the right of <em>'Envio Mask . .'</em> to edit the map.  This time, select <em>Waterbat_Envio.tga</em>.  The Environment mask is single-channel, so you must select <em>'Use R'</em> to narrow what we grab from the file to only the Red channel.  Because our texture is grayscale, we could just as easily employ <em>'Use G'</em> or <em>'Use B'</em>, but Red is the most common setting in this case amongst StarCraft II assets.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0021_Material_EditEnvironmentMask.png" title="Editing the Enviro Mask field will help tone down the Reflection intensity."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0022_Bitmap_EnvironmentMaskChannel.png" title="You must, however, select only a single channel, and not RGB."/>
+                    </li>
+                    
+                    <li>
+                        <p>The Waterbat should now be looking near complete!  His weapons and his water tanks now have a healthy sheen, and he's ready for the next phase of the Tutorial!</p>
+                        <img src="resource/img/BasicMaterial_Preview_0010_MaskedEnvironment.png" title="A reasonably complete and awesome looking Waterbat!" />
+                    </li>
+                </ol>
+                <h2>Decals</h2>
+                <p>In StarCraft II, players can choose from a set of Decals to personalize their army.  These are swapped in programmatically for textures with the token <em>'Decal'</em> in their name.  The Decal texture layer is where textures for this purpose are generally applied.  Generally, a decal will use a set of UVs different from that of the basic model.  As such you will need to construct a second set of UVs for the decal only.</p>
+                <ol>
+                    <li value="24">
+                        <p>To enable the decal layer, click the button to the right of <em>'Decal . . . . . .'</em> in the <em>'Material Texture Parameters'</em> rollout.  And select the provided decal, <em>'Decal_StarToolsTutorial_0000_01.tga'</em>.  Because it has the token <em>'Decal'</em> in the name it will mark this slot for dynamic replacement in game.  The map itself will overwrite the Diffuse layer, based on the Alpha channel of the texture.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0023_Material_EditDecal.png" title="The 'Decal . . . . . .' slot overwrites the Diffuse layer." />
+                    </li>
+                    
+                    <li>
+                        <p>The Decal layer requires special mapping.  First we need to set it to use a second UV set.  By changing the <em>'Coordinates &gt; Mapping'</em> dropdown to <em>'Explicit UV 2'</em>, we can layout UVs to place the decal exactly where we want it.  Because the Decal isn't a texture that we don't want to see repeating, we also need to disable <em>'Tile U'</em> and <em>'Tile V'</em>, so that the decal will show up only in the exact place we care about.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0024_Bitmap_DecalMapping.png" title="Choose Explicit UV 2 from the Mapping Dropdown."/>
+                        <img class="zoom" src="resource/img/BasicMaterial_MatEdit_0025_Bitmap_DecalTiling.png" title="Disable tiling so that the decal doesn't bleed out over odd parts of the unit."/>
+                    </li>
+                    
+                    <li>
+                        <p>To apply a second UV set, select the meshes where you want the decal to show up.  Then, in the <em>'Modify'</em> panel, apply an <em>'Unwrap UVW'</em> modifier.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0007_DecalUnwrapUVW.png" title="The Unwrap UVW modifier can be found near the bottom of the list of possible modifiers."/>
+                    </li>
+                    
+                    <li>
+                        <p>To edit the second UV channel, you need to first set <em>'Parameters &gt; Channel &gt; Map Channel'</em> to <em>'2'</em> then hit the <em>'Reset UVWs'</em> button to activate that channel for the modifier.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0008_SetupUnwrap.png" title="In the Unwrap UVW Modifier, you need to set the channel to 2, and then reset it."/>
+                    </li>
+                    
+                    <li>
+                        <p>Hit the <em>'Edit. . .'</em> button inside the modifier, and arrange your UVs so that the decal is centered where you want it.  In the example, we want the decal placed in the center of the shoulder pad.  Everything else has been tucked off to the side, so that it does not receive decaling.  Because tiling has been disabled, it is safe for the UVs to bleed outside of 0-1 space without negative visual consequences.</p>
+                        <img class="zoom" src="resource/img/BasicMaterial_Viewport_0011_UnwrapUV2.png" title="The UVs for the face of the shoulder pad should be centered over 0-1, while everything else should be pushed outside 0-1."/>
+                    </li>
+                    
+                    <li>
+                        <p>The Waterbat's materials should now be completely set up!  A player-specific decal should now show up on its shoulder when it runs around in game.  A <em>'Preview'</em> of your current scene should yield a visually complete Waterbat ready to animate!  You can compare your results to <em>'Waterbat_Tutorial02_Textured.max'</em>, which is an example file at a similar level of completion.</p>
+                        <img src="resource/img/BasicMaterial_Preview_0011_DecalApplied.png" title="The final look of the Waterbat, Armed and ready!" />
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </body>
+</html>

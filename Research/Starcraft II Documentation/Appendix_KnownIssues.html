@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+    	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=8" />
+		<title>Appendix: Known Issues - StarCraft II Art Tools Documentation</title>
+        <link rel="shortcut icon" href="common/sc2.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="common/tutorial.css" />
+        <script type="text/javascript" src="common/jquery-1.6.1.min.js" ></script>
+        <script type="text/javascript" src="common/tutorial.js" ></script>
+    </head>
+    <body>
+        <div class="home"><a target="_top" href="index.html">Documentation Home</a></div>
+        <div class="wrap">
+            <div class="content">
+                <h1>Appendix: Known Issues</h1>
+                <p>StarCraft II Art Tools is constantly updated.  There are bugs which we are currently working on solving.  In the meantime, this list may help you avoid them in your workflow.</p>
+                
+                <h2 id="Nodes">Nodes</h2>
+                <ul>
+                    <li>
+                        <p>3ds Max can crash if there is an <a href="Node_SC2Projector.html">SC2 Projector</a> in the scene and a render operation is triggered.</p>
+                    </li>
+                    <li>
+                        <p>3ds Max can enter an invalid state and eventually crash if an <a href="Node_SC2SplineRibbon.html">SC2SplineRibbon</a> node is duplicated.  If possible, avoid cloning spline ribbons.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="Tools">Tools</h2>
+                <ul>
+                    <li>
+                        <p>The <a href="Tool_BehaviorEditor.html">Behavior Editor</a> can grab focus during <em>Undo</em> and <em>Redo</em> operations.  To undo multiple scene operations, you may have to click the 3ds Max window to restore focus between each undo.</p>
+                        <p>The <a href="Tool_BehaviorEditor.html">Behavior Editor</a> does not support <em>Undo</em> and <em>Redo</em> for all operations.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="Materials">Materials</h2>
+                <ul>
+                    <li>
+                        <p>Under certain conditions, using the Slate Material Editor with <em>SC2 Bitmap</em> can cause 3ds Max to crash or freeze.  We recommend  that you use the Compact Material Editor when working with the StarCraft II Art Tools.  This can be set from the Material Editor with <em> Modes (Menu) &gt; Compact Material Editor...</em></p>
+                    </li>
+                    <li>
+                        <p>Dragging and dropping a texture file from Windows Explorer onto slots in SC2 Materials and Texmaps can result in 3ds Max crashes and freezes.</p>
+                    </li>
+                    <li>
+                        <p><em>SC2 Composite Material</em> can intermittently fail when using <em>Live Update</em>.  If a previewed composite material looks potentially incorrect, hit <em>Live Update Now !!!</em> to refresh the view.</p>
+                    </li>
+                    <li>
+                        <p>If an <em>SC2 Bitmap</em> is set to use a video file as a texture, but has animated flipbook parameters still set, the video will still behave as a flipbook, but the flipbook parameters will not be editable.  To fix this, temporarily assign a TGA file, and reset the flipbook parameters to default.  Then reassign the video.</p>
+                    </li>
+                </ul>
+                
+                <h2 id="Export">Export</h2>
+                <ul>
+                    <li>
+                        <p>If the currently active timeline is several thousand frames long, exporting may take a longer time than expected, even if those frames of animation are not used in the final m3 file.  To get optimal export speeds, it is advisable to look at a smaller segment of animation, such as Frames 0-30, or whatever range defines your "Stand" animation.</p>
+                    </li>
+                    <li>
+                        <p><a href="Tutorial_ExportAnim.html">M3A assets</a> that contain an <a href="Node_SC2Particle.html">SC2Particle</a> node that uses a <em>Mesh</em> emission type may not <a href="Tutorial_CommittingModels">Commit</a> properly.  To work around this issue, temporarily convert the <em>Emitter Shape</em> to some other option, such as Sphere.  It should still match against the source model's Mesh emitter in game.</p>
+                    </li>
+				</ul>
+				
+				<h2 id="NameCollision">Name Collisions</h2>
+				<ul>
+					<li>
+						<p>StarCraft II assumes that art assets have unique names.  If multiple .SC2Mod files are loaded, and any of their assets share the same name, only the most recently loaded asset will show up.  The others will be overwritten.  We recommend that assets do not use generic names such as <em>dirt</em> or <em>smoke</em>.  These names may already be used by StarCraft II, and it may alter the look of in-game units.  To avoid name collisions between projects, mod makers are encouraged to come up with a prefix for their assets, textures in particular, with a project name, creator, or asset-specific prefix.  Examples:</p>
+						<ul>
+							<li>In the tutorials, we use <em>waterbat_diff.dds</em> not diff.dds</li>
+							<li>The SC2BW or StarBow mods might use <em>sc2bw_</em> or <em>sbow_</em> prefixes, respectively, to avoid accidentally mangling art if they decided to share assets.</li>
+							<li>An artist named Phill, who wants to make a model anyone can use, might want to use something like <em>phill_protosshero.m3</em> so that no one else's Protoss heroes accidentally cause problems if a map decides to use both.</li>
+						</ul>
+					</li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>
