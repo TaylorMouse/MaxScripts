@@ -3,6 +3,10 @@
 
 This document describes mdx structure of the 3D models of Blizzards Warcraft III Reforged files. To keep it software agnostic, no code will be used during the explanation.
 
+Original
+
+Original [3D Studio Max 5](https://archive.org/details/3dsmax5_201908)
+
 Code for importing these models in 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
 
     FLAG Values
@@ -155,7 +159,7 @@ Always 372 bytes ( no other size encountered so far ) containing the basic info 
 |External Animation File reference|260 bytes ( not used imho)
 |Unk| 4 bytes
 |Bounding box| 24 bytes ( 2x 3 floats) that contain the max and min points of the bounding box
-|150| 4 bytes containing the integer 150 ( Always 150 up till now )
+|Animation blend time ?| 4 bytes containing the integer 150 ( Always 150 up till now )
 
 ### SEQS
 

@@ -11,12 +11,6 @@ In the material editor of 3D Studio Max, there is a new material type the comes 
 
 ![main menu](/images/exporter_001.png)
 
-![main menu](/images/exporter_002.png)
-
-The Alpha in the common parameters points to the transparency of the texture with the environment. 100 is no transparency, 0 is complete transparent (invisible) and is animatable.
-
-The Alpa at the Emissive level points to how much of the texture is actually emissing. 100 is full emissive, 0 is not emission and is animatable.
-
 In the exported mdx file, the maps are mapped to the path "war3mapImported\\" this means that all textures used in the model must be added in the Asset Manager but do not require changes to the path.
 
 The textures used in Warcraft 3 Reforged are PBR textures or Physical Based Rendered textures.
@@ -78,7 +72,9 @@ Save this map as a DXT5 dds file.
 
 Use the standard Black32.dds if you do not use an emissive map.
 
-Save this map as a DXT5 dds file.
+Where Black is no emission, and all other colors have emission
+
+Save this map as a DXT1 dds file.
 
 ### <span style="color:#0090ff">Alpa map</span>
 

@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.16 - fixed the two sided texture flag, added the alpha animation for the texture, added emssive map, does not seem to animate (yet) :/
     | 0.15 - fixed an issue with the texture replacable id
     | 0.14 - fixed rotation and translation of the overall model, still 90° off in the vertical axis :/
     | 0.13 - fixed multibone export, however, still a overall rotation issue
@@ -23,7 +24,7 @@
     | 0.04 - Writing out the GEOS with LOD's
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
-    | 0.01  - Main setup
+    | 0.01 - Main setup
     
 */
 GLOBAL WC3_DEBUG = true
@@ -418,7 +419,7 @@ STRUCT GriffonStudios_Helper_Functions
         struct _mtls ( TotalSize = 0, ShaderList = #(), TEXSList = #() )
         
         struct _shaders ( shaderSizeIncluded, priorityPlane, shaderName = default_shader_name, flag = 0, Layers = #() )
-        struct _lays ( layerSizeIncluded,  filterMode, shadingFlag, textureId, textureAnimationId, KMTA, KMTE )
+        struct _lays ( layerSizeIncluded, emissive_multiplier = 0.0, filterMode, shadingFlag, textureId, textureAnimationId, KMTA, KMTE )
         struct _kmta ( timeList = #(), valueList = #() )
         struct _kmte ( timeList = #(), valueList = #() )
         local mtls = _mtls()
@@ -441,8 +442,8 @@ STRUCT GriffonStudios_Helper_Functions
             
             s.shaderSizeIncluded = 92 --> starter header size 
             s.priorityPlane = mat.priorityplane
-            if ( mat.twosided ) then s.flag = 0x2
-            
+
+            if ( mat.twosided ) then s.flag = 0x02
             
             s.shaderSizeIncluded = s.shaderSizeIncluded + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
             mtls.TotalSize = mtls.TotalSize + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
@@ -457,6 +458,9 @@ STRUCT GriffonStudios_Helper_Functions
                 mtls.TotalSize = mtls.TotalSize + 52
                 lay.filterMode = mat.filterMode - 1
                 lay.shadingFlag = 0
+                
+                lay.emissive_multiplier = mat.emissive_multiplier
+                
                 if( mat.twosided ) then lay.shadingFlag = 0x10
                 
                 if (i==1) then 
@@ -481,7 +485,7 @@ STRUCT GriffonStudios_Helper_Functions
                             local theTime = help.TimeToInt key.time
                             theTime = theTime * 1000 / 30
                             append kmta.timeList theTime
-                            append kmta.valueList key.value
+                            append kmta.valueList ( key.value / 100.0 )
                         )
                         
                         lay.KMTA = kmta
@@ -490,7 +494,35 @@ STRUCT GriffonStudios_Helper_Functions
                 )
                 if (i==2) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.normal_map
                 if (i==3) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.orm_map
-                if (i==4) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.emissive_map
+                if (i==4) then 
+                (
+                    lay.emissive_multiplier = mat.emissive_multiplier
+                    lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.emissive_map
+                    
+                    if ( mat.emissive_alpha.controller != undefined ) then 
+                    (
+                        --> KMTE, nbr Key Values, Linetype, parent Id -> extra 16 bytes
+                        s.shaderSizeIncluded  = s.shaderSizeIncluded + 16
+                        mtls.TotalSize        = mtls.TotalSize + 16
+                        lay.layerSizeIncluded = lay.layerSizeIncluded + 16
+                        
+                        local kmte = _kmte()
+                        
+                        for key in mat.emissive_alpha.controller.keys do
+                        (
+                            s.shaderSizeIncluded  = s.shaderSizeIncluded + 8
+                            mtls.TotalSize        = mtls.TotalSize + 8
+                            lay.layerSizeIncluded = lay.layerSizeIncluded + 8
+                            
+                            local theTime = help.TimeToInt key.time
+                            theTime = theTime * 1000 / 30
+                            append kmte.timeList theTime
+                            append kmte.valueList key.value
+                        )
+                        
+                        lay.KMTE = kmte
+                    )
+                )
                 if (i==5) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.replacable_map
                 if (i==6) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.reflection_map
                 
@@ -1194,17 +1226,19 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeLong stream ( lay.TextureId - 1 )
                 writeLong stream lay.textureAnimationId
                 
-                writeLong  stream 0 -- CoordId
-                writeFloat stream 1 -- Alpha --> animatable
-                writeFloat stream 1 -- Emissive --> works, kinda, it does multiply, but I don't know what it multiplies
+                writeLong  stream 0 -- UV Mappting Coord map id --> TODO get this from the mesh
+                writeFloat stream 1.0 -- Alpha --> animatable -> if not animated, this value will be taken
                 
-                writeFloat stream 1 -- Fresnel Color R --> works 
-                writeFloat stream 1 -- Fresnel Color G --> works 
-                writeFloat stream 1 -- Fresnel Color B --> works 
+                writeFloat stream lay.emissive_multiplier -- Emissive --> works, kinda, it does multiply
+                
+                --> TODO get this from the material
+                writeFloat stream 0 -- Fresnel Color R --> works 
+                writeFloat stream 0 -- Fresnel Color G --> works 
+                writeFloat stream 0 -- Fresnel Color B --> works 
                 writeFloat stream 0 -- Fresnel Opacity --> works 
                 writeFloat stream 0 -- Fresnel Team Color --> does not work
                 
-                if ( l==1) then 
+                if ( l==1) then  --> Alpha animation
                 (
                     if ( lay.KMTA != undefined ) then
                     (
@@ -1216,11 +1250,29 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                         for k=1 to lay.KMTA.timeList.count do
                         (
                             writeLong stream lay.KMTA.timeList[k]
-                            writeLong stream lay.KMTA.valueList[k]
+                            writeFloat stream lay.KMTA.valueList[k]
                         )
                         
                     )
                 )
+                if ( l==4) then --> Emissive Animation -> DOES NOT WORK 
+                (
+                    if ( lay.KMTE != undefined ) then
+                    (
+                        writer.WriteFixedString stream "KMTE" 4
+                        writeLong stream lay.KMTE.timeList.count
+                        writeLong stream 1 --> line type
+                        writeLong stream -1 --> parentId
+                        
+                        for k=1 to lay.KMTE.timeList.count do
+                        (
+                            writeLong stream lay.KMTE.timeList[k]
+                            writeFloat stream lay.KMTE.valueList[k]
+                        )
+                        
+                    )
+                )
+                
             )
 
         )
@@ -1495,10 +1547,10 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 )
 
 clearlistener()
---i=1
+if i == undefined then i = 1
 --file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulips_1.mdx"
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_orc_" + ( i as string ) +".mdx"
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip_" + ( i as string ) +".mdx"
 i +=1
-WC3_DEBUG = true
+WC3_DEBUG = false
 GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 format "Written file % \n" (getfilenamefile file)
