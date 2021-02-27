@@ -9,9 +9,10 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.17 - fixing the translation and rotation animation... still working on it...
     | 0.16 - fixed the two sided texture flag, added the alpha animation for the texture, added emssive map, does not seem to animate (yet) :/
     | 0.15 - fixed an issue with the texture replacable id
-    | 0.14 - fixed rotation and translation of the overall model, still 90° off in the vertical axis :/
+    | 0.14 - fixed rotation and translation of the overall model, still 90ï¿½ off in the vertical axis :/
     | 0.13 - fixed multibone export, however, still a overall rotation issue
     | 0.12 - multiple bones export work but the rotation is not correct yet, and fixed an export issue when the timetracker is not at frame 0
     | 0.11 - One bone seems to animate ok, bone hierarchy and animation is still off.
@@ -143,13 +144,42 @@ STRUCT GriffonStudios_Helper_Functions
           --  kg.ParentId = wc3Bones[i].parentID
             kg.nbrKeys = numkeys b.rotation.controller 
             kg.Size += kg.nbrKeys * 20
+            
+            prevRot = undefined
             for k=1 to kg.nbrKeys do
             (
                 local kv = AnimKeyValues()
                 kv.key =  help.TimeToInt ( getKeyTime b.rotation.controller k )
                 
-                at time kv.key --in coordsys parent
-                        kv.val = b.rotation as quat
+                at time kv.key 
+                (
+                    local q = b.rotation 
+
+                    moreThen90 = false
+                    euler = quattoeuler q
+                    if ( abs(euler.x) > 90 or abs(euler.y) > 90 or abs(euler.z) > 90 ) then 
+                        moreThen90 = true
+                   
+                    
+                    if( b.parent != undefined ) then 
+                    (
+                        --if prevRot == undefined then 
+                            q = b.parent.rotation - b.rotation 
+                        
+                        --if prevRot != undefined then 
+                        --    q = prevRot - b.rotation 
+                        
+                        --prevRot = q
+                        kv.val = quat -q.x q.y q.z q.w
+                        
+                        if moreThen90 then
+                            kv.val = quat q.x -q.y q.z q.w
+                    )
+                    else
+                    (
+                        kv.val = quat q.x q.y q.z q.w
+                    )
+                )
                 append kg.AnimBlock kv
             )
             
@@ -190,9 +220,7 @@ STRUCT GriffonStudios_Helper_Functions
     (
         struct WC3RefGEOA ( size, id, alpha, flag, color, KGAO )
         
-        local meshes = #()
-        
-        for obj in objects do if (classof obj == Editable_Mesh ) then append meshes obj
+        local meshes =  GriffonStudios_Helper_Functions.GetMeshesToExport()
         
         local geoas = #()
         for i=1 to meshes.count do
@@ -386,8 +414,7 @@ STRUCT GriffonStudios_Helper_Functions
                         s.noLoop = value as float
                         if ( value == "true" ) then s.noLoop = 1
                         if ( value == "false" ) then s.noLoop = 0
-                            
-                        print s.noLoop
+                        
                     )       
                     if ( key == "defaultPriority" ) then s.Priority = value as float
 
@@ -407,7 +434,6 @@ STRUCT GriffonStudios_Helper_Functions
             append seqs seq
         )
         
-        --print seqs
         return seqs
     ),
     /* Get the list of materials and their properties and the list of associated textures */
@@ -625,11 +651,30 @@ STRUCT GriffonStudios_Helper_Functions
         return textureId
         
     ),
-     function GetGEOS=
+    function GetMeshesToExport = 
+    (
+        local meshes = #()
+        for obj in objects do
+        (
+            /* meshes, prefixed with "B_KGS_" are collision objects */
+            if (classof obj == Editable_mesh ) then 
+            (
+                if ( substring obj.name 1 6 != "B_KGS_"  and obj.isHidden == false ) then 
+                (
+                    if ( obj.material != undefined ) then 
+                        if ( classof obj.material == WC3RefMaterial ) then 
+                            append meshes obj
+                    
+                )
+            )
+        )
+        return meshes
+    ),
+    function GetGEOS=
     (
         
         local help = GriffonStudios_Helper_Functions()
-        
+       
         struct WC3RefGeometry 
             ( TotalSize = 0, Geos = #() )
         
@@ -641,9 +686,7 @@ STRUCT GriffonStudios_Helper_Functions
         
         local geos = WC3RefGeometry()
         
-        local meshes = #()
-        for obj in objects do
-            if (classof obj == Editable_mesh ) then append meshes obj
+        local meshes = help.GetMeshesToExport()
         
         for m in meshes do
         (
@@ -680,7 +723,7 @@ STRUCT GriffonStudios_Helper_Functions
                 tvVertices[u.z] = f.z
                 
             )
-            --print tvVertices
+            
             local vertices = #()
             local normals = #()
             local uvs = #()
@@ -968,31 +1011,8 @@ STRUCT GriffonStudios_Helper_Functions
             append uvs [ uv.x, ( 1.0 - uv.y ) ]
         )
         return uvs
-    ),
-    /*
-        .DESCRIPTION
-        | Fix global rotation for export
-    */
-    function SetGlobalRotation=
-    (
-        local d = dummy name:"Fixer" pos:[0,0,0] rot:(quat 0 0 0 1)
-        
-        for obj in objects do 
-        (
-            if ( classof obj == BoneGeometry and obj.parent == undefined ) then
-            (
-                --obj.parent = d
-            )
-        )
-        rotate d (eulerangles 0 0 0)
-        return d
-    ),
-    function ResetGlobalRotation theRotationDummy=
-    (
-        rotate theRotationDummy (eulerangles 0 0 0)
-        delete theRotationDummy
     )
-        
+    
 )
 
 STRUCT GriffonStudios_Warcraft_3_Writer_Functions
@@ -1018,14 +1038,8 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         theBone.assumeSkinPose()
         
         if ( WC3_DEBUG ) then format "\n%\n" theBone
-        
-        local correctionMatrix = eulertoquat (eulerangles 0 0 0)  as matrix3
-        
-        local baseRot = theBone.rotation 
-        local basePos = theBone.pos
-        local parentPos = [0,0,0]
-
-        --baseRot = baseRot * correctionMatrix as quat
+   
+        local bPos = theBone.pos --> get this from the binding position !!
         
         for i=1 to animations.count do
         (
@@ -1035,8 +1049,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeLong stream animations[i].AnimBlock.Count
                 writeLong stream animations[i].LineType
                 writeLong stream animations[i].ParentId
-                
-                
+
                 for anim in animations[i].AnimBlock do
                 (
                     
@@ -1045,59 +1058,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                     
                     if ( WC3_DEBUG ) then format " - Frame: % (%)\n" anim.Key wc3key
                     
-                    if ( animations[i].Type == "KGTR" ) then 
-                    (
-                        if ( theBone.parent != undefined  ) then 
-                        (
-                            at time anim.Key
-                            (
-                                parentPos = theBone.parent.position
-                                basePos = theBone.position
-                            )
-                        )
-                        
---                         writeFloat stream (anim.Val.y - basePos.y - parentPos.y)
---                         writeFloat stream (anim.Val.x - basePos.x - parentPos.x)
---                         writeFloat stream (anim.Val.z - basePos.z - parentPos.Z)
-                        writeFloat stream (anim.Val.y - basePos.y )
-                        writeFloat stream (anim.Val.x - basePos.x )
-                        writeFloat stream (anim.Val.z - basePos.z )
-                        --writer.WriteVector3 stream anim.Val
-                    )
-                    if ( animations[i].Type == "KGRT" ) then 
-                    (
-                        
-                        if ( theBone.parent != undefined ) then 
-                        (
-                            at time anim.Key
-                            (
-                                baseRot =  theBone.parent.rotation
-                            )
-                            kquat = (anim.Val - baseRot ) * correctionMatrix as quat
-                        )
-                        else
-                        (
-                            baseRot = theBone.rotation
-                            kquat = (anim.Val - baseRot )
-                        )
-                                                
-                        
-                        writeFloat stream -kquat.z
-                        writeFloat stream kquat.x
-                        writeFloat stream kquat.y
-                        writeFloat stream kquat.w
-                        --baseRot = kquat
-                        --prev = kquat
-                       -- print anim.Val
-                        -- print kquat
-                        --writer.WriteQuat stream  rot 
-
-                    )
-                    
+                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream ( anim.Val - bpos )
+                    if ( animations[i].Type == "KGRT" ) then writer.WriteQuat stream anim.Val 
                     if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
                 
                 )
-                --delete dr
             )
         )
     ),
@@ -1479,8 +1444,6 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         animationrange = interval 0 100
         slidertime = 0
         
-        ---theRotationDummy = GriffonStudios_Helper_Functions.SetGlobalRotation()
-        
         --try (
             /* MDLX */
             format "Writing MDLX\n"
@@ -1538,8 +1501,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
         fFlush stream
         fClose stream
-        
-        --GriffonStudios_Helper_Functions.ResetGlobalRotation theRotationDummy
+
         -- set the position back to orignal animation interval
         animationrange = interval animationInterval.start animationInterval.end
         gc()        
@@ -1548,8 +1510,8 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 clearlistener()
 if i == undefined then i = 1
---file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulips_1.mdx"
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tulip_" + ( i as string ) +".mdx"
+
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tome_" + ( i as string ) +".mdx"
 i +=1
 WC3_DEBUG = false
 GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
