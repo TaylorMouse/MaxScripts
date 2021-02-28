@@ -2,19 +2,30 @@
 
 Griffon Studios 3D Studio Max Scripts
 
-## How to install
+## How to install the Warcraft III Reforged Art Tools
 
-- Download the folder content GriffonStudios and the GriffonsStudios_StartUp.ms scripts.
+- Download the ***GriffonStudios_Warcraft_3_Reforged_ArtTools.ms*** and the ***GriffonStudios_Warcraft_3_Reforged_ArtTools*** folder content.
+- Place the folder and the .ms script in the startup scripts of 3D Studio Max
+
+    Example:
+
+        C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
+
+Once you copied the content start 3D Studio Max. A ***WC3 Reforged Tools*** menu will appear
+
+![main menu](images/wc3arttools.png)
+
+## How to install the Griffon Studios Tools
+
+- Download the folder content GriffonStudios and the GriffonsStudios_StartUp.ms scripts. ( not the Warcraft III Reforged Art Tools)
 - Place them in the startup script folder of your 3D Stusio Max folder.
 
     Example:
 
-    ```cmd
-    C:\Program Files\Autodesk\3ds Max 2020\scripts\Startup\
-    ```
+        C:\Program Files\Autodesk\3ds Max 2020\scripts\Startup\
 
 - Start 3D Studio Max
-- If everything went well you should see an additional **Griffon Studios Tools**  and a **Warcraft 3 Reforged Tools** menu 
+- If everything went well you should see an additional **Griffon Studios Tools**  menu.
 
 ![main menu](images/gsmenu.png)
 

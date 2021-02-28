@@ -1,6 +1,7 @@
-# Warcraft 3 Reforged Exporter
+# Warcraft 3 Reforged Tools Documentation
+*©2010~2020 Griffon Studios*
 
-Written by Taylor Mouse
+*Written by Taylor Mouse*
 
 This document describes how to use the Exporter.
 The exporter for 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
@@ -11,7 +12,7 @@ In the material editor of 3D Studio Max, there is a new material type the comes 
 
 ![main menu](/images/exporter_001.png)
 
-In the exported mdx file, the maps are mapped to the path "war3mapImported\\" this means that all textures used in the model must be added in the Asset Manager but do not require changes to the path.
+In the exported mdx file, the maps are mapped to the default path "war3mapImported\\" this means that all textures used in the model must be added in the Asset Manager but do not require changes to the path.
 
 The textures used in Warcraft 3 Reforged are PBR textures or Physical Based Rendered textures.
 
@@ -68,7 +69,7 @@ The alpha channel of this texture is used as the **team color**.
 
 Save this map as a DXT5 dds file.
 
-### <span style="color:#0090ff">Emissive map</span>
+### <div style="color:#0090ff">Emissive map</div>
 
 Use the standard Black32.dds if you do not use an emissive map.
 
