@@ -1,5 +1,4 @@
-
-# Warcraft 3 Reforged mdx format
+# Warcraft 3 Reforged mdx format research
 
 This document describes mdx structure of the 3D models of Blizzards Warcraft III Reforged files. To keep it software agnostic, no code will be used during the explanation.
 

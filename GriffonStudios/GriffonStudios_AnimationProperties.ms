@@ -1,19 +1,24 @@
 /*
-    ©2020 Script by Taylor Mouse
-    Amped up my initial script to display notes on the animation track
-*/
+    .SYNOPSIS
+    | Opens up a popup window that reads the data from the notes track in Max and interpretes them as animation sequences
+    
+    .COPYRIGHT
+    | Â©2020 Griffon Studios
+    
+    .AUTHOR
+    | Taylor Mouse
 
+*/
 
 rollout GriffonStudios_AnimationProperties "Animation Properties" width:250 height:810
 (
     /*********************************************************************************************************/
-    label lblTM "©2020 Taylor Mouse"
+    label lblTM "Â©2020 Taylor Mouse"
     
     dropdownlist ddlTracks "" height:20
     dotNetControl lv "System.Windows.Forms.ListView" width:230 height:300 align:#center
     checkbox cbUpdateTimeLine "Update timeline"
     button btn_RefreshList "Refresh" align:#right offset:[0,-20]
-    
     
     local bUpdateTimeLine = true
     local selectedAnimationTrack = undefined 

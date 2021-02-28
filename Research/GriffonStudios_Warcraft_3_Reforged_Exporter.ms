@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.18 - finally fixed the rotation and translation animation !!
     | 0.17 - fixing the translation and rotation animation... still working on it...
     | 0.16 - fixed the two sided texture flag, added the alpha animation for the texture, added emssive map, does not seem to animate (yet) :/
     | 0.15 - fixed an issue with the texture replacable id
@@ -28,8 +29,10 @@
     | 0.01 - Main setup
     
 */
-GLOBAL WC3_DEBUG = true
-GLOBAL TEXTURE_PATH = "war3mapImported\\" --> leave this as is if you don't want to change it in the world editor
+GLOBAL WC3_DEBUG = false
+GLOBAL TEXTURE_PATH = "war3mapImported/" --> leave this as is if you don't want to change it in the world editor
+
+TEXTURE_PATH = "units/creeps/bandit/"
 
 STRUCT GriffonStudios_Helper_Functions
 (
@@ -110,6 +113,9 @@ STRUCT GriffonStudios_Helper_Functions
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
+            local basePos = b.pos
+            local parentBasePos = [0,0,0]
+            if ( b.parent != undefined ) then parentBasePos = b.parent.pos
             
             kg.nbrKeys = numkeys b.pos.controller 
             kg.Size += kg.nbrKeys * 16
@@ -119,7 +125,15 @@ STRUCT GriffonStudios_Helper_Functions
                 kv.key =  help.TimeToInt ( getKeyTime b.pos.controller k )
                 
                 at time kv.key 
-                    kv.val = b.pos
+                (
+                    if( b.parent != undefined ) then
+                        p = b.pos - basePos - ( b.parent.pos - parentBasePos )
+                    else
+                        p = b.pos - basePos
+
+                    kv.val = p
+                    --kv.val = b.pos
+                )
                 append kg.AnimBlock kv
             )
             
@@ -134,18 +148,15 @@ STRUCT GriffonStudios_Helper_Functions
         struct WC3Anim ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, ParentId = -1, AnimBlock = #() )
         struct AnimKeyValues ( Key, Val )
 
-        
-        
         for i=1 to wc3Bones.Count do
         (
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
-          --  kg.ParentId = wc3Bones[i].parentID
+
             kg.nbrKeys = numkeys b.rotation.controller 
             kg.Size += kg.nbrKeys * 20
             
-            prevRot = undefined
             for k=1 to kg.nbrKeys do
             (
                 local kv = AnimKeyValues()
@@ -153,32 +164,11 @@ STRUCT GriffonStudios_Helper_Functions
                 
                 at time kv.key 
                 (
-                    local q = b.rotation 
-
-                    moreThen90 = false
-                    euler = quattoeuler q
-                    if ( abs(euler.x) > 90 or abs(euler.y) > 90 or abs(euler.z) > 90 ) then 
-                        moreThen90 = true
-                   
+                    kv.val = b.rotation
                     
                     if( b.parent != undefined ) then 
-                    (
-                        --if prevRot == undefined then 
-                            q = b.parent.rotation - b.rotation 
-                        
-                        --if prevRot != undefined then 
-                        --    q = prevRot - b.rotation 
-                        
-                        --prevRot = q
-                        kv.val = quat -q.x q.y q.z q.w
-                        
-                        if moreThen90 then
-                            kv.val = quat q.x -q.y q.z q.w
-                    )
-                    else
-                    (
-                        kv.val = quat q.x q.y q.z q.w
-                    )
+                        kv.val = b.rotation - b.parent.rotation
+
                 )
                 append kg.AnimBlock kv
             )
@@ -381,7 +371,7 @@ STRUCT GriffonStudios_Helper_Functions
                 local s = WC3RefAnimSequence()
                 
                 s.name = parts[1]
-                --if ( WC3_DEBUG ) then  format " %\n" s.name
+                if ( WC3_DEBUG ) then  format " %\n" s.name
                 local StartFrameStr = (getnotekeytime track i) as string 
                 local EndFrameStr = (getnotekeytime track (i+1)) as string 
                 
@@ -1019,8 +1009,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
 (
     function WriteMatrix stream someBone=
     (
-        local matrix = someBone.Transform
-        --if ( WC3_DEBUG ) then format " - % \n" matrix
+        local matrix = someBone.transform
+        
+        if ( someBone.parent != undefined ) then 
+            matrix = someBone.transform * someBone.parent.transform
+        
         for r=1 to 4 do
         (
             for i=1 to 3 do
@@ -1037,7 +1030,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         theBone.assumeSkinPose()
         
-        if ( WC3_DEBUG ) then format "\n%\n" theBone
+        --if ( WC3_DEBUG ) then format "\n%\n" theBone
    
         local bPos = theBone.pos --> get this from the binding position !!
         
@@ -1056,9 +1049,9 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                     local wc3key = anim.Key * 1000 / 30
                     writeLong stream wc3key
                     
-                    if ( WC3_DEBUG ) then format " - Frame: % (%)\n" anim.Key wc3key
+                    --if ( WC3_DEBUG ) then format " - Frame: % (%)\n" anim.Key wc3key
                     
-                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream ( anim.Val - bpos )
+                    if ( animations[i].Type == "KGTR" ) then writer.WriteVector3 stream anim.Val
                     if ( animations[i].Type == "KGRT" ) then writer.WriteQuat stream anim.Val 
                     if ( animations[i].Type == "KGSC" ) then writer.WriteVector3 stream anim.Val
                 
@@ -1123,7 +1116,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local bbox = GriffonStudios_Helper_Functions.GetMODLBoundingBox()
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
-        if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
+        --if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
         
         writer.WriteVector3 stream bbox[1]
         writer.WriteVector3 stream bbox[2]
@@ -1136,7 +1129,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         local seqs = help.GetSEQS()
         
-        if ( WC3_DEBUG ) then for s in seqs do format " - %\n" s
+        --if ( WC3_DEBUG ) then for s in seqs do format " - %\n" s
         
         writeLong stream ( 132 * seqs.count)
         
@@ -1154,7 +1147,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writer.WriteVector3 stream seq.BBox[1]
             writer.WriteVector3 stream seq.BBox[2]
             
-            if ( WC3_DEBUG ) then  Format " - %\n" seq
+            --if ( WC3_DEBUG ) then  Format " - %\n" seq
         )
 
         
@@ -1167,7 +1160,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         if (WC3_DEBUG) then 
         (
             for i=1 to mtls.TEXSList.Count do
-                format " - %\n" mtls.TEXSList[i]
+                format " - %\n" mtls.TEXSList[i].filename
         )
         
         writeLong stream mtls.TotalSize
@@ -1273,7 +1266,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
     (
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         local geos = GriffonStudios_Helper_Functions.GetGEOS()
-        --local rot90Matrix = ( eulertoquat ( eulerangles 0 0 180) ) as matrix3
+        
         writeLong stream geos.TotalSize
         
         for geo in geos.geos do
@@ -1284,16 +1277,15 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             writeLong stream geo.VRTX.count
             for v in geo.VRTX do 
             (
-                local v2 = [v.y, -v.x, v.z]
-                writer.WriteVector3 stream v2
-                --writer.WriteVector3 stream ( v * rot90Matrix )
+                --local v2 = [-v.y, v.x, v.z]
+                writer.WriteVector3 stream v
             )
             writer.WriteFixedString stream "NRMS" 4
             writeLong stream geo.NRMS.count
             for n in geo.NRMS do 
             (
-                local n2 = [n.y, -n.x, n.z]
-                writer.WriteVector3 stream n2
+                --local n2 = [-n.y, n.x, n.z]
+                writer.WriteVector3 stream n
             )
 
             writer.WriteFixedString stream "PTYP" 4
@@ -1383,7 +1375,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         if (WC3_DEBUG) then 
         (
             format "Total Size: % \n" wc3Bones.totalSize
-            for b in wc3Bones.WC3RefBoneList do format " - % \n" b
+            for b in wc3Bones.WC3RefBoneList do format " - %\t%\n" b.id b.name
         )
         
         writeLong stream wc3Bones.totalSize
@@ -1423,6 +1415,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         WriteLong stream ( boneList.count * 48 + 4 )
         WriteLong stream boneList.count
         
+            
         for b in boneList do
             writer.WriteMatrix stream b
         
@@ -1439,12 +1432,14 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         local stream = fopen file "wb"
         
         local animationInterval = animationrange
+        try (
+            setWaitCursor()
+            disableSceneRedraw()
+            -- set the T-pose of the object to export correctly
+            animationrange = interval 0 100
+            slidertime = 0
+         
         
-        -- set the T-pose of the object to export correctly
-        animationrange = interval 0 100
-        slidertime = 0
-        
-        --try (
             /* MDLX */
             format "Writing MDLX\n"
             writer.WriteFixedString stream "MDLX" 4
@@ -1497,22 +1492,24 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 
             Format "DONE!\n"
-        --) catch ( print ( getCurrentException() ) )
+        ) catch ( print ( getCurrentException() ) )
 
         fFlush stream
         fClose stream
 
         -- set the position back to orignal animation interval
         animationrange = interval animationInterval.start animationInterval.end
-        gc()        
+        gc() 
+        enableSceneRedraw() 
+        setArrowCursor()        
     )
 )
 
 clearlistener()
 if i == undefined then i = 1
 
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_tome_" + ( i as string ) +".mdx"
+file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_bandit_" + ( i as string ) +".mdx"
 i +=1
-WC3_DEBUG = false
+--WC3_DEBUG = true
 GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
 format "Written file % \n" (getfilenamefile file)
