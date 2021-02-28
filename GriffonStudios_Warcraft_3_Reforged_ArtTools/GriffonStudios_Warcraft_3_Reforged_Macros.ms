@@ -4,7 +4,7 @@ global Warcraft3_ConvertToSC2
 
 macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" tooltip:"Import model" 
 (
-    fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
+    
 
     rollout ImportWindow "Warcraft 3 Reforged Import (v1.0)"
     (
@@ -19,7 +19,7 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
             checkbox chkConvertToSC2 "Convert to SC2 Compatible"
         )
 
-        label lbl1 "©2020 Created by" align:#center
+        label lbl1 "ï¿½2020 Created by" align:#center
         label lbl2 "Taylor Mouse"  align:#center
         button btnClose "Close" height:30 width:80 offset:[115,-35]
         button btnImport "Import" height:30 width:80 offset:[-115,-35]
@@ -47,6 +47,7 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
         )
         on btnImport pressed do
         (
+            fileIn "GriffonStudios_Warcraft_3_Reforged_Main.ms"
             local file = txtSelectedFile.Text
             if (doesfileexist file == true ) then 
                 Warcraft3_Reforged.Import file
@@ -123,17 +124,18 @@ macroscript Warcaft3Reforged_Settings category:"Warcraft 3 Reforged Tools" toolt
     
 )
 
-
 macroscript Warcaft3Reforged_ExportModel category:"Warcraft 3 Reforged Tools" tooltip:"Export model" 
 (
-    messagebox "Please be patient, I'm working on it :)"
+    filein "GriffonStudios_Warcraft_3_Reforged_Exporter_Dialog.ms"
+    if(GriffonStudios_WC3_ExportDialog != undefined) then destroydialog GriffonStudios_WC3_ExportDialog
+        CreateDialog GriffonStudios_WC3_ExportDialog lockwidth: true
 )
 
 macroscript Warcaft3Reforged_Animations category:"Warcraft 3 Reforged Tools" tooltip:"Animation Selector" 
 (
-    filein "GriffonStudios_AnimationProperties.ms"
-    if(GriffonStudios_AnimationProperties != undefined) then destroydialog GriffonStudios_AnimationProperties
-        CreateDialog GriffonStudios_AnimationProperties lockwidth: true     
+    filein "GriffonStudios_Warcraft_3_Reforged_AnimationProperties.ms"
+    if(GriffonStudios_WC3_AnimationProperties != undefined) then destroydialog GriffonStudios_WC3_AnimationProperties
+        CreateDialog GriffonStudios_WC3_AnimationProperties lockwidth: true     
 )
 
 macroscript Warcaft3Reforged_About      category:"Warcraft 3 Reforged Tools" tooltip:"About"
@@ -142,7 +144,7 @@ macroscript Warcaft3Reforged_About      category:"Warcraft 3 Reforged Tools" too
     
     rollout aboutWindow "Warcraft 3 Reforged Tools" 
     (
-        label lbl1 "©2020 Created by Taylor Mouse" align:#center
+        label lbl1 "Â©2020 Created by Taylor Mouse" align:#center
         label lbl2 "Get the latest version from my github:" align:#center
         hyperlink lnk1 "github.com/TaylorMouse/Warcraft 3 Reforged"  address:"https://github.com/TaylorMouse/MaxScripts/tree/master/Warcraft 3 Reforged" align:#center color:(color 255 128 0)
         button btn "Close" height:30 width:80 offset:[0,10]

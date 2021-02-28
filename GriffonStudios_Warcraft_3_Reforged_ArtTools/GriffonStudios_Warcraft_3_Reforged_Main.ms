@@ -10,10 +10,13 @@
     |   Warcraft III Reforged Import model
     
 */
-global gClid
 global gBpos
+global gBones
+global gModel
+
 global wc3_debug = false
 global wc3_debug_build = true
+global Warcraft3_ImportAllLOD = true
 
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
@@ -46,10 +49,10 @@ struct Warcraft3_Reforged_TEXS
     ( Id, replacableId, fileNameOnly, path,  extension, flags )
 
 struct Warcraft3_Reforged_MTLS
-    ( Id, ShaderName, priorityPlane, flags, ConstantColor=false , TwoSided=false,  SortPrimsFarZ=false, FullResolution=false, materialRef, LAYS )
+    ( Id, ShaderName, priorityPlane, flags, ConstantColor=off , TwoSided=off,  SortPrimsFarZ=off, FullResolution=off, materialRef, LAYS )
 
 struct Warcraft3_Reforged_LAYS
-    ( Id, ParentId, TextureId, filterMode, shadingFlags,  KMTA, KMTE, alpha )
+    ( Id, ParentId, TextureId, filterMode, shadingFlags,  KMTA, KMTE, CoordId,alpha, emissive_multiplier, fresnelR, fresnelG, fresnelB, fresnel_multiplier, team_color_multiplier )
 
 struct Warcraft3_Reforged_BPOS
     ( Id, Matrix )
@@ -771,6 +774,7 @@ struct Warcraft3_Reforged
                     for v=1 to nVerts do 
                     (
                         local vert = [readFloat stream, readFloat stream, readFloat stream]
+                        
                         append verts vert
                     )
                     geo.VRTX = verts
@@ -953,6 +957,8 @@ struct Warcraft3_Reforged
             )
             append geos geo
         )
+        
+        
         return geos
     ),
     function ReadBONE stream tag=
@@ -1009,30 +1015,30 @@ struct Warcraft3_Reforged
             b.KGSC = kgsc
             
         )
-        
+        if WC3_DEBUG then gBones = boneList
         return boneList
     ),
     function ReadLayer stream=
     (
         /* filterMode
-                 0x0: none
-                 0x1: transparent
-                 0x2: blend
-                 0x3: additive
-                 0x4: add alpha
-                 0x5: modulate
-                 0x6: modulate 2x
-                 0x7: fallback
+                 0x0: none          -> Opaque
+                 0x1: transparent   -> Mask
+                 0x2: blend         -> Blend
+                 0x3: additive      -> Add
+                 0x4: add alpha     -> Blend Add
+                 0x5: modulate      -> Mod
+                 0x6: modulate 2x   -> Mod 2x
+                 0x7: fallback      -> not supported
                 */
         
         /* ShadingFlag
-                 0x1: unshaded
-                 0x2: sphere environment map
-                 0x4: Wrap Width
-                 0x8: Wrap Hieght
-                 0x10: two sided
-                 0x20: unfogged
-                 0x40: no depth test
+                 0x1: unshaded       -> Unlit
+                 0x2: sphere env map -> Spherical Reflection Map
+                 0x4: Wrap Width     -> Tile Horizontally
+                 0x8: Wrap Height    -> Tile Vertically
+                 0x10: two sided     -> Show backface culling
+                 0x20: unfogged      -> Draw Z Depth
+                 0x40: no depth test -> 
                  0x80: no depth set               
                  0x100: Fallback
                 */
@@ -1045,9 +1051,17 @@ struct Warcraft3_Reforged
         layer.shadingFlags = readLong stream + 1
         layer.textureId = readLong stream + 1
         layer.parentId = readLong stream + 1
-        layer.Alpha = 1.0
+        
+        layer.CoordId = readLong stream
+        layer.alpha = readfloat stream
+        layer.emissive_multiplier = readfloat stream --> ?
+        layer.fresnelR = readfloat stream
+        layer.fresnelG = readfloat stream
+        layer.fresnelB = readfloat stream
+        layer.fresnel_multiplier = readfloat stream
+        layer.team_color_multiplier = readfloat stream
 
-        GriffonStudios_Helpers.SkipBytes stream ( 52 - 20 )
+        --GriffonStudios_Helpers.SkipBytes stream ( 52 - 20 )
         
         if ( layerSize > 52 ) then (
             for i=1 to 2 do
@@ -1064,13 +1078,7 @@ struct Warcraft3_Reforged
         )   
         
         fseek stream ( currentPos + layerSize ) #seek_set
-        
---         format "Layer size: %\n" layerSize
---         format "\tFilter Mode: %\n" mdxFilterMode[layer.filterMode]
---         format "\tShading Flag: %\n" mdxShadingFlag[layer.shadingFlags]
---         format "\tTexture id: %\n" layer.TextureId
---         print layer.KMTA
-        
+               
         return layer
         
     ),
@@ -1103,10 +1111,10 @@ struct Warcraft3_Reforged
                 0x02 TwoSided 
             */
 
-            if ( bit.and mtl.flags 0x01 > 0 ) then mtl.ConstantColor = true
-            if ( bit.and mtl.flags 0x02 > 0 ) then mtl.TwoSided  = true
-            if ( bit.and mtl.flags 0x10 > 0 ) then mtl.SortPrimsFarZ = true
-            if ( bit.and mtl.flags 0x20 > 0 ) then mtl.FullResolution = true
+            if ( bit.and mtl.flags 0x01 > 0 ) then mtl.ConstantColor = on
+            if ( bit.and mtl.flags 0x02 > 0 ) then mtl.TwoSided  = on
+            if ( bit.and mtl.flags 0x10 > 0 ) then mtl.SortPrimsFarZ = on
+            if ( bit.and mtl.flags 0x20 > 0 ) then mtl.FullResolution = on
             
             mtl.shaderName = GriffonStudios_Helpers.ReadFixedString stream 80
             
@@ -1324,13 +1332,10 @@ struct Warcraft3_Reforged
             local row4 = [ReadFloat stream, ReadFloat stream, ReadFloat stream] 
          
             b.Matrix = matrix3 row1 row2 row3 row4
-            
-            -- local s = sphere radius:0.8
-            -- s.transform = b.matrix
-            
             append bpos b
+            
         )
-        
+        if WC3_DEBUG then gBpos = bpos
         return bpos
     ),
     function ReadGEOA stream tag=
@@ -1894,6 +1899,7 @@ struct Warcraft3_Reforged
         local uniqueId = 1
         for geo in geos do
         (
+            
             if (Warcraft3_ImportAllLOD == false and geo.MATS.LOD != 0) then continue
 
             format "Building %\n" geo.MATS.Name
@@ -1978,6 +1984,18 @@ struct Warcraft3_Reforged
             
             if (mtl.lays.count > 0) then mat.filtermode = mtl.lays[1].filterMode
             
+            mat.twoSided = mtl.twoSided
+            mat.Unlit = mtl.ConstantColor
+            /* TODO
+                mat.envMap = off 
+                mat.wrapwidth = off
+                mat.wrapheight = off
+                mat.nofog = off
+            */
+            mat.nodepthtest = mtl.SortPrimsFarZ
+            mat.nodepthset = mtl.FullResolution
+
+            
             for layer in mtl.lays do
             (
                -- print layer
@@ -2026,12 +2044,25 @@ struct Warcraft3_Reforged
                         with animate on (
                             at time ( anim.Time + 10 )
                             (
-                                mat.material_alpha = anim.Point * 100.0
+                                mat.material_alpha = anim.Point * 100.0 --> max expects a percentage
                             )
                         )
                     )
                 )
-                    
+                
+                /* animated texture */
+                if ( layer.KMTE != undefined ) then
+                (
+                    for anim in layer.KMTE.KG do
+                    (
+                        with animate on (
+                            at time ( anim.Time + 10 )
+                            (
+                                mat.emissive_alpha = anim.Point 
+                            )
+                        )
+                    )
+                )
                    
             )
             if( mtl.id < 25 ) then meditMaterials[mtl.id] = mat
@@ -2168,143 +2199,6 @@ struct Warcraft3_Reforged
         
         
     ),
-    function BuildBONE=
-    (
-        local boneList = mdx.bone
-        local bpos = mdx.bpos
-        if ( boneList == undefined ) then return undefined
-        format "Building Bones\n"
-        local layer = GriffonStudios_Helpers.CreateLayer "Bones"
-        
-        -- create the bones
-        local uniqueId = 1
-        for b in boneList do
-        (
-            
-            local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
-            
-            aBone.Name = b.name
-            aBone.showLinks = true
-			aBone.Width = 0.05
-			aBone.Height = 0.05
-            b.boneRef = aBone
-            layer.AddNode aBone
-
-            uniqueId += 1
-        )
-        -- apply bind pos
-        for obj in boneList do
-        (
-            local b = obj.boneRef
-
-            if bpos != undefined then 
-            (
-            
-                local mtrx = bpos[obj.id].matrix
-                
-                b.pos = mtrx.translationpart
-            )
-
-        )
-
-        -- apply bone animation
-        local applyBoneAnim = true
-        if applyBoneAnim == true then 
-        for obj in boneList do
-        (
-            local b = obj.boneRef
-            
-            b.assumeSkinPose()
-
-            if ( obj.KGRT != undefined ) then 
-            (
-               -- b.assumeSkinPose()
-                
-                local dr = dummy name:"DummyRotationController"
-                dr.rotation.controller = b.rotation.controller
-                local q0 = dr.transform
-                local prevTime = 0
-                
-                for anim in obj.KGRT.KG do
-                (
-                    local t = anim.Time + 10
-                    local q = anim.Point
-                    
-                    if ( prevTime == t ) then continue else prevTime = t
-                    with animate on 
-                        at time t
-                        (
-                            in coordsys q0 dr.rotation = q
-                        )
-                )
-                with animate on b.rotation.controller = copy dr.rotation.controller
-                
-                delete dr
-
-            )
-            if ( obj.KGTR != undefined ) then
-            (
-                    local dp = dummy name:"DummyPositionController" 
-                    dp.position.controller = b.position.controller
-                    local p0 = dp.transform
-                    local prevTime = 0
-
-                    for anim in obj.KGTR.KG do
-                    (
-                        local t = anim.Time + 10
-                        local p = anim.Point
-
-                        if ( prevTime == t ) then continue else prevTime = t
-                        
-                        with animate on 
-                            at time t
-                            (
-                                in coordsys p0 dp.position = p 
-                            )
-                    )
-                    with animate on b.position.controller = copy dp.position.controller
-                    
-                    delete dp
-            )
-            
-            if ( obj.KGSC != undefined ) then
-            (
-               -- b.assumeSkinPose()
-                
-                local ds = dummy name:"DummyScaleController" 
-                ds.scale.controller = b.scale.controller
-                local p0 = ds.transform
-                local prevTime = 0
-                
-                for anim in obj.KGSC.KG do
-                (
-                    local t = anim.Time + 10
-                    local p = anim.Point
-                        
-                    if ( prevTime == t ) then continue else prevTime = t
-                    
-                    with animate on 
-                        at time t
-                        (
-                            in coordsys p0 ds.scale = p 
-                        )
-                )
-                with animate on b.scale.controller = copy ds.scale.controller
-                
-                delete ds
-            )
-            
-        )
-                -- build bone hierarchy
-        for b in boneList do
-        (
-            if ( b.ParentBoneId > 0 and b.ParentBoneId <= boneList.count ) then 
-            (
-                local parentBone = boneList[b.ParentBoneId].boneRef
-                b.boneRef.parent = parentBone
-            )
-        )
-    ),
     function BuildBONE2=
     (
         if( mdx.bone == undefined ) then return undefined
@@ -2336,6 +2230,8 @@ struct Warcraft3_Reforged
             (
             
                 local mtrx = bpos[obj.id].matrix
+                
+                --b.transform = mtrx
                 
                 b.pos = mtrx.translationpart
                 
@@ -3310,72 +3206,6 @@ struct Warcraft3_Reforged
         
         
     ),
-    function FindObjects=
-    (
-        local geos = mdx.geos
-        local boneList = mdx.bone
-        /* Very dirty fix for the animation, please check !! */
-        
-        local completeFilePath = (getDir #scene) + "\\temp.fbx"
-        exportFile completeFilePath #noPrompt using:FBXEXP
-        resetMaxFile #noPrompt
-        importFile completeFilePath #noPrompt using:FBXIMP
-        
-        for item in boneList do
-        (
-            local b = getNodeByName item.Name
-            
-            if b != undefined then 
-                item.boneRef = b
-            else
-                format "% not found\n" item
-            
-        )
-        
-        for item in geos do
-        (
-            if (  item.uniqueName != undefined ) then 
-            (
-                local m = getNodeByName item.uniqueName
-                if m != undefined then 
-                   item.meshRef = m
-                else
-                    format "% not found\n" item
-            )
-        )
-    ),
-    function FixAnimation=
-    (
-        /* Very dirty fix for the animation, please check !! */
-        
-        local completeFilePath = (getDir #scene) + "\\temp.fbx"
-        FbxExporterSetParam "Animation" true
-        FbxExporterSetParam "ASCII" false
-        FbxExporterSetParam "BakeAnimation" false
-        FbxExporterSetParam "BakeFrameStep" 1
-        FbxExporterSetParam "BakeResampleAnimation" false
-        FbxExporterSetParam "Cameras" false
-        FbxExporterSetParam "CAT2HIK" false
-        FbxExporterSetParam "ColladaTriangulate" false
-        FbxExporterSetParam "ColladaSingleMatrix" true
-        FbxExporterSetParam "ColladaFrameRate" 30.0
-        FbxExporterSetParam "EmbedTextures" false
-        FbxExporterSetParam "FileVersion" #FBX201600
-        FbxExporterSetParam "FilterKeyReducer" false
-        FbxExporterSetParam "GeomAsBone" false
-        FbxExporterSetParam "GenerateLog" false
-        FbxExporterSetParam "Lights" false
-        FbxExporterSetParam "UpAxis" #y
-        FbxExporterSetParam "ScaleFactor" 1.0
-        FbxExporterSetParam "ShowWarnings" false
-        FbxExporterSetParam "SmoothMeshExport" false
-        exportFile completeFilePath #noPrompt using:FBXEXP
-        --resetMaxFile #noPrompt
-        importFile completeFilePath #noPrompt using:FBXIMP
-        
-        Warcraft3_Reforged.FindObjects()
-        
-    ),
     function AssignMTLS=
     (
         try
@@ -3483,31 +3313,32 @@ struct Warcraft3_Reforged
             -- TODO PREM // particle emitters    
             
         )
-
+        
         if ( wc3_debug ) then (
+            gModel = mdx.geos
                 
-            print mdx.TAGS
-            print mdx.VERS
-            print mdx.MODL
-            print mdx.SEQS
-            print mdx.MTLS
-            print mdx.TEXS
-            print mdx.GEOS
-            print mdx.BONE
-            print mdx.ATCH
-            print mdx.CLID
-            print mdx.BPOS
-            print mdx.GEOA
-            print mdx.EVTS
-            print mdx.PIVT
-            print mdx.FAFX
-            print mdx.CAMS
-            print mdx.CORN
-            print mdx.LITE
-            print mdx.GLBS
-            print mdx.TXAN
-            print mdx.RIBB
-            print mdx.PRE2
+--            print mdx.TAGS
+--             print mdx.VERS
+--             print mdx.MODL
+--             print mdx.SEQS
+--             print mdx.MTLS
+--             print mdx.TEXS
+--             print mdx.GEOS
+--             print mdx.BONE
+--             print mdx.ATCH
+--             print mdx.CLID
+--             print mdx.BPOS
+--             print mdx.GEOA
+--             print mdx.EVTS
+--             print mdx.PIVT
+--             print mdx.FAFX
+--             print mdx.CAMS
+--             print mdx.CORN
+--             print mdx.LITE
+--             print mdx.GLBS
+--             print mdx.TXAN
+--             print mdx.RIBB
+--             print mdx.PRE2
         )
 
         if ( wc3_debug_build ) then
@@ -3556,6 +3387,9 @@ struct Warcraft3_Reforged
     )
 )
 
+/*
+
+*/
 UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 function ViewPortAttachmentPointDisplay=
 (
@@ -3570,3 +3404,15 @@ function ViewPortAttachmentPointDisplay=
     
 )
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+
+--ClearListener()
+
+--wc3_debug = false
+--wc3_debug_build = true
+
+
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\doodads\silvermoon\prop\tulips\tulips0.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\doodads\ashenvale\water\fish\fish.mdx"
+--file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\objects\inventoryitems\tome\tome.mdx"
+--Warcraft3_Reforged.Import file
+

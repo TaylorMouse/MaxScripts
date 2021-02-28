@@ -1505,11 +1505,11 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
     )
 )
 
-clearlistener()
-if i == undefined then i = 1
+--clearlistener()
+--if i == undefined then i = 1
 
-file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_bandit_" + ( i as string ) +".mdx"
-i +=1
+--file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_bandit_" + ( i as string ) +".mdx"
+--i +=1
 --WC3_DEBUG = true
-GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
-format "Written file % \n" (getfilenamefile file)
+--GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
+--format "Written file % \n" (getfilenamefile file)

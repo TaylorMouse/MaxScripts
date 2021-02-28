@@ -17,19 +17,11 @@ fileIn "GriffonStudios\\GriffonStudios_HelperScripts_Struct.ms" --> new approach
 
 fileIn "GriffonStudios\\GriffonStudios_Menu.ms"
 
-fileIn "GriffonStudios\\GriffonStudios_Warcraft_3_Reforged_Macros.ms"
-fileIn "GriffonStudios\\GriffonStudios_Warcraft_3_Reforged_Menu.ms"
-fileIn "GriffonStudios\\GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
-
 fileIn "GriffonStudios\\GriffonStudios_WoW_M2_Import_v3.3.ms"
 fileIn "GriffonStudios\\GriffonStudios_Starcraft_HotS_M3_Import_v3.5.ms"
 
-wc3ref = Warcraft3_Reforged_Menu()
-wc3ref.CreateMenu()
-
 gs = GriffonStudios_Menu()
 gs.CreateMenu()
-
 
 try ( 
     test = SC2_Standard_Material() 
