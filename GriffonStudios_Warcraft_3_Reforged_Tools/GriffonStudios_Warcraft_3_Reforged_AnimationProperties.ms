@@ -1,6 +1,7 @@
 /*
     .SYNOPSIS
     | Opens up a popup window that reads the data from the notes track in Max and interpretes them as animation sequences
+    | Compatible with Warcraft III, Warcraft III Reforged and StarCraft II
     
     .COPYRIGHT
     | ©2020 Griffon Studios
@@ -10,32 +11,80 @@
 
 */
 
-rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:250 height:810
+rollout GriffonStudios_WC3_AnimationProperties "Animation Sequences" 
+    width:250 
+    height:720
 (
-    /*********************************************************************************************************/
-    label lblTM "©2021 Taylor Mouse"
-    
+
     dropdownlist ddlTracks "" height:20
     dotNetControl lv "System.Windows.Forms.ListView" width:230 height:300 align:#center
     checkbox cbUpdateTimeLine "Update timeline" checked:true
     button btn_RefreshList "Refresh" align:#right offset:[0,-20]
     
-    local leftPos = - 50
+    local leftPos = - 20
     local selectedAnimationTrack = undefined 
     local selectedAnimation = undefined
     local selectedAnimationName = ""
     
-    /*********************************************************************************************************/
-    function SetAnimationNoteTrack list_animations=
+    group "Properties"
+    (
+        edittext txt_newName "" width:120 
+        button btn_rename "Rename" width:80 height:20 offset:[70,-25]        
+        
+        label lblStartFrame "Start "    align:#left
+        spinner txt_StartFrame ""       width:50 offset:[leftPos,-20] type:#integer
+
+        label lblEndFrame "End "        align:#left
+        spinner txt_EndFrame ""         width:50 offset:[leftPos,-20] type:#integer
+
+        label lblRarity "Rarity (%)"    align:#left
+        spinner spinRarity ""           width:50 offset:[leftPos,-20] type:#integer
+
+        label lblMovementSpeed "Movement Speed" align:#left
+        spinner spinMovementSpeed ""    width:50 offset:[leftPos,-20] type:#float
+        
+        label lblPriority "Priority"    align:#left
+        spinner spinPriority ""         width:50 offset:[leftPos,-20] type:#integer
+
+        label lblNonLooping "Non-Looping" align:#left
+        checkbox chkNonLooping "" offset:[122,-20]
+        
+
+    )
+
+    group "Add new animation"
+    (
+        edittext txt_newAnimName "" width:120 
+        button btn_add "Add" width:80 height:20 offset:[70,-25]
+    )
+    
+    group "Remove selected Animation"
+    (
+        button btn_delete "Remove" width:180 height:30
+    )
+
+    group "Remove note track"
+    (
+        button btn_removeNoteTrack "Remove all animations (note track)" width:180 height:30
+    )
+    
+    label lblTM "©2021 Taylor Mouse"
+    
+    function SetAnimationNoteTrack anim=
     (
         
         /* clear existing notes */
         local starAnimTrack = undefined
         if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
-            
+           
+        local strLastNoteFrame = "0f"
+        local lastNoteFrame = 0
+        
         if( (hasNoteTracks rootNode) == true ) then
         (
-            starAnimTrack = getNoteTrack rootNode selectedAnimationTrack
+            starAnimTrack    = getNoteTrack rootNode selectedAnimationTrack
+            strLastNoteFrame = getNoteKeyTime starAnimTrack starAnimTrack.keys.count as string
+            lastNoteFrame    = substring strLastNoteFrame 1  (strLastNoteFrame.count - 1) as integer
         )
         else
         (
@@ -43,29 +92,39 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
             addNoteTrack rootNode starAnimTrack
         )
         
-        /* apply new notes */
-        for anim in list_animations do
+        local noteExists = getNoteKeyIndex starAnimTrack  anim.start_frame
+        
+        /* validation */
+        local isValid = true
+        if ( anim.start_frame >= anim.end_frame ) then isValid = false
+        if ( anim.start_frame <= lastNoteFrame ) then isValid = false
+        
+        if isValid == false then 
         (
-            local noteExists = getNoteKeyIndex starAnimTrack  anim.start_frame
-            if( noteExists == undefined) then
-            (
-                --( name, start_frame, end_frame, rarity, movement_speed, priority, non_looping )
-                
-                local startNote = AddNewNoteKey starAnimTrack anim.start_frame
-                local endNote = AddNewNoteKey starAnimTrack anim.end_frame
-                
-                /* this is based on StarCraft 2 animation note track */
-                local val = anim.name + "\r\n"
-                      val += "rarity = " + anim.rarity + "\r\n"
-                      val += "moveSpeed = " + anim.movement_speed + "\r\n"
-                      val += "nonLoop = " + anim.non_looping + "\r\n"
-                      val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = " + anim.priority
-
-                startNote.Value = val
-                endNote.Value = val
-                
-            )
+            messagebox "One of the following was invalid:\nEnd Frame must be higher then the Start Frame\nThe start frame must start later then the previous end frame"
+            return undefined
         )
+        /* apply new notes */
+        
+        if( noteExists == undefined) then
+        (
+            --( name, start_frame, end_frame, rarity, movement_speed, priority, non_looping )
+            
+            local startNote = AddNewNoteKey starAnimTrack anim.start_frame
+            local endNote = AddNewNoteKey starAnimTrack anim.end_frame
+            
+            /* this is based on StarCraft 2 animation note track */
+            local val = anim.name + "\r\n"
+                  val += "rarity = " + anim.rarity + "\r\n"
+                  val += "moveSpeed = " + anim.movement_speed + "\r\n"
+                  val += "nonLoop = " + anim.non_looping + "\r\n"
+                  val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = " + anim.priority
+
+            startNote.Value = val
+            endNote.Value = val
+            
+        )
+
         
     )
 
@@ -117,7 +176,6 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
                 if (pos != undefined) then
                 (
                     animationName = substring note 1 pos
-                    print animationName
                     item = dotNetObject "System.Windows.Forms.ListViewItem"
                     item.Text = animationName
                     append items item
@@ -142,60 +200,13 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
         ResetListView()
         ResetTrackList()
     )
-
-    /*********************************************************************************************************/
-    group "Properties"
-    (
-        
-        
-        label lblStartFrame "Start "    align:#left
-        spinner txt_StartFrame ""       width:50 offset:[leftPos,-20] type:#integer
-
-        label lblEndFrame "End "        align:#left
-        spinner txt_EndFrame ""         width:50 offset:[leftPos,-20] type:#integer
-
-        label lblRarity "Rarity (%)"    align:#left
-        spinner spinRarity ""           width:50 offset:[leftPos,-20] type:#integer
-
-        label lblMovementSpeed "Movement Speed" align:#left
-        spinner spinMovementSpeed ""            width:50 offset:[leftPos,-20] type:#float
-        
-        label lblPriority "Priority" align:#left
-        spinner spinPriority ""            width:50 offset:[leftPos,-20] type:#integer
-
-        label lblNonLooping "Non-Looping" align:#left
-        checkbox chkNonLooping "" offset:[92,-20]
-        
-    )
-
-    group "Rename animation"
-    (
-        edittext txt_newName "" width:180 
-        button btn_rename "Rename" width:180 height:40
-    )
     
-    group "Add new animation"
-    (
-        edittext txt_newAnimName "" width:180 
-        button btn_add "Add" width:180 height:30
-    )
-    
-    group "Remove selected Animation"
-    (
-        button btn_delete "Delete" width:180 height:30
-    )
-    group "Remove note track"
-    (
-        button btn_removeNoteTrack "Remove all animations" width:180 height:30
-    )
-    /*********************************************************************************************************/
     on btn_refreshList pressed do
     (
         ResetTrackList()
         ResetListView()
     )
     
-    /*********************************************************************************************************/
     on btn_removeNoteTrack pressed do
     (
         if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
@@ -215,7 +226,6 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
         )
     )
     
-    /*********************************************************************************************************/
     on btn_add pressed do
     (
         if( txt_newAnimName.Text == "") then 
@@ -223,7 +233,6 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
             messageBox "Please enter a valid animation name!" title:"Incorrect Animation name"
             return undefined
         )
-        local list_animations = #()
         
         struct animStruct ( name, start_frame, end_frame, rarity, movement_speed, priority, non_looping )
         
@@ -237,16 +246,13 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
         anim.priority       = spinPriority.value as string
         anim.non_looping    = chkNonLooping.checked as string
         
-        append list_animations anim
-        
-        SetAnimationNoteTrack list_animations
+        SetAnimationNoteTrack anim
         
         ResetListView()
         
         txt_newAnimName.Text = ""
     )
     
-    /*********************************************************************************************************/
     on btn_rename pressed do
     (
         
@@ -285,7 +291,7 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
         selectedAnimation = undefined
         txt_newName.text = ""
     )
-    /*********************************************************************************************************/
+ 
     on btn_delete pressed do
     (
         --format "Animation found:%\n" selectedAnimation
@@ -321,7 +327,6 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
             ResetListView()
         )
     )
-    /*********************************************************************************************************/
     
     on GriffonStudios_WC3_AnimationProperties open do
     (
@@ -347,7 +352,7 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
             local pos = (findString note "\n") - 2
             local animationName = substring note 1 pos
             local propNote = substring note (pos + 2 ) -1
-            --print propNote
+            
             if( animationName == selectedAnimation.Text) then
             (
                 startTime = getNoteKeyTime track i
@@ -366,13 +371,11 @@ rollout GriffonStudios_WC3_AnimationProperties "WC3 Animation Sequences" width:2
                 
                 local parts = filterstring propNote "\r\n ,"
 
-                --print parts
                     
                 spinRarity.value = parts[3] as integer
                 spinMovementSpeed.value = parts[6] as float
                 spinPriority.value = parts[18] as integer
         
-                --print chkNonLooping.checked
                 if parts[9] == "true" then 
                     chkNonLooping.checked = true
                 else 

@@ -1,7 +1,11 @@
 # Warcraft 3 Reforged Tools Documentation
-*©2010~2020 Griffon Studios*
 
-*Written by Taylor Mouse*
+## Description
+
+The following page describes the use of the WC3 Reforged Tools
+
+- *©2010~2020 Griffon Studios*
+- *Written by Taylor Mouse*
 
 This document describes how to use the Exporter.
 The exporter for 3D Studio Max 2011 and above, can be found in [my max scripts](https://github.com/TaylorMouse/MaxScripts)
