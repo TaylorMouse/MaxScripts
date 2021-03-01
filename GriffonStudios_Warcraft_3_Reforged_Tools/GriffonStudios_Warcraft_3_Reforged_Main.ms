@@ -2173,6 +2173,7 @@ struct Warcraft3_Reforged
                     
             if ( a.KATV != undefined ) then 
             (
+                
                 local isVisibilityTrackRequired = false -- by default evertythng is 1
                 
                 for anim in a.KATV.KG do
@@ -2182,7 +2183,6 @@ struct Warcraft3_Reforged
                 
                 if ( isVisibilityTrackRequired == true ) then
                 (
-                    pnt.Visibility = undefined 
                     pnt.Visibility = on
                     pnt.Visibility.controller = on_off()
 
@@ -2599,7 +2599,6 @@ struct Warcraft3_Reforged
             
             if ( isVisibilityTrackRequired == true ) then
             (
-                theMesh.Visibility = undefined 
                 theMesh.Visibility = on
                 theMesh.Visibility.controller = on_off()
 
@@ -2963,7 +2962,6 @@ struct Warcraft3_Reforged
                 )
                 if ( isVisibilityTrackRequired == true ) then
                 (
-                    ribbon.Visibility = undefined 
                     ribbon.Visibility = on
                     ribbon.Visibility.controller = on_off()
 
@@ -3111,7 +3109,6 @@ struct Warcraft3_Reforged
 
                 if ( isVisibilityTrackRequired == true ) then
                 (
-                    emitter.Visibility = undefined 
                     emitter.Visibility = on
                     emitter.Visibility.controller = on_off()
 
@@ -3188,7 +3185,6 @@ struct Warcraft3_Reforged
 
                 if ( isVisibilityTrackRequired == true ) then
                 (
-                    cObj.Visibility = undefined 
                     cObj.Visibility = on
                     cObj.Visibility.controller = on_off()
 
@@ -3390,7 +3386,9 @@ struct Warcraft3_Reforged
 /*
 
 */
-UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+if ( ViewPortAttachmentPointDisplay != undefined ) then 
+	UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+	
 function ViewPortAttachmentPointDisplay=
 (
             
@@ -3415,4 +3413,3 @@ RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 --file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\doodads\ashenvale\water\fish\fish.mdx"
 --file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\objects\inventoryitems\tome\tome.mdx"
 --Warcraft3_Reforged.Import file
-
