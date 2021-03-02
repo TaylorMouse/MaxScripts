@@ -29,10 +29,7 @@
     | 0.01 - Main setup
     
 */
-GLOBAL WC3_DEBUG = false
 GLOBAL TEXTURE_PATH = "war3mapImported/" --> leave this as is if you don't want to change it in the world editor
-
-TEXTURE_PATH = "units/creeps/bandit/"
 
 STRUCT GriffonStudios_Helper_Functions
 (
@@ -962,9 +959,9 @@ STRUCT GriffonStudios_Helper_Functions
                     weights[k] = ( weight * 255 ) as integer
                 )
                 
-                if count > 4 then 
-                    weights[4] = 1.0 - weights[3] - weights[2] - weights[1]
-                
+                if( 255 - weights[1] - weights[2] - weights[3] - weights[4] != 0 ) then
+                    weights[1] = 255 - weights[2] - weights[3] - weights[4]
+
                 local vertex = vertexWeights vertexId:v boneIndices:boneIndices weights:weights
                 
                 append vertices vertex
@@ -1252,7 +1249,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         )            
         
     ),
-    function WriteMODL stream=
+    function WriteMODL stream file=
     (
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         writeLong stream 372
@@ -1435,6 +1432,8 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         try (
             setWaitCursor()
             disableSceneRedraw()
+            clearlistener()
+            
             -- set the T-pose of the object to export correctly
             animationrange = interval 0 100
             slidertime = 0
@@ -1453,7 +1452,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             /* MODL */
             format "Writing MODL\n"
             writer.WriteFixedString stream "MODL" 4
-            writer.WriteMODL stream
+            writer.WriteMODL stream file
             
             /* SEQS */
             format "Writing SEQS\n"

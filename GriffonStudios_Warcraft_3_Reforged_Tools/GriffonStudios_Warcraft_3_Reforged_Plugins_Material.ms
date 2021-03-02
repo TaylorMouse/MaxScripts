@@ -1,5 +1,5 @@
 /*
-    Written by Taylor Mouse © 2020
+    Written by Taylor Mouse Â© 2020
     for
     Warcraft 3 Reforged
 
@@ -36,6 +36,7 @@ plugin Material WC3RefMaterial
         teamcolor_map   type:#texturemap animatable:false ui:mb_teamcolor --> usually Alpha layer of the orm map
         emissive_map    type:#texturemap animatable:false ui:mb_emissive
         emissive_alpha  type:#float      animatable:true  ui:spn_emissive
+        emissive_multiplier type:#float      animatable:true  ui:spn_emissive_multiplier
         alphamask_map   type:#texturemap animatable:false ui:mb_alphamask
         reflection_map  type:#texturemap animatable:false ui:mb_reflection
         replacable_map  type:#texturemap animatable:false ui:mb_replacable
@@ -108,6 +109,7 @@ plugin Material WC3RefMaterial
         label lbl5 "Emissive . . . ." align:#left offset:[0,10]
             mapbutton mb_emissive  "(drag & drop texture here)" height:22 width:200 offset:[20,-25] 
             spinner spn_emissive "Alpha:"   range:[0,100.0,100.0] align:#right width:50 offset:[-30,0]
+            spinner spn_emissive_multiplier "Multiplier:"   range:[0,100,0] align:#right width:50 offset:[-30,0]
         
         label lbl6 "Alpha mask . . " align:#left offset:[0,5] 
             mapbutton mb_alphamask "(drag & drop texture here)" height:22 width:200 offset:[20,-25] 
@@ -136,4 +138,3 @@ plugin Material WC3RefMaterial
     
     
 )
-

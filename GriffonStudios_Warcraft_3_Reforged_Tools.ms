@@ -10,9 +10,9 @@
         
 */
 
-fileIn "GriffonStudios_Warcraft_3_Reforged_ArtTools\\GriffonStudios_Warcraft_3_Reforged_Macros.ms"
-fileIn "GriffonStudios_Warcraft_3_Reforged_ArtTools\\GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
-fileIn "GriffonStudios_Warcraft_3_Reforged_ArtTools\\GriffonStudios_Warcraft_3_Reforged_Menu.ms"
+fileIn "GriffonStudios_Warcraft_3_Reforged_Tools\\GriffonStudios_Warcraft_3_Reforged_Macros.ms"
+fileIn "GriffonStudios_Warcraft_3_Reforged_Tools\\GriffonStudios_Warcraft_3_Reforged_Plugins_Material.ms"
+fileIn "GriffonStudios_Warcraft_3_Reforged_Tools\\GriffonStudios_Warcraft_3_Reforged_Menu.ms"
 
 global STARCRAFT_II_ARTTOOLS_INSTALLED = true
 
