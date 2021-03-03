@@ -9,6 +9,9 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.21 - EUREKA first complex correct export is done!
+    | 0.20 - translation issue under investigation, seems like child bones are not correctly positioning
+    | 0.19 - fixed a vertex weight issue
     | 0.18 - finally fixed the rotation and translation animation !!
     | 0.17 - fixing the translation and rotation animation... still working on it...
     | 0.16 - fixed the two sided texture flag, added the alpha animation for the texture, added emssive map, does not seem to animate (yet) :/
@@ -28,8 +31,27 @@
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
     | 0.01 - Main setup
     
+    .TODO
+    | find the textures used in the exported asset folder
+    | if the black32.dds is used, map it to the blizzards wc3ref one
+    | if the EnvironmentMap.dds is used, map it to the blizzards wc3ref one
+    | camera
+    | light
+    | ribbon
+    | particle emitter
+    | collision objects
+    | events
+    | faceFX -> maybe
+    | popcornFX -> maybe
+    | attachment points
+    | make it export faster ?
+    
 */
-GLOBAL TEXTURE_PATH = "war3mapImported/" --> leave this as is if you don't want to change it in the world editor
+GLOBAL WC3_DEBUG = false
+GLOBAL TEXTURE_PATH = "war3mapImported/" 
+GLOBAL FIND_TEXTURES
+GLOBAL USE_BLACK32
+GLOBAL USE_ENVIRONMENT_MAP
 
 STRUCT GriffonStudios_Helper_Functions
 (
@@ -110,9 +132,14 @@ STRUCT GriffonStudios_Helper_Functions
             local kg = WC3Anim()
             
             local b = wc3Bones[i].BoneRef
+            
+            b.assumeSkinPose()
+            
             local basePos = b.pos
-            local parentBasePos = [0,0,0]
-            if ( b.parent != undefined ) then parentBasePos = b.parent.pos
+            
+            if ( b.parent != undefined ) then
+                in coordsys parent 
+                    basePos = b.pos
             
             kg.nbrKeys = numkeys b.pos.controller 
             kg.Size += kg.nbrKeys * 16
@@ -123,13 +150,10 @@ STRUCT GriffonStudios_Helper_Functions
                 
                 at time kv.key 
                 (
-                    if( b.parent != undefined ) then
-                        p = b.pos - basePos - ( b.parent.pos - parentBasePos )
-                    else
-                        p = b.pos - basePos
-
-                    kv.val = p
-                    --kv.val = b.pos
+                    kv.val= b.pos - basepos
+                    if ( b.parent != undefined ) then
+                        in coordsys parent
+                            kv.val= b.pos - basepos
                 )
                 append kg.AnimBlock kv
             )
@@ -557,7 +581,7 @@ STRUCT GriffonStudios_Helper_Functions
     /* Get the unique list of textures so that a reference can be made when writing the mtls block */
     function GetTEXS bitmap=
     (
-        
+        if ( TEXTURE_PATH == undefined ) then TEXTURE_PATH = "war3mapImported/" 
         if( bitmap==undefined ) then 
             tex = ""
         else
@@ -1025,12 +1049,6 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local theBone = wc3Bone.BoneRef
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
-        theBone.assumeSkinPose()
-        
-        --if ( WC3_DEBUG ) then format "\n%\n" theBone
-   
-        local bPos = theBone.pos --> get this from the binding position !!
-        
         for i=1 to animations.count do
         (
             if ( animations[i].AnimBlock.count > 0 ) then
@@ -1421,8 +1439,15 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
 
 STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 (
-    function Export file=
+    function Export file texturePath cfg=
     (
+        -- ( debug_mode, find_textures, useBlack32, useEnvMap, base_texture_path )
+        WC3_DEBUG           = cfg.debug_mode
+        TEXTURE_PATH        = cfg.base_texture_path
+        FIND_TEXTURES       = cfg.find_textures
+        USE_BLACK32         = cfg.useBlack32
+        USE_ENVIRONMENT_MAP = cfg.useEnvMap
+        
         if ( objects.count == 0 ) then return undefined
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
@@ -1491,7 +1516,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 
             Format "DONE!\n"
-        ) catch ( print ( getCurrentException() ) )
+        ) catch ( messagebox ( getCurrentException() ) )
 
         fFlush stream
         fClose stream
@@ -1504,11 +1529,3 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
     )
 )
 
---clearlistener()
---if i == undefined then i = 1
-
---file = @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\tm_bandit_" + ( i as string ) +".mdx"
---i +=1
---WC3_DEBUG = true
---GriffonStudios_Warcraft_3_Reforged_Exporter.Export file
---format "Written file % \n" (getfilenamefile file)

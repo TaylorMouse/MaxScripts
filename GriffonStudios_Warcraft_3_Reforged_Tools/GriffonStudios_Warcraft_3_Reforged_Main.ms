@@ -16,7 +16,7 @@ global gModel
 
 global wc3_debug = false
 global wc3_debug_build = true
-global Warcraft3_ImportAllLOD = true
+global Warcraft3_ImportAllLOD = false
 
 struct Warcraft3_Reforged_TAG
     ( Name, Offset, Size )
@@ -3405,11 +3405,5 @@ RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 
 --ClearListener()
 
---wc3_debug = false
---wc3_debug_build = true
-
-
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\doodads\silvermoon\prop\tulips\tulips0.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\doodads\ashenvale\water\fish\fish.mdx"
---file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\objects\inventoryitems\tome\tome.mdx"
---Warcraft3_Reforged.Import file
+--wc3_debug = true
+--wc3_debug_build = false
