@@ -9,28 +9,33 @@
     | Taylor Mouse
 
 */
-GLOBAL WC3_DEBUG = false
 
-rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" height:180 width:250
+
+rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" width:250
 (
     
     group "Export"
     (
-        
-        checkBox chkCopyTextures "Copy textures to export folder"
-        checkBox chkDebugmode "Debug mode"
-        button btn_export "Export" height:30 width:150
+        label    lbl01              "Texture Path:" align:#left
+        edittext txt_texturePath    "" width:230 height:20 align:#left offset:[-5,0]
+        checkBox chkFindTextures    "Find textures in the root asset folder"
+        checkBox chkUseBlack32      "Map to standard black32.dds"
+        checkBox chkUseEnvMap       "Map to standard EnvironmentMap.dds"
+        checkBox chkDebugmode       "Debug mode"
+        button   btn_export         "Export" height:30 width:150
     )
     
     label info "\xa9 2020 Exporter by Taylor Mouse" align:#center
     
     on GriffonStudios_WC3_ExportDialog open do
     (
-        chkCopyTextures.checked = true
+        txt_texturePath.text = TEXTURE_PATH
     )
 
     on btn_export pressed do
     (
+        struct _config ( debug_mode, find_textures, useBlack32, useEnvMap, base_texture_path )
+
         filein "GriffonStudios_Warcraft_3_Reforged_Exporter.ms"
         local saveFile = getSaveFileName caption:"Export file location" \
                                          types:"Warcraft III Reforged Model (.mdx)|*.mdx|All Files|*.*"\
@@ -39,7 +44,13 @@ rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" height:180 
         local startedAt = timestamp()
         local exporter = GriffonStudios_Warcraft_3_Reforged_Exporter()
 
-        exporter.Export saveFile
+        local cfg = _config debug_mode:chkDebugmode.checked \
+                            find_textures:chkFindTextures.checked \
+                            useBlack32:chkUseBlack32.checked \
+                            useEnvMap:chkUseEnvMap.checked \
+                            base_texture_path:txt_texturePath.text
+        
+        exporter.Export saveFile cfg
         
         local endedAt = timestamp()
         

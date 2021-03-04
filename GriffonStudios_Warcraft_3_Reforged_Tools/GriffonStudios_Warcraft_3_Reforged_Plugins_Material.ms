@@ -1,5 +1,5 @@
 /*
-    Written by Taylor Mouse Â© 2020
+    Written by Taylor Mouse © 2020
     for
     Warcraft 3 Reforged
 
@@ -138,3 +138,4 @@ plugin Material WC3RefMaterial
     
     
 )
+

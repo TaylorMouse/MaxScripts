@@ -701,6 +701,8 @@ STRUCT GriffonStudios_Helper_Functions
         
         for m in meshes do
         (
+            format "Writing %\n" m.name
+            
             local lod_name = substring m.name (m.name.count - 3) -1
             
             local lod_id = 0
@@ -1439,7 +1441,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
 
 STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 (
-    function Export file texturePath cfg=
+    function Export file cfg=
     (
         -- ( debug_mode, find_textures, useBlack32, useEnvMap, base_texture_path )
         WC3_DEBUG           = cfg.debug_mode
@@ -1454,7 +1456,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         local stream = fopen file "wb"
         
         local animationInterval = animationrange
-        try (
+        --try (
             setWaitCursor()
             disableSceneRedraw()
             clearlistener()
@@ -1516,7 +1518,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
 
 
             Format "DONE!\n"
-        ) catch ( messagebox ( getCurrentException() ) )
+        --) catch ( messagebox ( getCurrentException() ) )
 
         fFlush stream
         fClose stream
@@ -1528,4 +1530,3 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         setArrowCursor()        
     )
 )
-
