@@ -31,21 +31,6 @@
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
     | 0.01 - Main setup
     
-    .TODO
-    | find the textures used in the exported asset folder
-    | if the black32.dds is used, map it to the blizzards wc3ref one
-    | if the EnvironmentMap.dds is used, map it to the blizzards wc3ref one
-    | camera
-    | light
-    | ribbon
-    | particle emitter
-    | collision objects
-    | events
-    | faceFX -> maybe
-    | popcornFX -> maybe
-    | attachment points
-    | make it export faster ?
-    
 */
 GLOBAL WC3_DEBUG = false
 GLOBAL TEXTURE_PATH = "war3mapImported/" 
