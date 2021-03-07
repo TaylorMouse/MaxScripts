@@ -1,10 +1,14 @@
 /*
-    Written by Taylor Mouse © 2020
-    for
-    Warcraft 3 Reforged
+    .SYNOPSIS
+    | Standard Material for Warcraft III Reforged
+    
+    .COPYRIGHT
+    | Â©2020 Griffon Studios
+    
+    .AUTHOR
+    | Taylor Mouse
 
 */
-
 plugin Material WC3RefMaterial
     name: "Warcraft 3 Reforged Standard"
     classID:#(0xbc1a66d, 0x64d12aa1)
@@ -13,8 +17,6 @@ plugin Material WC3RefMaterial
     replaceUI:true 
     version:1
 (
-
-    
     parameters main rollout:params
     (
         priorityPlane   type:#integer   animatable:false  ui:spn_priority
@@ -36,10 +38,10 @@ plugin Material WC3RefMaterial
         teamcolor_map   type:#texturemap animatable:false ui:mb_teamcolor --> usually Alpha layer of the orm map
         emissive_map    type:#texturemap animatable:false ui:mb_emissive
         emissive_alpha  type:#float      animatable:true  ui:spn_emissive
-        emissive_multiplier type:#float      animatable:true  ui:spn_emissive_multiplier
+        emissive_multiplier type:#float  animatable:false  ui:spn_emissive_multiplier
         alphamask_map   type:#texturemap animatable:false ui:mb_alphamask
         reflection_map  type:#texturemap animatable:false ui:mb_reflection
-        replacable_map  type:#texturemap animatable:false ui:mb_replacable
+        replacable_map  type:#texturemap animatable:false --ui:mb_replacable
        
        /* filterMode
          0x0: Opaque
@@ -80,8 +82,8 @@ plugin Material WC3RefMaterial
     (
         dropdownlist lb_filterMode "Filter Mode" items:#("Opaque","Mask","Blend", "Add", "BlendAdd", "Mod", "Mod2x") width:150
         
-        spinner spn_priority "Priority :" range:[0,1000,0] type:#integer width:60 offset:[0,-27] width:100 align:#right
-        spinner spn_alpha  "Alpha :"     range:[0,100.0,100.0] offset:[0,0] width:60 align:#right
+        spinner spn_priority "Priority :" range:[0,10,0] type:#integer width:60 offset:[-20,-27] width:100 align:#right
+        spinner spn_alpha  "Alpha :"     range:[0,100.0,100.0] offset:[-20,0] width:60 align:#right
         
         checkbox cbx_unlit "Unlit"
         checkbox cbx_environment "Environment" 
@@ -108,17 +110,17 @@ plugin Material WC3RefMaterial
         
         label lbl5 "Emissive . . . ." align:#left offset:[0,10]
             mapbutton mb_emissive  "(drag & drop texture here)" height:22 width:200 offset:[20,-25] 
-            spinner spn_emissive "Alpha:"   range:[0,100.0,100.0] align:#right width:50 offset:[-30,0]
-            spinner spn_emissive_multiplier "Multiplier:"   range:[0,100,0] align:#right width:50 offset:[-30,0]
+            spinner spn_emissive "Alpha:"   range:[0,100.0,100.0] align:#left width:70 offset:[165,0]
+            spinner spn_emissive_multiplier "Multiplier:"   range:[0,100,0] align:#left width:80 offset:[150,0]
         
         label lbl6 "Alpha mask . . " align:#left offset:[0,5] 
             mapbutton mb_alphamask "(drag & drop texture here)" height:22 width:200 offset:[20,-25] 
     
-        label lbl7 "Reflection . . ."   align:#left offset:[0,10]
+        label lbl7 "Environment . . ."   align:#left offset:[0,10]
             mapbutton mb_reflection "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
     
-        label lbl8 "Replacable . . ."   align:#left offset:[0,10]
-            mapbutton mb_replacable "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
+--         label lbl8 "Replacable . . ."   align:#left offset:[0,10]
+--             mapbutton mb_replacable "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
     
     
         groupbox grpMaps "Texture Maps" height:300 pos:[5,160] width:315 
@@ -133,6 +135,17 @@ plugin Material WC3RefMaterial
         delegate.shadertype = 1
         filtermode = 1
         material_alpha = 100
+        emissive_alpha = 100
+        emissive_multiplier = 1
+        
+        diffuse_map = Bitmaptexture fileName:""
+        normal_map = Bitmaptexture fileName:""
+        orm_map = Bitmaptexture fileName:""
+        teamcolor_map = Bitmaptexture fileName:""
+        emissive_map = Bitmaptexture fileName:""
+        alphamask_map = Bitmaptexture fileName:""
+        reflection_map = Bitmaptexture fileName:""
+        replacable_map = Bitmaptexture fileName:""
         
     )
     

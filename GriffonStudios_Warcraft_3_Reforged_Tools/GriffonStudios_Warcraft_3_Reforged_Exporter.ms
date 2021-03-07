@@ -36,12 +36,12 @@
 */
 GLOBAL WC3_DEBUG = false
 GLOBAL TEXTURE_PATH = "war3mapImported/" 
-GLOBAL FIND_TEXTURES = false
 GLOBAL USE_BLACK32 = false
 GLOBAL USE_ENVIRONMENT_MAP = false
 
 STRUCT GriffonStudios_Helper_Functions
 (
+    
     /* Keys in a controller return a weird uint64 this is converted here */
     function TimeToInt theTime=
     (
@@ -649,7 +649,9 @@ STRUCT GriffonStudios_Helper_Functions
             textureToFind = (getFilenameFile map.fileName) + ".dds"
             if ( textureToFind.count <= 4 ) then textureToFind = ""
             if ( textureToFind.count > 4) then textureToFind = TEXTURE_PATH +  (getFilenameFile map.fileName) + ".dds" 
-            
+            if ( USE_BLACK32 ) then textureToFind = "Textures/Black32.blp"
+            if ( USE_ENVIRONMENT_MAP ) then textureToFind = "ReplaceableTextures/EnvironmentMap.blp"
+                
         )
         
         local textureId = 0
@@ -1450,7 +1452,6 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         -- ( debug_mode, find_textures, useBlack32, useEnvMap, base_texture_path )
         WC3_DEBUG           = cfg.debug_mode
         TEXTURE_PATH        = cfg.base_texture_path
-        FIND_TEXTURES       = cfg.find_textures
         USE_BLACK32         = cfg.useBlack32
         USE_ENVIRONMENT_MAP = cfg.useEnvMap
         
