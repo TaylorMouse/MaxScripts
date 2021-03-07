@@ -9,6 +9,7 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+    | 0.22 - Added functionality for using the standard black32.dds and EnvironmentMap.dds
     | 0.21 - EUREKA first complex correct export is done!
     | 0.20 - translation issue under investigation, seems like child bones are not correctly positioning
     | 0.19 - fixed a vertex weight issue
@@ -30,13 +31,14 @@
     | 0.03 - Getting the GEOS data
     | 0.02 - Writes MDLX, VERS, MODL, SEQS, MTLS, LAYS, KMTA, TEXS
     | 0.01 - Main setup
+
     
 */
 GLOBAL WC3_DEBUG = false
 GLOBAL TEXTURE_PATH = "war3mapImported/" 
-GLOBAL FIND_TEXTURES
-GLOBAL USE_BLACK32
-GLOBAL USE_ENVIRONMENT_MAP
+GLOBAL FIND_TEXTURES = false
+GLOBAL USE_BLACK32 = false
+GLOBAL USE_ENVIRONMENT_MAP = false
 
 STRUCT GriffonStudios_Helper_Functions
 (
@@ -577,7 +579,12 @@ STRUCT GriffonStudios_Helper_Functions
             if( fileName == "" or fileName.count <=4 ) then 
                 tex = ""
             else
+            (
+                
+                
                 tex = TEXTURE_PATH + fileName 
+                
+            )
         )
         return tex
     ),
@@ -593,16 +600,28 @@ STRUCT GriffonStudios_Helper_Functions
             local tex  = undefined
             
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.diffuse_map
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
+
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.normal_map
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
+            
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.orm_map
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
+            
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.emissive_map
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
+            
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.replacable_map
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
+            
             tex = GriffonStudios_Helper_Functions.GetTEXS mat.reflection_map
+            if ( getfilenamefile tex == "EnvironmentMap" and USE_ENVIRONMENT_MAP == true ) then tex = "ReplaceableTextures/EnvironmentMap.blp"
+            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
             appendIfUnique texsList tex
             
         )
