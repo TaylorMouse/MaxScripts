@@ -3231,7 +3231,7 @@ struct Warcraft3_Reforged
         mdx = wc3_reforged_mdx()
         
         local workingDir = getdir #temp
-        local iniFile = workingDir + "\\griffonstudios.config"
+        local iniFile = workingDir + "\\wc3ref.config"
         local assetFolder = getinisetting iniFile "Warcraft3Reforged" "AssetFolder"
         Warcraft3_AssetFolder = assetFolder   
         
