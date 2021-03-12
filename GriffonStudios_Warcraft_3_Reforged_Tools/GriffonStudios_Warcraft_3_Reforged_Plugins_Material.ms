@@ -9,6 +9,7 @@
     | Taylor Mouse
 
 */
+
 plugin Material WC3RefMaterial
     name: "Warcraft 3 Reforged Standard"
     classID:#(0xbc1a66d, 0x64d12aa1)
@@ -17,6 +18,8 @@ plugin Material WC3RefMaterial
     replaceUI:true 
     version:1
 (
+
+    
     parameters main rollout:params
     (
         priorityPlane   type:#integer   animatable:false  ui:spn_priority
@@ -119,10 +122,7 @@ plugin Material WC3RefMaterial
         label lbl7 "Environment . . ."   align:#left offset:[0,10]
             mapbutton mb_reflection "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
     
---         label lbl8 "Replacable . . ."   align:#left offset:[0,10]
---             mapbutton mb_replacable "(drag & drop texture here)" height:22 width:200  offset:[20,-25] tooltip:"Select spherical reflection map"
-    
-    
+   
         groupbox grpMaps "Texture Maps" height:300 pos:[5,160] width:315 
     
         

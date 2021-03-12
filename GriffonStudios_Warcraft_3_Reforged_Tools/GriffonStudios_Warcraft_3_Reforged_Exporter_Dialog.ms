@@ -18,7 +18,6 @@ rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" width:250
     (
         label    lbl01              "Texture Path:" align:#left
         edittext txt_texturePath    "" width:230 height:20 align:#left offset:[-5,0]
-        checkBox chkFindTextures    "Find textures in the root asset folder"
         checkBox chkUseBlack32      "Map to standard black32.dds"
         checkBox chkUseEnvMap       "Map to standard EnvironmentMap.dds"
         checkBox chkDebugmode       "Debug mode"
@@ -34,7 +33,7 @@ rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" width:250
 
     on btn_export pressed do
     (
-        struct _config ( debug_mode, find_textures, useBlack32, useEnvMap, base_texture_path )
+        struct _config ( debug_mode, useBlack32, useEnvMap, base_texture_path )
 
         filein "GriffonStudios_Warcraft_3_Reforged_Exporter.ms"
         local saveFile = getSaveFileName caption:"Export file location" \
@@ -45,7 +44,6 @@ rollout GriffonStudios_WC3_ExportDialog "Warcraft 3 Reforged Export" width:250
         local exporter = GriffonStudios_Warcraft_3_Reforged_Exporter()
 
         local cfg = _config debug_mode:chkDebugmode.checked \
-                            find_textures:chkFindTextures.checked \
                             useBlack32:chkUseBlack32.checked \
                             useEnvMap:chkUseEnvMap.checked \
                             base_texture_path:txt_texturePath.text
