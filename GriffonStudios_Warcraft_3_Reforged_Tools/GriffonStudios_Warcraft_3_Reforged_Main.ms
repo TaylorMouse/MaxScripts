@@ -15,7 +15,7 @@ global gBones
 global gModel
 global gCollisions
 
-global wc3_debug = false
+global wc3_debug = true
 global wc3_debug_build = true
 global Warcraft3_ImportAllLOD = false
 global wc3_version = 1000
@@ -69,7 +69,7 @@ struct Warcraft3_Reforged_EVTS
     ( Id, Name, ParentId, Flags, KEVT, objRef )
 
 struct Warcraft3_Reforged_PIVT
-    ( Id, PivotPoint, objRef )
+    ( Id, Matrix, objRef )
 
 struct Warcraft3_Reforged_FAFX
     ( Id, Name, ExternalFileName, objRef )
@@ -1259,8 +1259,9 @@ struct Warcraft3_Reforged
         for n=1 to nbr do
         (
             local p = Warcraft3_Reforged_PIVT()
-            p.Id = n
-            p.PivotPoint = [readfloat stream, readfloat stream, readfloat stream]
+            p.Id = n as integer
+            p.matrix = matrix3 1
+            p.matrix.row4 = [readfloat stream, readfloat stream, readfloat stream]
             append pivts p
         )
         return pivts
@@ -3197,6 +3198,13 @@ struct Warcraft3_Reforged
             
             -- TODO PREM // particle emitters    
             
+        )
+       
+        if mdx.bpos == undefined then 
+        (
+            format "[WARNING] - Model does not contain BPOS tag, switching to PIVT\n"
+            mdx.bpos = mdx.pivt
+            gBpos    = mdx.bpos
         )
         
         if ( wc3_debug ) then (
