@@ -1293,34 +1293,35 @@ struct Warcraft3_Reforged
         fseek stream tag.Offset #seek_set
         local total_size
         local cams = #()
-        
-        while ( total_size > 0 ) do
-        (
-            local size = readLong stream
-            local cam = Warcraft3_Reforged_CAMS()
-
-            cam.Name = GriffonStudios_Helpers.ReadFixedString stream 80
-            cam.Pos = [readFloat stream,readFloat stream,readFloat stream]
-            cam.FOV = radToDeg ( readFloat stream )
-            cam.FarClip = readFloat stream
-            cam.NearClip = readFloat stream
-            cam.TargetPos = [readFloat stream,readFloat stream,readFloat stream]
-
-            for i=1 to 3 do
+        try (
+            while ( total_size > 0 ) do
             (
-                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
-                if ( anim == "KCTR" ) then cam.KCTR = Warcraft3_Reforged.ReadVector3Anim stream
-                if ( anim == "KTTR" ) then cam.KTTR = Warcraft3_Reforged.ReadVector3Anim stream
-                if ( anim == "KCRL" ) then cam.KCRL = Warcraft3_Reforged.ReadQuatAnim stream
+                local size = readLong stream
+                local cam = Warcraft3_Reforged_CAMS()
+
+                cam.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+                cam.Pos = [readFloat stream,readFloat stream,readFloat stream]
+                cam.FOV = radToDeg ( readFloat stream )
+                cam.FarClip = readFloat stream
+                cam.NearClip = readFloat stream
+                cam.TargetPos = [readFloat stream,readFloat stream,readFloat stream]
+
+                for i=1 to 3 do
+                (
+                    local anim = GriffonStudios_Helpers.ReadFixedString stream 4
+                    if ( anim == "KCTR" ) then cam.KCTR = Warcraft3_Reforged.ReadVector3Anim stream
+                    if ( anim == "KTTR" ) then cam.KTTR = Warcraft3_Reforged.ReadVector3Anim stream
+                    if ( anim == "KCRL" ) then cam.KCRL = Warcraft3_Reforged.ReadQuatAnim stream
+                )
+                
+                if ( cam.KCTR == undefined ) then fseek stream -4 #seek_cur
+                if ( cam.KTTR == undefined ) then fseek stream -4 #seek_cur
+                if ( cam.KCRL == undefined ) then fseek stream -4 #seek_cur
+                append cams cam
+                total_size -= size
             )
-            
-            if ( cam.KCTR == undefined ) then fseek stream -4 #seek_cur
-            if ( cam.KTTR == undefined ) then fseek stream -4 #seek_cur
-            if ( cam.KCRL == undefined ) then fseek stream -4 #seek_cur
-            append cams cam
-            total_size -= size
         )
-        
+        catch ()
         return cams
     ),
     function ReadCORN stream tag=
@@ -3231,7 +3232,7 @@ struct Warcraft3_Reforged
                 Warcraft3_Reforged.BuildFAFX()  --> build facial effects
                 Warcraft3_Reforged.BuildCAMS()  --> build cameras
                 Warcraft3_Reforged.BuildLITE()  --> build lites
-                -- Warcraft3_Reforged.BuildPIVT()  --> build pivots
+                -- Warcraft3_Reforged.BuildPIVT()  --> build pivots --> seamed important in v800
                 Warcraft3_Reforged.BuildRIBB()  --> build ribbon emitters
                 Warcraft3_Reforged.BuildPRE2()  --> build particle emitters
                 Warcraft3_Reforged.BuildCORN()  --> build popcorn emitters
