@@ -1291,37 +1291,35 @@ struct Warcraft3_Reforged
     function ReadCAMS stream tag=
     (
         fseek stream tag.Offset #seek_set
-        local total_size
+        local total_size = 0
+
         local cams = #()
-        try (
-            while ( total_size > 0 ) do
+        while ( total_size > 0 ) do
+        (
+            local size = readLong stream
+            local cam = Warcraft3_Reforged_CAMS()
+
+            cam.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+            cam.Pos = [readFloat stream,readFloat stream,readFloat stream]
+            cam.FOV = radToDeg ( readFloat stream )
+            cam.FarClip = readFloat stream
+            cam.NearClip = readFloat stream
+            cam.TargetPos = [readFloat stream,readFloat stream,readFloat stream]
+
+            for i=1 to 3 do
             (
-                local size = readLong stream
-                local cam = Warcraft3_Reforged_CAMS()
-
-                cam.Name = GriffonStudios_Helpers.ReadFixedString stream 80
-                cam.Pos = [readFloat stream,readFloat stream,readFloat stream]
-                cam.FOV = radToDeg ( readFloat stream )
-                cam.FarClip = readFloat stream
-                cam.NearClip = readFloat stream
-                cam.TargetPos = [readFloat stream,readFloat stream,readFloat stream]
-
-                for i=1 to 3 do
-                (
-                    local anim = GriffonStudios_Helpers.ReadFixedString stream 4
-                    if ( anim == "KCTR" ) then cam.KCTR = Warcraft3_Reforged.ReadVector3Anim stream
-                    if ( anim == "KTTR" ) then cam.KTTR = Warcraft3_Reforged.ReadVector3Anim stream
-                    if ( anim == "KCRL" ) then cam.KCRL = Warcraft3_Reforged.ReadQuatAnim stream
-                )
-                
-                if ( cam.KCTR == undefined ) then fseek stream -4 #seek_cur
-                if ( cam.KTTR == undefined ) then fseek stream -4 #seek_cur
-                if ( cam.KCRL == undefined ) then fseek stream -4 #seek_cur
-                append cams cam
-                total_size -= size
+                local anim = GriffonStudios_Helpers.ReadFixedString stream 4
+                if ( anim == "KCTR" ) then cam.KCTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if ( anim == "KTTR" ) then cam.KTTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if ( anim == "KCRL" ) then cam.KCRL = Warcraft3_Reforged.ReadQuatAnim stream
             )
+            
+            if ( cam.KCTR == undefined ) then fseek stream -4 #seek_cur
+            if ( cam.KTTR == undefined ) then fseek stream -4 #seek_cur
+            if ( cam.KCRL == undefined ) then fseek stream -4 #seek_cur
+            append cams cam
+            total_size -= size
         )
-        catch ()
         return cams
     ),
     function ReadCORN stream tag=
