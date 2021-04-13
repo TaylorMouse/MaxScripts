@@ -1292,8 +1292,8 @@ struct Warcraft3_Reforged
     (
         fseek stream tag.Offset #seek_set
         local total_size = 0
-
         local cams = #()
+        
         while ( total_size > 0 ) do
         (
             local size = readLong stream
@@ -1320,6 +1320,7 @@ struct Warcraft3_Reforged
             append cams cam
             total_size -= size
         )
+        
         return cams
     ),
     function ReadCORN stream tag=
@@ -2309,59 +2310,121 @@ struct Warcraft3_Reforged
 			
         )
     ),
+    function BuildCollisionObject cl bpos=
+    (
+        /*
+          0: cube
+          1: plane
+          2: sphere
+          3: cylinder
+        */
+        
+        /*
+            cl.BoundingType = readLong stream
+            
+            cl.pos = [readFloat stream, readFloat stream, readFloat stream]
+            
+            if ( cl.BoundingType != 2 ) then cl.posAlt = [readFloat stream, readFloat stream, readFloat stream]
+            
+            if ( cl.BoundingType == 2 or cl.BoundingType == 3 ) then cl.radius = readFloat stream
+        */
+        local mtrx = bpos.matrix
+        local obj = undefined 
+        
+        if(cl.BoundingType == 0 ) then -- CUBE
+        (
+            local x = abs ( cl.pos.x - cl.posAlt.x ) / 2.0 * 1.5
+            local y = abs ( cl.pos.y - cl.posAlt.y ) / 2.0 * 1.5
+            local z = abs ( cl.pos.z - cl.posAlt.z ) / 2.0 * 1.5
+            
+            obj = Box length:x width:y height:z
+            obj.pivot = [0,0,z]
+        )
+        -- PLANE
+        if(cl.BoundingType == 1) then 
+        (
+            local x = abs ( cl.pos.x - cl.posAlt.x )
+            local y = abs ( cl.pos.y - cl.posAlt.y )
+            
+            obj = Plane length:x width:y 
+            
+        )
+            
+        -- SPHERE
+        if(cl.BoundingType == 2 ) then obj = Sphere radius:cl.radius
+        
+        
+        -- CYLINDER
+        if(cl.BoundingType == 3 ) then 
+        (
+            format "Collistion object data : %\n" cl
+            local z = abs ( cl.pos.z - cl.posAlt.z )
+            obj = Cylinder height:z radius:cl.radius
+        )
+        
+--        centerpivot obj
+        obj.name = cl.name
+        obj.transform = mtrx
+        obj.boxmode = true
+        obj.wirecolor = color 64 128 255
+        obj.renderable = off
+        obj.castShadows = off
+        obj.receiveshadows = off
+        obj.ApplyAtmospherics = off
+        obj.inheritVisibility = off
+        obj.primaryVisibility = off
+        obj.secondaryVisibility = off
+        
+        --in coordsys local obj.rotation = quat 1 0 0 0
+        
+        return obj
+    ),
     function BuildCLID2=
     (
         local clid = mdx.clid
         local bpos = mdx.bpos
+        
         local layer = GriffonStudios_Helpers.CreateLayer "Collision Objects"
+        
+        format "Building Collision objects\n"
         
         for cl in clid do
         (
-            if cl.boundingtype == 0 then
+            local clObj = Warcraft3_Reforged.BuildCollisionObject cl bpos[cl.id]
+            local mtrx = bpos[cl.id].matrix    
+            
+            if ( cl.KGRT != undefined ) then 
             (
-                local p1 = cl.pos
-                local p2 = [cl.radius, cl.height, cl.something]
-                local mtrx = bpos[cl.id].matrix
-                local capsul = GriffonStudios_Helpers.drawLineBetweenTwoPoints p1 p2
-                centerpivot capsul
-                capsul.name = cl.name
-                --capsul.pos = mtrx.row4
-                capsul.transform = mtrx
-                capsul.boxmode = true
                 
-                
-                if ( cl.KGRT != undefined ) then 
+                for anim in cl.KGRT.KG do
                 (
+                    local t = anim.time + 10
+                    local q = anim.Point
                     
-                    for anim in cl.KGRT.KG do
-                    (
-                        local t = anim.time + 10
-                        local q = anim.Point
-                        
-                        with animate on at time t in coordsys mtrx capsul.rotation = q
-                    )
-                        
+                    with animate on at time t in coordsys mtrx clObj.rotation = q
                 )
-                
-                if ( cl.KGTR != undefined ) then 
-                (
-
-                    local prevTime = 0
-                    for anim in cl.KGTR.KG do
-                    (
-                        local t = anim.time + 10
-                        local p = anim.Point
-                        
-                        if ( prevTime == t ) then continue else prevTime = t
-                        
-                        with animate on at time t in coordsys mtrx capsul.pos = p
-                    )
-                        
-                )
-                
-                freeze capsul
-                layer.addnode capsul
+                    
             )
+            
+            if ( cl.KGTR != undefined ) then 
+            (
+
+                local prevTime = 0
+                for anim in cl.KGTR.KG do
+                (
+                    local t = anim.time + 10
+                    local p = anim.Point
+                    
+                    if ( prevTime == t ) then continue else prevTime = t
+                    
+                    with animate on at time t in coordsys mtrx clObj.pos = p
+                )
+                    
+            )
+                
+            freeze clObj
+            layer.addnode clObj
+            
             
         )  
     ),
@@ -3230,7 +3293,7 @@ struct Warcraft3_Reforged
                 Warcraft3_Reforged.BuildFAFX()  --> build facial effects
                 Warcraft3_Reforged.BuildCAMS()  --> build cameras
                 Warcraft3_Reforged.BuildLITE()  --> build lites
-                -- Warcraft3_Reforged.BuildPIVT()  --> build pivots --> seamed important in v800
+                -- Warcraft3_Reforged.BuildPIVT()  --> build pivots
                 Warcraft3_Reforged.BuildRIBB()  --> build ribbon emitters
                 Warcraft3_Reforged.BuildPRE2()  --> build particle emitters
                 Warcraft3_Reforged.BuildCORN()  --> build popcorn emitters
@@ -3277,8 +3340,6 @@ function ViewPortAttachmentPointDisplay=
 )
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
 
---ClearListener()
---wc3_debug = true
---wc3_debug_build = true
--- file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\human\peasant\peasant.mdx"
---Warcraft3_Reforged.Import file 
+-- wc3_debug = true
+-- Warcraft3_ImportAllLOD = true
+-- wc3_debug_build = true
