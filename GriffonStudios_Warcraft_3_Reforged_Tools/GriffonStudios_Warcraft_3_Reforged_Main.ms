@@ -2331,38 +2331,39 @@ struct Warcraft3_Reforged
         local mtrx = bpos.matrix
         local obj = undefined 
         
+        local x = abs ( cl.pos.x )
+        local y = abs ( cl.pos.y )
+        local z = abs ( cl.pos.z )
+        
+        
+        if ( cl.posAlt != undefined ) then (
+            x = abs ( cl.pos.x - cl.posAlt.x) / 2.0 * 1.5
+            y = abs ( cl.pos.y - cl.posAlt.y) / 2.0 * 1.5
+            z = abs ( cl.pos.z - cl.posAlt.z) / 2.0 * 1.5
+        )
+        
         if(cl.BoundingType == 0 ) then -- CUBE
         (
-            local x = abs ( cl.pos.x - cl.posAlt.x ) / 2.0 * 1.5
-            local y = abs ( cl.pos.y - cl.posAlt.y ) / 2.0 * 1.5
-            local z = abs ( cl.pos.z - cl.posAlt.z ) / 2.0 * 1.5
-            
             obj = Box length:x width:y height:z
             obj.pivot = [0,0,z]
         )
         -- PLANE
-        if(cl.BoundingType == 1) then 
-        (
-            local x = abs ( cl.pos.x - cl.posAlt.x )
-            local y = abs ( cl.pos.y - cl.posAlt.y )
-            
-            obj = Plane length:x width:y 
-            
-        )
+        if(cl.BoundingType == 1) then obj = Plane length:x width:y 
             
         -- SPHERE
-        if(cl.BoundingType == 2 ) then obj = Sphere radius:cl.radius
-        
+        if(cl.BoundingType == 2 ) then(
+            obj = Sphere radius:z
+            obj.pivot = [0,0,0]
+        )
         
         -- CYLINDER
         if(cl.BoundingType == 3 ) then 
         (
             format "Collistion object data : %\n" cl
-            local z = abs ( cl.pos.z - cl.posAlt.z )
             obj = Cylinder height:z radius:cl.radius
         )
         
---        centerpivot obj
+
         obj.name = cl.name
         obj.transform = mtrx
         obj.boxmode = true
@@ -2375,7 +2376,7 @@ struct Warcraft3_Reforged
         obj.primaryVisibility = off
         obj.secondaryVisibility = off
         
-        --in coordsys local obj.rotation = quat 1 0 0 0
+        
         
         return obj
     ),
@@ -3339,7 +3340,3 @@ function ViewPortAttachmentPointDisplay=
     
 )
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
-
--- wc3_debug = true
--- Warcraft3_ImportAllLOD = true
--- wc3_debug_build = true
