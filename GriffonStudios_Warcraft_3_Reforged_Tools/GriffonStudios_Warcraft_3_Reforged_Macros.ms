@@ -1,5 +1,5 @@
 global Warcraft3_AssetFolder
-global Warcraft3_ImportAllLOD
+global Warcraft3_ImportAllLOD = false
 global Warcraft3_ConvertToSC2
 
 macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" tooltip:"Import model" 
@@ -23,8 +23,14 @@ macroscript Warcaft3Reforged_ImportModel category:"Warcraft 3 Reforged Tools" to
         button btnImport "Import" height:30 width:80 offset:[-115,-35]
         
         on btnClose pressed do destroydialog ImportWindow
-        on chkImportAllLOD changed theState do Warcraft3_ImportAllLOD = theState
-        on chkConvertToSC2 changed theState do Warcraft3_ConvertToSC2 = theState
+        on chkImportAllLOD changed theState do (
+            Warcraft3_ImportAllLOD = theState
+            format "Import all LOD's: %\n" Warcraft3_ImportAllLOD
+        )
+        on chkConvertToSC2 changed theState do (
+            Warcraft3_ConvertToSC2 = theState
+            format "Import SC2 Conversion: %\n" Warcraft3_ConvertToSC2
+        )
         
         on ImportWindow open do
         (

@@ -17,7 +17,7 @@ global gCollisions
 
 global wc3_debug = true
 global wc3_debug_build = true
-global Warcraft3_ImportAllLOD = false
+--global Warcraft3_ImportAllLOD = false
 global wc3_version = 1000
 
 struct Warcraft3_Reforged_TAG
@@ -3340,3 +3340,12 @@ function ViewPortAttachmentPointDisplay=
     
 )
 RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+
+--ClearListener()
+wc3_debug = true
+Warcraft3_ImportAllLOD = false
+wc3_debug_build = true
+file = @"F:\Blizzard\Warcraft - Reforged\Extracted\Assets\units\human\peasant\peasant.mdx"
+Warcraft3_Reforged.Import file 
+-- file = @"D:\Downloads\King Varian Wrynn\King Varian Wrynn\Varian.mdx"
+-- Warcraft3_Reforged.Import file 
