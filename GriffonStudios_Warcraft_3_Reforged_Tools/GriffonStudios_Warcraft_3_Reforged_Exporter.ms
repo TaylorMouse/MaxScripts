@@ -9,6 +9,8 @@
     | Warcraft III Reforged mdx exporter 
     
     .PROGRESS
+	| 0.23 - Speed up the process to calculate the bounding boxes, fixed a bug for the MATS to export with always the same texture ID
+    |        Copy all the textures used into the export folder for easy backup and selection
     | 0.22 - Added functionality for using the standard black32.dds and EnvironmentMap.dds
     | 0.21 - EUREKA first complex correct export is done!
     | 0.20 - translation issue under investigation, seems like child bones are not correctly positioning
@@ -275,80 +277,98 @@ STRUCT GriffonStudios_Helper_Functions
         
         return volume
     ),
-    /* Get the last key on the animation track for one object */
-    function FindLastKeyFrameByObject obj last_frame = 
+    function GetAllAnimatedKeyFrames=
     (
-        for i=1 to obj.numSubs do -- number of possible animation controllers
+        local uniqueKeys = #()
+        for obj in objects do
         (
-            local keys = obj[i].keys
-            if( keys != undefined ) then
-            (
-                if( keys.count > 0 ) then
+            
+                --print obj.Name
+                --if(obj.Name == "bone_turret" ) then 
+                for i=1 to obj.numSubs do 
                 (
-                    local timeFrame = keys[keys.count].time
-                    if( timeFrame > last_frame ) then
-                        last_frame = timeFrame
-                )
-                if (obj[i].numSubs > 0 ) then
-                (
-                    for j=1 to obj[i].numSubs do
+                    if obj[i].Keys != undefined then
                     (
-                        last_frame = GriffonStudios_Helper_Functions.FindLastKeyFrameByObject obj[i] last_frame
+                        
+                        for j=1 to obj[i].numsubs do
+                        (
+                            if obj[i][j].Keys != undefined then
+                            (
+                                --print obj[i][j].keys
+                                for k in obj[i][j].keys do
+                                (
+                                    local strTime = k.time as string
+                                    local iTime = substring strTime 1 (strTime.count - 1 ) as integer
+                                    
+                                    appendifunique uniqueKeys iTime
+                                    
+                                )
+                            )
+                        )
                     )
                     
                 )
-            )
         )
-        return last_frame
+
+        local sortedKeys = sort uniqueKeys   
+        return sortedKeys
         
     ),
+
     /* Get the last key on the animation track from ALL objects */
     function FindLastKeyFrame =
     (
-        local last_frame = 0
-        for obj in objects do
-        (
-            last_frame = GriffonStudios_Helper_Functions.FindLastKeyFrameByObject obj last_frame
-        )
-        return last_frame
+        local allKeys = GriffonStudios_Helper_Functions.GetAllAnimatedKeyFrames()
+        
+        return allKeys[allKeys.count]
     ),
     /* Get the biggest bounding box from all models between 2 frame, as animation changes these bounding boxes */
     function GetMODLBoundingBoxBetweenFrames startFrame endFrame=
     (
-        local help = GriffonStudios_Helper_Functions()
-        
-        struct bboxVolume ( bbox, volume )
+        if ( WC3_DEBUG ) then Format "Calculating MODL Boundingbox between frame % and %\n" startFrame endFrame
+        local allKeys = GriffonStudios_Helper_Functions.GetAllAnimatedKeyFrames()
 
-        bboxVolumeList = #()
+        maxPoint = [0,0,0]
+        minPoint = [0,0,0]
 
-        for f = startFrame to endFrame do
-            at time f (
-                
-                local bbox = help.GetBoundingBox()
-                local vol = help.GetBoundingBoxVolume bbox
-                local bv = bboxVolume bbox:bbox volume:vol
-                
-                append bboxVolumeList bv
-            )
-            
-
-        biggestId = 1
-        for i=1 to bboxVolumeList.count do
+        for t in allKeys do
         (
-            for j=(i+1) to bboxVolumeList.count do
+            if ( t >= startFrame and t <= endFrame ) then 
             (
-                if ( bboxVolumeList[i].volume > bboxVolumeList[j].volume ) then biggestId = i
+                at time t 
+                for obj in objects do
+                (
+                    if ( classof obj == Editable_Mesh and obj.visibility == true ) then
+                    (
+                        local bbMax = obj.max
+                        
+                        for i=1 to 3 do
+                            if( maxPoint[i] < bbMax[i] ) then maxPoint[i] = bbMax[i]
+                        
+                        local bbMin = obj.min
+                        
+                        for i=1 to 3 do
+                            if( minPoint[i] > bbMin[i] ) then minPoint[i] = bbMin[i]
+                        
+                    )
+                )
             )
         )
+        local bbox = #()
+        append bbox minPoint
+        append bbox maxPoint
         
-        return bboxVolumeList[biggestId].bbox  
+        --format "%\n" bbox
+
+        return bbox
     ),
     /* Get the biggest bounding box for the whole set of animations keys, specifically needed for the MODL chunk */
     function GetMODLBoundingBox =
     (
         local help = GriffonStudios_Helper_Functions()
-        local lastFrame = help.FindLastKeyFrame()
+        local lastFrame = GriffonStudios_Helper_Functions.FindLastKeyFrame()
 
+        if ( WC3_DEBUG ) then Format "Lastframe found at :%\n" lastFrame
         if ( lastFrame <= 1 ) then lastFrame = 10
         bbox = help.GetMODLBoundingBoxBetweenFrames 1 lastFrame
         
@@ -456,7 +476,9 @@ STRUCT GriffonStudios_Helper_Functions
                 appendIfUnique uniqueMaterials obj.material
         )
         /* get the textures, their ID is important in writing the MTLS */
-        mtls.TEXSList = help.GetUniqueTextures uniqueMaterials
+        _TEXSList = GriffonStudios_Helper_Functions.GetUniqueTextures uniqueMaterials
+        
+        mtls.TEXSList = _TEXSList
         
         for mat in uniqueMaterials do
         (
@@ -489,7 +511,7 @@ STRUCT GriffonStudios_Helper_Functions
                 
                 if (i==1) then 
                 (
-                    lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.diffuse_map
+                    lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.diffuse_map
                     
                     if ( mat.material_alpha.controller != undefined ) then 
                     (
@@ -516,12 +538,12 @@ STRUCT GriffonStudios_Helper_Functions
                     )
                     
                 )
-                if (i==2) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.normal_map
-                if (i==3) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.orm_map
+                if (i==2) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.normal_map
+                if (i==3) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.orm_map
                 if (i==4) then 
                 (
                     lay.emissive_multiplier = mat.emissive_multiplier
-                    lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.emissive_map
+                    lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.emissive_map
                     
                     if ( mat.emissive_alpha.controller != undefined ) then 
                     (
@@ -547,8 +569,8 @@ STRUCT GriffonStudios_Helper_Functions
                         lay.KMTE = kmte
                     )
                 )
-                if (i==5) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.replacable_map
-                if (i==6) then lay.textureId = help.GetLayerTextureId mtls.TEXSList mat.reflection_map
+                if (i==5) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.replacable_map
+                if (i==6) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.reflection_map
                 
                 lay.textureAnimationId = -1
                 
@@ -640,26 +662,27 @@ STRUCT GriffonStudios_Helper_Functions
         return mtlsTextures
     ),
     /* depending on the map to export, get the matching ID from the TEXS */
-    function GetLayerTextureId textureList map=
+    function GetLayerTextureId2 textureList map=
     (
         local textureToFind = ""
         if ( map == undefined ) then textureToFind = ""
         if ( map != undefined ) then 
         (
-            textureToFind = (getFilenameFile map.fileName) + ".dds"
+            textureToFind = filenameFromPath map.fileName
             if ( textureToFind.count <= 4 ) then textureToFind = ""
-            if ( textureToFind.count > 4) then textureToFind = TEXTURE_PATH +  (getFilenameFile map.fileName) + ".dds" 
-            if ( USE_BLACK32 ) then textureToFind = "Textures/Black32.blp"
-            if ( USE_ENVIRONMENT_MAP ) then textureToFind = "ReplaceableTextures/EnvironmentMap.blp"
+            if ( textureToFind.count > 4) then textureToFind = TEXTURE_PATH + textureToFind
+            if ( USE_BLACK32 AND ( getfilenamefile textureToFind ) == "Black32"  ) then textureToFind = "Textures/Black32.blp"
+            if ( USE_ENVIRONMENT_MAP AND ( getfilenamefile textureToFind ) == "EnvironmentMap" ) then textureToFind = "ReplaceableTextures/EnvironmentMap.blp"
                 
         )
-        
+        --format "Looking for %\n" textureToFind
         local textureId = 0
-        for t in textureList do
+        for x=1 to textureList.count do
         (
+            local t = textureList[x]
             if ( t.fileName == textureToFind ) then 
             (
-                textureId = t.id
+                textureId = x
                 exit
             )
         )
@@ -707,7 +730,7 @@ STRUCT GriffonStudios_Helper_Functions
         
         for m in meshes do
         (
-            format "Writing %\n" m.name
+            if ( WC3_DEBUG ) then format "Writing %\n" m.name
             
             local lod_name = substring m.name (m.name.count - 3) -1
             
@@ -1030,6 +1053,44 @@ STRUCT GriffonStudios_Helper_Functions
             append uvs [ uv.x, ( 1.0 - uv.y ) ]
         )
         return uvs
+    ),
+    function CopyFilesToOutputFolder outputfolder=
+    (
+        
+        makeDir ( outputfolder + "Textures" )
+        
+        gUniqueMaterials = #()
+
+        for obj in objects do
+        (
+            if ( obj.material != undefined and ( classof obj.material == WC3RefMaterial ) ) then
+                append gUniqueMaterials obj.material
+        )
+
+        gTextureFiles = #()
+
+        for mat in gUniqueMaterials do
+        (
+            --local fileName = getfilenamefile 
+            appendifunique gTextureFiles mat.diffuse_map.filename
+            appendifunique gTextureFiles mat.normal_map.filename
+            appendifunique gTextureFiles mat.orm_map.filename
+            appendifunique gTextureFiles mat.emissive_map.filename
+            appendifunique gTextureFiles mat.replacable_map.filename
+            appendifunique gTextureFiles mat.reflection_map.filename
+
+        )
+        for t in gTextureFiles do 
+        (
+            local fileNameOnly = getfilenamefile t
+            local targetFile = outputFolder + "Textures\\" + (filenameFromPath t)
+            if( fileNameOnly != "" ) then 
+            (
+                Format "Copying file %\n" (filenameFromPath t)
+                copyfile t  targetFile
+                
+            )
+        )
     )
     
 )
@@ -1139,7 +1200,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         local bbox = GriffonStudios_Helper_Functions.GetMODLBoundingBox()
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
-        --if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
+        if ( WC3_DEBUG ) then  Format "Writing bbox %\n" bbox
         
         writer.WriteVector3 stream bbox[1]
         writer.WriteVector3 stream bbox[2]
@@ -1201,6 +1262,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
             for l=1 to s.Layers.Count do
             (
                 local lay = s.Layers[l]
+                --format "DEBUG: TextureID: %\n" lay.TextureID
                 writeLong stream lay.layerSizeIncluded
                 writeLong stream lay.filterMode
                 writeLong stream lay.shadingFlag
@@ -1213,11 +1275,11 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
                 writeFloat stream lay.emissive_multiplier -- Emissive --> works, kinda, it does multiply
                 
                 --> TODO get this from the material
-                writeFloat stream 0 -- Fresnel Color R --> works 
-                writeFloat stream 0 -- Fresnel Color G --> works 
-                writeFloat stream 0 -- Fresnel Color B --> works 
-                writeFloat stream 0 -- Fresnel Opacity --> works 
-                writeFloat stream 0 -- Fresnel Team Color --> does not work
+                writeFloat stream 1 -- Fresnel Color R --> works 
+                writeFloat stream 1 -- Fresnel Color G --> works 
+                writeFloat stream 1 -- Fresnel Color B --> works 
+                writeFloat stream 0 -- Fresnel Multiplier --> works 
+                writeFloat stream 0 -- Team Color Multiplier --> does not work
                 
                 if ( l==1) then  --> Alpha animation
                 (
@@ -1397,7 +1459,7 @@ STRUCT GriffonStudios_Warcraft_3_Writer_Functions
         
         if (WC3_DEBUG) then 
         (
-            format "Total Size: % \n" wc3Bones.totalSize
+            --format "Total Size: % \n" wc3Bones.totalSize
             for b in wc3Bones.WC3RefBoneList do format " - %\t%\n" b.id b.name
         )
         
@@ -1454,7 +1516,7 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
         TEXTURE_PATH        = cfg.base_texture_path
         USE_BLACK32         = cfg.useBlack32
         USE_ENVIRONMENT_MAP = cfg.useEnvMap
-        
+        if ( file == undefined ) then return undefined
         if ( objects.count == 0 ) then return undefined
         local writer = GriffonStudios_Warcraft_3_Writer_Functions()
         
@@ -1521,6 +1583,9 @@ STRUCT GriffonStudios_Warcraft_3_Reforged_Exporter
             writer.WriteFixedString stream "BPOS" 4
             writer.WriteBPOS stream
 
+            /* Copy textures to output folder */
+            local outputFolder = getfilenamepath file
+            GriffonStudios_Helper_Functions.CopyFilesToOutputFolder outputFolder
 
             Format "DONE!\n"
         --) catch ( messagebox ( getCurrentException() ) )
