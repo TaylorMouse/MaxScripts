@@ -1,6 +1,48 @@
 # Griffon Studios 3D Studio Max Scripts
 
-## How to install the Warcraft III Reforged Tools
+## How to install Warcraft III Tools
+
+- Download the ***GriffonStudios_Warcraft_III_Tools*** folder
+
+- Copy the ***GriffonStudios_Warcraft_III_PLugins_xxx.ms*** and the ***GriffonStudios_Helper.ms*** files in the startup folder of your 3D Studio Max application.
+
+    Example:
+
+        C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
+
+- Start Max
+
+- This will install the following plugins:
+
+    - Warcraft III Standard Material *(found in the Material Editor)*
+    - Warcraft III Event *(found in Helpers in the Create tab )*
+    - Warcraft III Attachment *(found in Helpers in the Create tab )*
+
+- Prior to importing the model, convert the .blp files to .TGA, use the BLPconv.exe to do this conversion. Just drag and drop the .blp file onto the exe after you extracted it from the zip file.
+
+- Run the ***GriffonStudios_Warcraft_III_Import.ms*** script.
+
+- This window will ask you to select a .mdx file, *(version 800 !!)*
+
+- After the import is done, you should be able to have the following
+
+![WCIIIImport](images/wcIIIwip.png)
+
+- The model I used can be downloaded from [The Hive Workshop - Spartan Warrior](https://www.hiveworkshop.com/threads/spartan-warrior.333698/)
+
+## How to use the Animation Window
+
+- Copy the ***GriffonStudios_AnimationWindow.ms*** files in the startup folder of your 3D Studio Max application
+
+    Example:
+
+        C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
+- This will install a macro script in that you can add to any toolbar in Max, it will be listed under Griffon Studios Tools.
+
+- See the following video on how to install a macro and create a button of it:
+[How to install a macro in 3D Studio Max](https://www.youtube.com/watch?v=kvaAY8TCRdo)
+
+## How to install the Warcraft 3 Reforged Tools
 
 - Download the ***GriffonStudios_Warcraft_3_Reforged_Tools.ms*** and the ***GriffonStudios_Warcraft_3_Reforged_Tools*** folder content.
 - Place the folder and the .ms script in the startup scripts of 3D Studio Max

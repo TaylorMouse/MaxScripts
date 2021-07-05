@@ -397,3 +397,10 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
     
     )
 )
+
+macroscript Animation_Window category:"Griffon Studios Tools" tooltip:"Animation Window" 
+(
+    
+    if(GriffonStudios_AnimationWindow != undefined) then destroydialog GriffonStudios_AnimationWindow
+            CreateDialog GriffonStudios_AnimationWindow lockwidth: true      
+)

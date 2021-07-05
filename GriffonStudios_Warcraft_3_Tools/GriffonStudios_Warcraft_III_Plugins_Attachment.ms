@@ -11,6 +11,24 @@
 
 */
 
+if ( DisplayWarcraftIIIAttachments != undefined ) then 
+	UnregisterRedrawViewsCallback DisplayWarcraftIIIAttachments
+	
+function DisplayWarcraftIIIAttachments=
+(
+            
+    gw.setTransform ( matrix3 1 )
+    for obj in objects where 
+        ( classof obj == WarcraftIII_Attachment and obj.ishidden == false and obj.isfrozen == false ) do
+    (
+        gw.text ( obj.pos + [0, 0, 10] ) ( obj.name as string ) color:Yellow
+    )
+    gw.updateScreen()
+    
+)
+RegisterRedrawViewsCallback DisplayWarcraftIIIAttachments
+
+
 plugin simpleManipulator WarcraftIII_Attachment
     name: "Attachment"
     classID:#(0x56444562, 0x2ab75821)
@@ -53,20 +71,3 @@ plugin simpleManipulator WarcraftIII_Attachment
     )
     
 )
-
-if ( DisplayWarcraftIIIAttachments != undefined ) then 
-	UnregisterRedrawViewsCallback DisplayWarcraftIIIAttachments
-	
-function DisplayWarcraftIIIAttachments=
-(
-            
-    gw.setTransform ( matrix3 1 )
-    for obj in objects where 
-        ( classof obj == WarcraftIII_Attachment and obj.ishidden == false and obj.isfrozen == false ) do
-    (
-        gw.text ( obj.pos + [0, 0, 10] ) ( obj.name as string ) color:Yellow
-    )
-    gw.updateScreen()
-    
-)
-RegisterRedrawViewsCallback DisplayWarcraftIIIAttachments

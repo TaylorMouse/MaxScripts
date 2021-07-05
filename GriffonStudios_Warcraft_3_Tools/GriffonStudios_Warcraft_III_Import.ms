@@ -18,6 +18,7 @@
 clearlistener()
 fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Attachment.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Event.ms"
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
@@ -1031,7 +1032,7 @@ STRUCT WC3_MDX800
         
         for evt in evts do
         (
-            local pnt = WC3RefEvent()  -- point name:evt.Name
+            local pnt = WarcraftIII_Event()  -- point name:evt.Name
             
             pnt.Name = evt.name
 
@@ -1279,8 +1280,9 @@ STRUCT WC3_MDX800
     )
 )
 
+file = getOpenFileName caption:"Import MDX" \
+                       types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|"
 
-
-
-WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+if ( doesfileexist file ) then 
+    WC3_MDX800.Import file -- @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
         
