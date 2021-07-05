@@ -792,6 +792,312 @@ struct Warcraft_3_Read
         )
         
         return clid
+    ),
+    function ReadLITE stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        
+        local totalSize = tag.Size
+        local lites = #()
+        /*
+            0x0: Omni
+            0x1: Directional
+            0x2: Ambient
+            0x3: Default
+        */
+
+        while (totalSize > 0 ) do
+        (
+            local size = readLong stream
+            totalSize -= size
+            
+            local l = Warcraft3_Reforged_LITE()
+            
+            local ninetySix = readLong stream -- usually 96 appears before a name ???
+            l.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            l.Id = readLong stream + 1
+            l.ParentId = readLong stream + 1
+            l.Flags = readLong stream 
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KGSC" ) then l.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KGTR" ) then l.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KGRT" ) then l.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+            )
+            if( l.KGSC == undefined ) then fseek stream -4 #seek_cur
+            if( l.KGTR == undefined ) then fseek stream -4 #seek_cur
+            if( l.KGRT == undefined ) then fseek stream -4 #seek_cur
+            
+            l.Type = readLong stream 
+            l.FarAttenStart = readFloat stream
+            l.FarAttenEnd = readFloat stream
+            l.rgbColor = Warcraft3_Reforged.readColor stream
+            l.rgbIntensity = readFloat stream
+            l.ambColor = Warcraft3_Reforged.readColor stream
+            l.ambIntensity = readFloat stream
+
+            append lites l
+        )
+        return lites
+    ),
+    function ReadTXAN stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        local txans = #()
+        local totalSize = tag.Size
+        
+        while ( totalSize > 0 ) do
+        (
+            local size = readLong stream
+            totalSize -= size
+            local txan = Warcraft3_Reforged_TXAN()
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KTAT" ) then txan.KTAT = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KTAR" ) then txan.KTAR = Warcraft3_Reforged.ReadQuatAnim stream
+                if( kg == "KTAS" ) then txan.KTAS = Warcraft3_Reforged.ReadVector3Anim stream
+            )
+            if ( txan.KTAT == undefined ) then fseek stream -4 #seek_cur
+            if ( txan.KTAR == undefined ) then fseek stream -4 #seek_cur
+            if ( txan.KTAS == undefined ) then fseek stream -4 #seek_cur
+            
+            append txans txan
+        )
+        
+        return txans
+    ),
+    function ReadRIBB stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        
+        local totalSize = tag.size
+        local ribbs = #()
+        
+        while (totalSize > 0 ) do
+        (
+            local ribb = Warcraft3_Reforged_RIBB()
+            
+            local size = readLong stream
+            totalSize -=size
+            local unk = readLong stream
+            ribb.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            ribb.id = readLong stream + 1
+            ribb.parentBoneId = readLong stream + 1
+            ribb.flags = readLong stream
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KGTR" ) then ribb.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                if( kg == "KGRT" ) then ribb.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+                if( kg == "KGSC" ) then ribb.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+            )
+            
+            if( ribb.KGSC == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGTR == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGRT == undefined ) then fseek stream -4 #seek_cur
+            
+            ribb.staticHeightAbove = readFloat stream
+            ribb.staticHeightBelow = readFloat stream
+            ribb.staticAlpha = readFloat stream
+            ribb.staticColor = Warcraft3_Reforged.ReadColor stream
+            ribb.lifeSpan = readFloat stream
+            ribb.textureId = readLong stream + 1
+            ribb.emissionRate = readLong stream
+            ribb.flipbookRows = readLong stream
+            ribb.flipbookColumns = readLong stream
+            ribb.mtlsId = readLong stream + 1
+            ribb.gravity= readFloat stream
+            
+            for i=1 to 6 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KRHA" ) then ribb.KRHA = Warcraft3_Reforged.ReadFloatAnim stream -- heightAbove
+                if( kg == "KRHB" ) then ribb.KRHB = Warcraft3_Reforged.ReadFloatAnim stream  -- heightBelow
+                if( kg == "KRAL" ) then ribb.KRAL = Warcraft3_Reforged.ReadFloatAnim stream -- alpha
+                if( kg == "KRCO" ) then ribb.KRCO = Warcraft3_Reforged.ReadColorAnim stream -- color
+                if( kg == "KRTX" ) then ribb.KRTX = Warcraft3_Reforged.ReadLongAnim stream  -- texture
+                if( kg == "KRVS" ) then ribb.KRVS = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
+            )
+            if( ribb.KRHA == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRHB == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRAL == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRCO == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRTX == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRVS == undefined ) then fseek stream -4 #seek_cur
+            
+            append ribbs ribb
+        )
+        return ribbs
+    ),
+    function ReadPRE2 stream tag=
+    (
+        fseek stream tag.offset #seek_set
+       
+        local pre2s = #()
+        local totalSize = tag.Size
+        
+        try (
+                   
+            while (totalSize > 0 ) do
+            (
+                local size = readLong stream
+                local testPos = ftell stream
+                
+                totalSize -= size
+                
+                size -=4
+                
+                local pe = Warcraft3_Reforged_PRE2()
+                local headerSize    = readLong stream -- always 96
+                pe.name      = GriffonStudios_Helpers.ReadFixedString stream 80
+                pe.id        = readLong stream + 1
+                pe.parentId  = readLong stream + 1
+                local flags     = readLong stream
+                
+                local flagSettings = Warcraft3_Reforged_PRE2_FLAGS()
+                if (flags > 0) then 
+                (
+                    if ( (bit.and flags 0x00000001) > 0 ) then flagSettings.DONT_INHERIT_TRANSLATION = true
+                    if ( (bit.and flags 0x00000002) > 0 ) then flagSettings.DONT_INHERIT_SCALING = true
+                    if ( (bit.and flags 0x00000004) > 0 ) then flagSettings.DONT_INHERIT_ROTATION = true
+                    if ( (bit.and flags 0x00000008) > 0 ) then flagSettings.BILLBOARDED = true
+                    if ( (bit.and flags 0x00000010) > 0 ) then flagSettings.BILLBOARD_LOCK_X = true
+                    if ( (bit.and flags 0x00000020) > 0 ) then flagSettings.BILLBOARD_LOCK_Y = true
+                    if ( (bit.and flags 0x00000040) > 0 ) then flagSettings.BILLBOARD_LOCK_Z = true
+                    if ( (bit.and flags 0x00000080) > 0 ) then flagSettings.GENOBJECT_MDLBONESECTION = true
+                    if ( (bit.and flags 0x00000100) > 0 ) then flagSettings.GENOBJECT_MDLLIGHTSECTION = true
+                    if ( (bit.and flags 0x00000200) > 0 ) then flagSettings.GENOBJECT_MDLEVENTSECTION = true
+                    if ( (bit.and flags 0x00000400) > 0 ) then flagSettings.GENOBJECT_MDLATTACHMENTSECTION = true
+                    if ( (bit.and flags 0x00000800) > 0 ) then flagSettings.GENOBJECT_MDLPARTICLEEMITTER2 = true
+                    if ( (bit.and flags 0x00001000) > 0 ) then flagSettings.GENOBJECT_MDLHITTESTSHAPE = true
+                    if ( (bit.and flags 0x00002000) > 0 ) then flagSettings.GENOBJECT_MDLRIBBONEMITTER = true
+                    if ( (bit.and flags 0x00004000) > 0 ) then flagSettings.PROJECT = true
+                    if ( (bit.and flags 0x00008000) > 0 ) then flagSettings.UNSHADED = true
+                    if ( (bit.and flags 0x00010000) > 0 ) then flagSettings.SORT_PRIMITIVES_FAR_Z = true
+                    if ( (bit.and flags 0x00020000) > 0 ) then flagSettings.LINE_EMITTER = true
+                    if ( (bit.and flags 0x00040000) > 0 ) then flagSettings.PARTICLE_UNFOGGED = true
+                    if ( (bit.and flags 0x00080000) > 0 ) then flagSettings.PARTICLE_USE_MODEL_SPACE = true
+                    if ( (bit.and flags 0x00100000) > 0 ) then flagSettings.PARTICLE_INHERIT_SCALE = true
+                    if ( (bit.and flags 0x00200000) > 0 ) then flagSettings.PARTICLE_INSTANT_VELOCITY_LIN = true
+                    if ( (bit.and flags 0x00400000) > 0 ) then flagSettings.PARTICLE_0XKILL = true
+                    if ( (bit.and flags 0x00800000) > 0 ) then flagSettings.PARTICLE_Z_VELOCITY_ONLY = true
+                    if ( (bit.and flags 0x01000000) > 0 ) then flagSettings.PARTICLE_TUMBLER = true
+                    if ( (bit.and flags 0x02000000) > 0 ) then flagSettings.PARTICLE_TAIL_GROWS = true
+                    if ( (bit.and flags 0x04000000) > 0 ) then flagSettings.PARTICLE_EXTRUDE = true
+                    if ( (bit.and flags 0x08000000) > 0 ) then flagSettings.PARTICLE_XYQUADS = true
+                    if ( (bit.and flags 0x10000000) > 0 ) then flagSettings.PARTICLE_PROJECT = true
+                    if ( (bit.and flags 0x20000000) > 0 ) then flagSettings.PARTICLE_FOLLOW = true
+                )
+                pe.flags = flagSettings
+                
+                for i=1 to 3 do
+                (
+                    local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                    if( kg == "KGTR" ) then pe.KGTR = Warcraft3_Reforged.ReadVector3Anim stream
+                    if( kg == "KGRT" ) then pe.KGRT = Warcraft3_Reforged.ReadQuatAnim stream
+                    if( kg == "KGSC" ) then pe.KGSC = Warcraft3_Reforged.ReadVector3Anim stream
+                )
+                
+                if( pe.KGSC == undefined ) then fseek stream -4 #seek_cur
+                if( pe.KGTR == undefined ) then fseek stream -4 #seek_cur
+                if( pe.KGRT == undefined ) then fseek stream -4 #seek_cur
+
+                pe.speed         = readFloat stream
+                pe.variation     = readFloat stream
+                pe.coneAngle      = readFloat stream
+                pe.gravity       = readFloat stream
+
+                pe.lifespan      = readFloat stream
+                pe.emissionrate  = readFloat stream
+               
+                pe.length        = readFloat stream
+                pe.width         = readFloat stream
+                
+                pe.emitterType   = readLong stream
+                pe.rowCount      = readLong stream
+                pe.colCount      = readLong stream
+                pe.particleType  = readLong stream
+                
+                pe.tailLength    = readFloat stream
+                pe.midTime       = readFloat stream
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.startColor    = color r g b
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.midColor      = color r g b
+                
+                local r = ( readFloat stream * 255 ) as integer
+                local g = ( readFloat stream * 255 ) as integer
+                local b = ( readFloat stream * 255 ) as integer
+                
+                pe.endColor      = color r g b
+                
+                pe.startAlpha    = readByte stream
+                pe.midAlpha      = readByte stream
+                pe.endAlpha      = readByte stream 
+
+                pe.startSize    = readFloat stream
+                pe.midSize      = readFloat stream
+                pe.endSize      = readFloat stream
+
+                pe.startLifespanUVAnim   = readLong stream
+                pe.midLifespanUVAnim     = readLong stream
+                pe.endLifespanUVAnim     = readLong stream
+                pe.startDecayUVAnim      = readLong stream
+                pe.midDecayUVAnim        = readLong stream
+                pe.endDecayUVAnim        = readLong stream
+                pe.startTailUVAnim       = readLong stream
+                pe.midTailUVAnim         = readLong stream
+                pe.endTailUVAnim         = readLong stream
+                pe.startTailDecayUVAnim  = readLong stream
+                pe.midTailDecayUVAnim    = readLong stream
+                pe.endTailDecayUVAnim    = readLong stream
+                pe.blendMode             = readLong stream
+                pe.textureId             = readLong stream
+                pe.replacableTextureId   = readLong stream 
+                pe.priorityPlane         = readLong stream
+                  
+                /*
+                    BASE = 0x0,
+                    PLANE = 0x1,
+                    SPHERE = 0x2,
+                    SPLINE = 0x3,
+                */
+
+                for i=1 to 2 do
+                (
+                    local anim = GriffonStudios_Helpers.ReadFixedString stream 4
+                    
+                    if (anim == "KP2V" ) then pe.kp2v = Warcraft3_Reforged.ReadFloatAnim stream -- visibility
+                    if (anim == "KP2E" ) then pe.kp2e = Warcraft3_Reforged.ReadFloatAnim stream -- emission
+                    
+                )
+                if( pe.kp2v == undefined ) then fseek stream -4 #seek_cur
+                if( pe.kp2e == undefined ) then fseek stream -4 #seek_cur
+                
+                local skip = size - ( (ftell stream )- testPos )
+                
+                Warcraft3_Reforged.SkipBytes stream skip
+                
+                append pre2s pe
+            )
+        )
+        catch
+        (
+            /* old models fail on this... I don't care */
+        )
+        return pre2s
     )
-    
 )

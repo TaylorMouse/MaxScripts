@@ -1,5 +1,5 @@
 /*
-    Written by Taylor Mouse © 2020
+    Written by Taylor Mouse (c) 2020
     for
     Warcraft 3 Reforged
 

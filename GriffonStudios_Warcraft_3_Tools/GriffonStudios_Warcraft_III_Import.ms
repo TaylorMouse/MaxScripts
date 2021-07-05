@@ -1,8 +1,220 @@
+/*
+    .SYNOPSIS
+    | Importer for Warcraft III mdx (old version = version 800 )
+    
+    .COPYRIGHT
+    | ©2021 Griffon Studios
+    
+    .AUTHOR
+    | Taylor Mouse
+
+    .CHANGELOG
+    | 0.3 - Clean up for usage
+    | 0.2 - Applied correct skinning ( after re-reading nintoxicated's script )
+    | 0.1 - Initial setup
+
+*/
+
 clearlistener()
-fileIn "research_warcraft3_material.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Attachment.ms"
+fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
+fileIn "GriffonStudios_Helpers.ms"
 
 STRUCT WC3_MDX800
 (   
+    function ReadTAGS800 stream streamLen=
+    (
+        struct tag800 ( Name, Offset, Size )     
+        
+        local tags = #() 
+        local mainTag = tag800()
+
+        mainTag.Name = GriffonStudios_Helpers.ReadFixedString stream 4
+        mainTag.Offset = 0
+        mainTag.Size = 0
+        
+        local currentStreamPos = ftell stream
+
+        while (currentStreamPos < streamLen ) do
+        (
+            local tag = tag800()
+            
+            tag.Offset = ftell stream + 8 -- the +8 indicates where the data starts
+            tag.Name = GriffonStudios_Helpers.ReadFixedString stream 4
+            tag.Size = ReadLong stream
+            
+            GriffonStudios_Helpers.SkipBytes stream tag.Size
+
+            currentStreamPos = ftell stream
+            
+            append tags tag
+            --print tag
+        )
+        return tags
+    ),
+    function ReadEVTS800 stream tag=
+    (
+        /*
+            for a full understanding what these sounds are, see the official Warcraft III Art Tools documentation
+            
+        */
+        
+        struct evts800 ( Id, Name, ParentId, Flags, KEVT, objRef )
+        fseek stream tag.Offset #seek_set
+        local evts = #()
+              
+        
+        while ( ftell stream < (tag.offset + tag.size)) do
+        (
+            local evt = evts800()
+            local size = readLong stream
+            
+            evt.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            evt.id  = readLong stream + 1
+            evt.parentId = readLong stream + 1
+            evt.flags = readLong stream
+            local kevt = GriffonStudios_Helpers.ReadFixedString stream 4
+            if ( kevt == "KEVT" ) then
+            (
+                local keys = #()
+                local nbr = readLong stream
+                local parentId = readLong stream + 1
+                for i=1 to nbr do 
+                (
+                    local key =  ( GriffonStudios_Helpers.RoundToFrame ( readLong stream ) ) + 10
+                    append keys key
+                )
+                evt.KEVT = keys
+            )
+            else
+            (
+                format "Animation not implemented in ReadEVTS (%)"  evts
+            )
+            append evts evt
+            
+           
+        )
+        
+        return evts
+    ),
+    function ReadATCH800 stream tag=
+    (
+        struct atch800 ( Id, Name, ParentBoneId, Flags, Offset, Size, KGTR, KGRT, KGSC, KATV)
+        
+        fseek stream tag.Offset #seek_set
+        
+        local atchs = #()
+
+        while ( (ftell stream) < tag.offset + tag.size ) do
+        (
+            local att = atch800()
+            
+            local size = readLong stream
+            local headerSize = readLong stream --> 96 bytes consisting of name, id, parentId and flagid and headerSize
+
+            att.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            att.Id = readLong stream + 1
+            att.ParentBoneId = readLong stream + 1
+            att.flags = readLong stream
+            att.Offset = ftell stream
+            att.Size = size - 4 - 4 - 80 - 8 - 4
+            
+            GriffonStudios_Helpers.SkipBytes stream att.Size
+        
+            append atchs att
+        )
+        
+        for att in atchs do
+        (
+            fseek stream att.offset #seek_set
+            local kgtr -- transformation
+            local kgrt -- rotation
+            local kgsc -- scale
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+
+                if ( kg == "KGTR" ) then kgtr = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then kgrt = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then kgsc = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
+            )
+            
+            att.KGTR = kgtr
+            att.KGRT = kgrt
+            att.KGSC = kgsc
+            local correction = 0
+            if ( kgtr == undefined ) then correction = correction + 4
+            if ( kgrt == undefined ) then correction = correction + 4
+            if ( kgsc == undefined ) then correction = correction + 4
+           
+            GriffonStudios_Helpers.SkipBytes stream ( 264 - correction)
+
+            local katv = GriffonStudios_Helpers.ReadFixedString stream 4
+            
+            if( katv == "KATV") then att.katv = Warcraft_III_Helpers.ReadFloatAnim stream -- visibility track ?
+
+        )
+        
+        return atchs
+        
+    ),
+    function ReadBONE800 stream tag=
+    (
+        struct bone800 ( Id, Name, ParentBoneId, Flags, boneRef, KGTR, KGRT, KGSC, offset, geosetId, geosetAnimationId )
+        
+        fseek stream tag.offset #seek_set
+                
+        local boneList = #()
+
+        /* read the bone chunks*/
+        while ( (ftell stream) < tag.offset + tag.size ) do
+        (
+            local b = bone800()
+            
+            local size = readLong stream
+        
+            b.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+            b.Id = readLong stream + 1
+            b.ParentBoneId = readLong stream + 1
+            
+            b.Flags = readLong stream
+            b.offset = ftell stream
+            
+            GriffonStudios_Helpers.SkipBytes stream ( size - 80 - 16 )
+            
+            b.geosetId =  readlong stream
+            b.geosetAnimationId =  readlong stream
+
+            append boneList b
+        )
+        /* read the animation frames */
+        for b in boneList do
+        (
+            fseek stream b.offset #seek_set
+
+            local kgtr -- transformation
+            local kgrt -- rotation
+            local kgsc -- scale
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+
+                if ( kg == "KGTR" ) then kgtr = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then kgrt = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then kgsc = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
+            )
+            
+            b.KGTR = kgtr
+            b.KGRT = kgrt
+            b.KGSC = kgsc
+            
+        )
+        
+        return boneList
+    ),
     function ReadCLID800 stream tag=
     (
         /*
@@ -34,9 +246,9 @@ STRUCT WC3_MDX800
             (
                 local kg = GriffonStudios_Helpers.ReadFixedString stream 4
 
-                if ( kg == "KGTR" ) then clid.KGTR = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then clid.KGRT = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then clid.KGSC = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
+                if ( kg == "KGTR" ) then clid.KGTR = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then clid.KGRT = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then clid.KGSC = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
             )
             local currentPos = ftell stream
             
@@ -62,12 +274,6 @@ STRUCT WC3_MDX800
         --print clidList
         return clidList
     ),
-    function ReadEVTS800 stream tag=
-    (
-        local events = Warcraft3_Reforged.ReadEVTS stream tag
-       -- print events
-        return events
-    ),
     function ReadPIVT800 stream tag=
     (
         fseek stream tag.offset #seek_set
@@ -81,11 +287,6 @@ STRUCT WC3_MDX800
         )
         --print pivts
         return pivts
-    ),
-    function ReadATCH800 stream tag=
-    (
-        local atch_list = Warcraft3_Reforged.ReadATCH stream tag
-        return atch_list
     ),
     function ReadHELP800 stream tag=
     (
@@ -110,9 +311,9 @@ STRUCT WC3_MDX800
             (
                 local kg = GriffonStudios_Helpers.ReadFixedString stream 4
 
-                if ( kg == "KGTR" ) then h.KGTR = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then h.KGRT = Warcraft3_Reforged.ReadQuatAnim stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then h.KGSC = Warcraft3_Reforged.ReadVector3Anim stream -- Key Global Scale
+                if ( kg == "KGTR" ) then h.KGTR = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then h.KGRT = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then h.KGSC = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
             )
 
             
@@ -124,12 +325,6 @@ STRUCT WC3_MDX800
         
        -- print helperList
         return helperList
-    ),
-    function ReadBONE800 stream tag=
-    (
-        local bone_list = Warcraft3_Reforged.ReadBone stream tag
-        --print bone_list
-        return bone_list
     ),
     function ReadGEOA800 stream tag=
     (
@@ -226,8 +421,8 @@ STRUCT WC3_MDX800
                     for x=1 to 2 do
                     (
                         local km = GriffonStudios_Helpers.ReadFixedString stream 4
-                        if ( km == "KMTA" ) then lay.KMTA = Warcraft3_Reforged.ReadFloatAnim stream
-                        if ( km == "KMTE" ) then lay.KMTE = Warcraft3_Reforged.ReadFloatAnim stream
+                        if ( km == "KMTA" ) then lay.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream
+                        if ( km == "KMTE" ) then lay.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream
                         
                     )
                     if ( lay.KMTA == undefined ) then fseek stream -4 #seek_cur
@@ -272,11 +467,11 @@ STRUCT WC3_MDX800
                 if header == "VRTX" then 
                 (
                     local amount = readLong stream
-                    for v=1 to amount do append geo.vrtx (Warcraft3_Reforged.ReadVector3 stream)
+                    for v=1 to amount do append geo.vrtx (Warcraft_III_Helpers.ReadVector3 stream)
                     -- format "% %\n" header amount
                 )
                 if header == "NRMS" then 
-                    for v=1 to (readLong stream) do append geo.nrms (Warcraft3_Reforged.ReadVector3 stream)
+                    for v=1 to (readLong stream) do append geo.nrms (Warcraft_III_Helpers.ReadVector3 stream)
 
                 if header == "PTYP" then 
                     for v=1 to (readLong stream) do append geo.ptyp (readLong stream)
@@ -285,7 +480,7 @@ STRUCT WC3_MDX800
                     for v=1 to (readLong stream) do append geo.pcnt (readLong stream)
                 
                 if header == "PVTX" then 
-                    for v=1 to (readLong stream)/3 do append geo.pvtx (Warcraft3_Reforged.ReadTris stream)
+                    for v=1 to (readLong stream)/3 do append geo.pvtx (Warcraft_III_Helpers.ReadTris stream)
                 
                 if header == "GNDX" then -- groups
                 (
@@ -373,7 +568,7 @@ STRUCT WC3_MDX800
     ),
     function ReadMODL800 stream tag=
     (
-        struct modl800 ( name, path, unk, bbox, Always150 )
+        struct modl800 ( name, path, radius, bbox, Always150 )
         local modl = modl800()
         fseek stream tag.offset #seek_set
         
@@ -381,7 +576,7 @@ STRUCT WC3_MDX800
         modl.path = GriffonStudios_Helpers.ReadFixedString stream 260
         
         modl.bbox = #()
-        modl.unk = readFloat stream
+        modl.radius = readFloat stream / 4.0
         append modl.bbox [readFloat stream, readFloat stream, readFloat stream]
         append modl.bbox [readFloat stream, readFloat stream, readFloat stream]
         modl.Always150 = readLong stream
@@ -390,7 +585,39 @@ STRUCT WC3_MDX800
     ),
     function ReadSEQS800 stream tag=
     (
-        local seqs = Warcraft3_Reforged.ReadSEQS stream tag
+        struct seqs800 ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity,Priority,Default, BBox )
+        
+        fseek stream tag.offset #seek_set
+        
+        local nbrSeqs = tag.size / 132
+        local seqs = #()
+        
+        for i=1 to nbrSeqs do
+        (
+            local seq = seqs800()
+            seq.Name = GriffonStudios_Helpers.ReadFixedString stream 80
+            
+            local originalStartFrame = readLong stream
+            local originalEndFrame = readLong stream
+            
+            --format "Original sequence: % (%-%)\n" seq.Name originalStartFrame originalEndFrame
+            
+            seq.StartFrame = ( GriffonStudios_Helpers.RoundToFrame ( originalStartFrame ) ) + 10
+            seq.EndFrame = ( GriffonStudios_Helpers.RoundToFrame ( originalEndFrame ) ) + 10
+            seq.MovementSpeed = readFloat stream
+            seq.NoLoop = readLong stream
+            seq.Rarity = readFloat stream
+            seq.Default = readlong stream
+            seq.Priority = readFloat stream
+            
+            seq.BBox = #([readfloat stream,readfloat stream,readfloat stream], [readfloat stream,readfloat stream,readfloat stream] )
+
+            append seqs seq
+        )
+
+        if (mdxConvertToSC2AnimationNames == true ) then 
+            StarTools_Helpers.RenameSEQS seqs
+
         return seqs
         
     ),
@@ -918,7 +1145,7 @@ STRUCT WC3_MDX800
         for a in mdx.atch do
         (
         
-            local pnt = WC3RefAttachment name:a.name
+            local pnt = WarcraftIII_Attachment name:a.name
             pnt.pos = mdx.pivt[a.id].translationpart
             layer.AddNode pnt
             
@@ -927,6 +1154,25 @@ STRUCT WC3_MDX800
 
         )
         
+    ),
+    function BuildMODL800 mdx=
+    (
+        local layer = GriffonStudios_Helpers.CreateLayer "Bounding Box"
+        
+        local obj = GriffonStudios_Helpers.BuildBoundingBox mdx.modl.bbox
+        obj.name = "MODL - " + mdx.modl.name
+        freeze obj
+        obj.boxmode = true
+        obj.wirecolor = color 100 100 100
+        
+        local pos = obj.max.z/2.0
+        local obj2 = sphere name:"Selection Sphere" radius:mdx.modl.radius pos:[0,0,pos]
+        
+        freeze obj2
+        obj2.boxmode = true
+        obj2.wirecolor = color 100 100 100
+
+        layer.addNode obj
     ),
     function ApplySkinning mdx=
     (
@@ -994,7 +1240,7 @@ STRUCT WC3_MDX800
         
         local mdx = mdx800()
         mdx.fileName = file
-        mdx.tags = Warcraft3_Reforged.ReadTags stream streamLen
+        mdx.tags = WC3_MDX800.ReadTAGS800 stream streamLen
         
         for tag in mdx.tags do 
         (
@@ -1016,6 +1262,7 @@ STRUCT WC3_MDX800
         
         fclose stream
         
+        WC3_MDX800.BuildMODL800 mdx
         WC3_MDX800.BuildGEOS800 mdx
         WC3_MDX800.BuildSEQS800 mdx
         WC3_MDX800.BuildAndAssignMaterials mdx
@@ -1031,22 +1278,9 @@ STRUCT WC3_MDX800
         setArrowCursor() 
     )
 )
-if ( ViewPortAttachmentPointDisplay != undefined ) then 
-	UnregisterRedrawViewsCallback ViewPortAttachmentPointDisplay
-	
-function ViewPortAttachmentPointDisplay=
-(
-            
-    gw.setTransform ( matrix3 1 )
-    for obj in objects where 
-        ( classof obj == WC3RefAttachment and obj.ishidden == false and obj.isfrozen == false ) do
-    (
-        gw.text ( obj.pos + [0, 0, 10] ) ( obj.name as string ) color:Yellow
-    )
-    gw.updateScreen()
-    
-)
-RegisterRedrawViewsCallback ViewPortAttachmentPointDisplay
+
+
+
 
 WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
         

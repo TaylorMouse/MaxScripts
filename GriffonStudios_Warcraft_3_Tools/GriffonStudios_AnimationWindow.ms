@@ -4,14 +4,14 @@
     | Compatible with Warcraft III, Warcraft III Reforged and StarCraft II
     
     .COPYRIGHT
-    | Â©2020 Griffon Studios
+    | ©2020 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
 
 */
 
-rollout GriffonStudios_WC3_AnimationProperties "Animation Sequences" 
+rollout GriffonStudios_AnimationWindow "Animation Window" 
     width:250 
     height:720
 (
@@ -68,7 +68,7 @@ rollout GriffonStudios_WC3_AnimationProperties "Animation Sequences"
         button btn_removeNoteTrack "Remove all animations (note track)" width:180 height:30
     )
     
-    label lblTM "Â©2021 Taylor Mouse"
+    label lblTM "©2021 Taylor Mouse"
     
     function SetAnimationNoteTrack anim=
     (
@@ -328,7 +328,7 @@ rollout GriffonStudios_WC3_AnimationProperties "Animation Sequences"
         )
     )
     
-    on GriffonStudios_WC3_AnimationProperties open do
+    on GriffonStudios_AnimationWindow open do
     (
         InitializeListView()
 
@@ -364,9 +364,12 @@ rollout GriffonStudios_WC3_AnimationProperties "Animation Sequences"
                     slidertime = startTime
                 )
 
+                
                 sStartTime = startTime as string
                 sEndTime = endTime as string
-                txt_StartFrame.value =( substring sStartTime 1 ( sStartTime.count  - 1)) as integer
+                
+                
+                txt_StartFrame.value = ( substring sStartTime 1 ( sStartTime.count  - 1)) as integer
                 txt_EndFrame.value = (substring sEndTime 1 ( sEndTime.count  - 1)) as integer
                 
                 local parts = filterstring propNote "\r\n ,"
