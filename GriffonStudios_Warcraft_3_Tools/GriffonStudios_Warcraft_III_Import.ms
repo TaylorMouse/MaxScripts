@@ -22,6 +22,8 @@ fileIn "GriffonStudios_Warcraft_III_Plugins_Event.ms"
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
+GLOBAL WC3_MDX800_DEBUG = true
+GLOBAL WC3_MDX = undefined
 STRUCT WC3_MDX800
 (   
     function ReadTAGS800 stream streamLen=
@@ -586,6 +588,7 @@ STRUCT WC3_MDX800
     ),
     function ReadSEQS800 stream tag=
     (
+        
         struct seqs800 ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity,Priority,Default, BBox )
         
         fseek stream tag.offset #seek_set
@@ -624,6 +627,7 @@ STRUCT WC3_MDX800
     ),
     function BuildGEOS800 mdx=
     (
+        if mdx.geos == undefined then return undefined
         local layer = GriffonStudios_Helpers.CreateLayer "Unit"
         for i=1 to mdx.geos.count do 
          (
@@ -662,6 +666,7 @@ STRUCT WC3_MDX800
     ),
     function BuildSEQS800 mdx=
     (
+        if mdx.seqs == undefined then return undefined
         local animTrack1 = undefined 
         local nNoteTracks = numNoteTracks rootNode
         if(  nNoteTracks > 0 ) then
@@ -701,6 +706,7 @@ STRUCT WC3_MDX800
     ),
     function BuildAndAssignMaterials mdx=
     (
+        if mdx.mtls == undefined then return undefined
         /*
             Replacable Id's
             0 - Diffuse map
@@ -715,6 +721,7 @@ STRUCT WC3_MDX800
     ),
     function BuildMaterials800 mdx=
     (
+        
         for x=1 to 24 do 
         (
             local matname = "Standard Material - " + (x as string)
@@ -801,11 +808,13 @@ STRUCT WC3_MDX800
     ),
     function BuildBonesAndHelpers mdx=
     (
+        
         local boneLayer = GriffonStudios_Helpers.CreateLayer "Bones"
         local helpLayer = GriffonStudios_Helpers.CreateLayer "Helpers"
         
         mdx.objs = #()
         
+        if mdx.bone != undefined then
         for b in mdx.bone do
         (
             local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
@@ -821,7 +830,7 @@ STRUCT WC3_MDX800
             
             append mdx.objs aBone
         )
-        
+        if mdx.help != undefined then
         for h in mdx.help do
         (
             local d = dummy name:h.name
@@ -835,6 +844,7 @@ STRUCT WC3_MDX800
     ),
     function BuildBONE800 mdx=
     (
+        if mdx.bone == undefined then return undefined
         local boneList = mdx.bone
         local bpos = mdx.pivt
         
@@ -933,7 +943,7 @@ STRUCT WC3_MDX800
     ),
     function BuildHELP800 mdx=
     (
-
+        if mdx.help == undefined then return undefined
         for h in mdx.help do
         (
             local d = h.helperRef
@@ -1025,6 +1035,7 @@ STRUCT WC3_MDX800
     ),
     function BuildEVTS800 mdx=
     (
+        if mdx.evts == undefined then return undefined
         local evts = mdx.evts
         
         if (evts == undefined ) then return undefined
@@ -1048,6 +1059,7 @@ STRUCT WC3_MDX800
     ),
     function BuildCLID800 mdx=
     (
+        if mdx.clid == undefined then return undefined
         local bpos = mdx.pivt
         local layer = GriffonStudios_Helpers.CreateLayer "Collision Objects"
         
@@ -1140,6 +1152,8 @@ STRUCT WC3_MDX800
     ),
     function BuildATCH800 mdx=
     (
+        
+        if mdx.atch == undefined then return undefined
         local layer = GriffonStudios_Helpers.CreateLayer "Attachments"
         sliderTime = 0f
         
@@ -1158,6 +1172,7 @@ STRUCT WC3_MDX800
     ),
     function BuildMODL800 mdx=
     (
+        
         local layer = GriffonStudios_Helpers.CreateLayer "Bounding Box"
         
         local obj = GriffonStudios_Helpers.BuildBoundingBox mdx.modl.bbox
@@ -1262,7 +1277,7 @@ STRUCT WC3_MDX800
         )
         
         fclose stream
-        
+        if WC3_MDX800_DEBUG then WC3_MDX = mdx
         WC3_MDX800.BuildMODL800 mdx
         WC3_MDX800.BuildGEOS800 mdx
         WC3_MDX800.BuildSEQS800 mdx
@@ -1283,6 +1298,6 @@ STRUCT WC3_MDX800
 file = getOpenFileName caption:"Import MDX" \
                        types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|"
 
-if ( doesfileexist file ) then 
+if ( file != undefined and doesfileexist file ) then 
     WC3_MDX800.Import file -- @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
         
