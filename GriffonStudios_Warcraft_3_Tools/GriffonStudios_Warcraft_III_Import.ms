@@ -3,7 +3,7 @@
     | Importer for Warcraft III mdx (old version = version 800 )
     
     .COPYRIGHT
-    | ©2021 Griffon Studios
+    | ï¿½2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -26,6 +26,34 @@ GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL WC3_MDX = undefined
 STRUCT WC3_MDX800
 (   
+    function ReadCAMS800 stream tag=
+    (
+        struct cam800 ( size, name, camPos, FOV, farClip, nearClip, targetPos )
+        
+        local cams = #()
+        local totalSize = tag.size
+        local currentOffset = tag.offset
+        while (totalSize > 0) do
+        (
+            fseek stream currentOffset #seek_set
+                
+            local cam = cam800()
+            
+            cam.size = readLong stream
+            cam.name = GriffonStudios_Helpers.ReadFixedString stream 80
+            cam.camPos = [readFloat stream,readFloat stream,readFloat stream]
+            cam.FOV = radToDeg ( readFloat stream )
+            cam.FarClip = readFloat stream
+            cam.NearClip = readFloat stream
+            cam.targetPos = [readFloat stream,readFloat stream,readFloat stream]
+            
+            append cams cam
+            totalSize -= cam.size
+            currentOffset += cam.size
+        )
+        if WC3_MDX800_DEBUG then print cams
+        return cams
+    ),
     function ReadTAGS800 stream streamLen=
     (
         struct tag800 ( Name, Offset, Size )     
@@ -628,6 +656,7 @@ STRUCT WC3_MDX800
     function BuildGEOS800 mdx=
     (
         if mdx.geos == undefined then return undefined
+        format "Building Meshes \n"
         local layer = GriffonStudios_Helpers.CreateLayer "Unit"
         for i=1 to mdx.geos.count do 
          (
@@ -667,6 +696,7 @@ STRUCT WC3_MDX800
     function BuildSEQS800 mdx=
     (
         if mdx.seqs == undefined then return undefined
+        format "Building Animation Sequences\n"
         local animTrack1 = undefined 
         local nNoteTracks = numNoteTracks rootNode
         if(  nNoteTracks > 0 ) then
@@ -707,6 +737,7 @@ STRUCT WC3_MDX800
     function BuildAndAssignMaterials mdx=
     (
         if mdx.mtls == undefined then return undefined
+        format "Building Materials\n"
         /*
             Replacable Id's
             0 - Diffuse map
@@ -845,6 +876,7 @@ STRUCT WC3_MDX800
     function BuildBONE800 mdx=
     (
         if mdx.bone == undefined then return undefined
+        format "Building Bones\n"
         local boneList = mdx.bone
         local bpos = mdx.pivt
         
@@ -944,6 +976,7 @@ STRUCT WC3_MDX800
     function BuildHELP800 mdx=
     (
         if mdx.help == undefined then return undefined
+        format "Building Helpers\n"
         for h in mdx.help do
         (
             local d = h.helperRef
@@ -1036,6 +1069,7 @@ STRUCT WC3_MDX800
     function BuildEVTS800 mdx=
     (
         if mdx.evts == undefined then return undefined
+        format "Building Events\n"
         local evts = mdx.evts
         
         if (evts == undefined ) then return undefined
@@ -1060,6 +1094,7 @@ STRUCT WC3_MDX800
     function BuildCLID800 mdx=
     (
         if mdx.clid == undefined then return undefined
+        format "Building Collision Objects\n"
         local bpos = mdx.pivt
         local layer = GriffonStudios_Helpers.CreateLayer "Collision Objects"
         
@@ -1154,6 +1189,7 @@ STRUCT WC3_MDX800
     (
         
         if mdx.atch == undefined then return undefined
+        format "Building Attachments\n"
         local layer = GriffonStudios_Helpers.CreateLayer "Attachments"
         sliderTime = 0f
         
@@ -1172,7 +1208,7 @@ STRUCT WC3_MDX800
     ),
     function BuildMODL800 mdx=
     (
-        
+        format "Building base models\n"
         local layer = GriffonStudios_Helpers.CreateLayer "Bounding Box"
         
         local obj = GriffonStudios_Helpers.BuildBoundingBox mdx.modl.bbox
@@ -1180,18 +1216,24 @@ STRUCT WC3_MDX800
         freeze obj
         obj.boxmode = true
         obj.wirecolor = color 100 100 100
-        
-        local pos = obj.max.z/2.0
-        local obj2 = sphere name:"Selection Sphere" radius:mdx.modl.radius pos:[0,0,pos]
-        
-        freeze obj2
-        obj2.boxmode = true
-        obj2.wirecolor = color 100 100 100
-
         layer.addNode obj
+        
+        if mdx.modl.radius > 0 then 
+        (
+            local pos = obj.max.z/2.0
+            local obj2 = sphere name:"Selection Sphere" radius:mdx.modl.radius pos:[0,0,pos]
+        
+            freeze obj2
+            obj2.boxmode = true
+            obj2.wirecolor = color 100 100 100
+            layer.addNode obj2
+        )
+        
+        
     ),
     function ApplySkinning mdx=
     (
+        format "Apply Skinning (this may take some time )\n"
         completeRedraw()
         for geo in mdx.geos do
         (
@@ -1242,6 +1284,25 @@ STRUCT WC3_MDX800
         completeRedraw()
         
     ),
+    function BuildCAMS800 mdx=
+    (
+        if mdx.cams == undefined then return undefined  
+        format "Building Cameras \n"
+        local layer = GriffonStudios_Helpers.CreateLayer "Cameras"
+        
+        for i=1 to mdx.cams.count do
+        (
+            local c = mdx.cams[i]
+            local targetName = c.name + ".Target." + ( i as string)
+            local camName = c.name + ( i as string)
+            local target = Targetobject pos:c.targetPos name:targetName wirecolor:red 
+            local cam = Targetcamera fov:c.FOV farclip:c.farClip nearclip:c.nearClip pos:c.camPos name:camName wirecolor:yellow target:target
+            layer.AddNode target
+            layer.AddNode cam
+        )
+        
+        
+    ),
     function Import file=
     (
         clearlistener()
@@ -1252,7 +1313,7 @@ STRUCT WC3_MDX800
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
         struct mdx800 
-            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, objs )
+            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, objs )
         
         local mdx = mdx800()
         mdx.fileName = file
@@ -1274,6 +1335,7 @@ STRUCT WC3_MDX800
             if tag.name == "PIVT" then mdx.pivt = WC3_MDX800.ReadPIVT800 stream tag
             if tag.name == "EVTS" then mdx.evts = WC3_MDX800.ReadEVTS800 stream tag
             if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag
+            if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag
         )
         
         fclose stream
@@ -1289,6 +1351,7 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildCLID800 mdx
         WC3_MDX800.ApplySkinning mdx
         WC3_MDX800.BuildATCH800 mdx
+        WC3_MDX800.BuildCAMS800 mdx
         
         gc()
         setArrowCursor() 
