@@ -3,7 +3,7 @@
     | Importer for Warcraft III mdx (old version = version 800 )
     
     .COPYRIGHT
-    | ï¿½2021 Griffon Studios
+    | ©2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -359,24 +359,36 @@ STRUCT WC3_MDX800
     ),
     function ReadGEOA800 stream tag=
     (
-        fseek stream tag.Offset #seek_set
+        
         local totalSize = tag.Size
+        local currentOffset = tag.Offset
         local geoa = #()
         
-        struct geoa800 (size, opacity, geoId, color, index)
+        struct geoa800 (size, opacity, geoId, color, type, KGAO)
         
         while ( totalSize > 0 ) do
         (
+            fseek stream currentOffset #seek_set
+            
             local g = geoa800()
             g.size      = readLong stream
             g.opacity   = readFloat stream
-            g.geoId     = readLong stream
+            g.type      = readLong stream 
             g.color     = color (readFloat stream * 255.0) (readFloat stream * 255.0) (readFloat stream * 255.0) 1.0
-            g.index     = readlong stream
+            g.geoId     = readlong stream + 1
+            
+            if ( g.size > 28 ) then 
+            local kgao = GriffonStudios_Helpers.ReadFixedString stream 4
+            
+            if ( kgao == "KGAO" ) then
+                g.KGAO = Warcraft_III_Helpers.ReadFloatAnim stream
+            else
+                fseek stream -4 #seek_cur
             
             append geoa g
             
             totalSize -= g.Size
+            currentOffset += g.Size
         )
     
         --print geoa
@@ -614,6 +626,20 @@ STRUCT WC3_MDX800
 
         return modl
     ),
+    function ReadGLBS800 stream tag=
+    (
+        fseek stream tag.offset #seek_set
+        local glbs = #()
+        
+        local nbr = tag.Size / 4
+        
+        for i=1 to nbr do 
+        (
+            local endFrame = (GriffonStudios_Helpers.RoundToFrame (readLong stream)) + 10
+            append glbs endFrame
+        )
+        return glbs
+    ),
     function ReadSEQS800 stream tag=
     (
         
@@ -646,9 +672,6 @@ STRUCT WC3_MDX800
 
             append seqs seq
         )
-
-        if (mdxConvertToSC2AnimationNames == true ) then 
-            StarTools_Helpers.RenameSEQS seqs
 
         return seqs
         
@@ -729,7 +752,8 @@ STRUCT WC3_MDX800
             startNote.Value = val
             endNote.Value = val
 
-            format "Animation sequence: % (%-%)\n" seq.name seq.startFrame seq.endFrame
+            if WC3_MDX800_DEBUG then 
+                format "- Anim: % (%-%)\n" seq.name seq.startFrame seq.endFrame
 			
         )
         
@@ -1303,6 +1327,42 @@ STRUCT WC3_MDX800
         
         
     ),
+    function BuildGEOA800 mdx=
+    (
+        local geoa = mdx.geoa
+        local geos = mdx.geos
+        
+        if( geoa == undefined ) then return undefined 
+        format "Applying Mesh Alpha Animations \n"
+        for a in geoa do
+        (
+            local theMesh = geos[a.GeoId].meshRef
+            if ( theMesh == undefined ) then continue
+            local isVisibilityTrackRequired = false -- by default evertythng is 1
+            
+            if a.KGAO == undefined then continue
+            
+            for anim in a.KGAO.KG do
+            (
+                if ( anim.point == 0) then isVisibilityTrackRequired = true
+            )
+            
+            if ( isVisibilityTrackRequired == true ) then
+            (
+                theMesh.Visibility = on
+                theMesh.Visibility.controller = on_off()
+
+                for anim in a.KGAO.KG do 
+                    with animate on at time ( anim.Time + 10 )
+                        if (anim.point == 1) then 
+                            theMesh.Visibility = on
+                        else
+                            theMesh.Visibility = off
+            )
+            
+        )  
+        
+    ),
     function Import file=
     (
         clearlistener()
@@ -1325,6 +1385,7 @@ STRUCT WC3_MDX800
             if tag.name == "VERS" then mdx.vers = WC3_MDX800.ReadVERS800 stream tag
             if tag.name == "MODL" then mdx.modl = WC3_MDX800.ReadMODL800 stream tag
             if tag.name == "SEQS" then mdx.seqs = WC3_MDX800.ReadSEQS800 stream tag
+            if tag.name == "GLBS" then mdx.glbs = WC3_MDX800.ReadGLBS800 stream tag
             if tag.name == "MTLS" then mdx.mtls = WC3_MDX800.ReadMTLS800 stream tag
             if tag.name == "TEXS" then mdx.texs = WC3_MDX800.ReadTEXS800 stream tag
             if tag.name == "GEOS" then mdx.geos = WC3_MDX800.ReadGEOS800 stream tag
@@ -1340,6 +1401,7 @@ STRUCT WC3_MDX800
         
         fclose stream
         if WC3_MDX800_DEBUG then WC3_MDX = mdx
+        
         WC3_MDX800.BuildMODL800 mdx
         WC3_MDX800.BuildGEOS800 mdx
         WC3_MDX800.BuildSEQS800 mdx
@@ -1352,7 +1414,9 @@ STRUCT WC3_MDX800
         WC3_MDX800.ApplySkinning mdx
         WC3_MDX800.BuildATCH800 mdx
         WC3_MDX800.BuildCAMS800 mdx
-        
+        WC3_MDX800.BuildGEOA800 mdx
+
+        format "Done!\n"
         gc()
         setArrowCursor() 
     )
