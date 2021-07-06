@@ -398,7 +398,12 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
     )
 )
 
-macroscript Animation_Window category:"Griffon Studios Tools" tooltip:"Animation Window" 
+macroscript Animation_Window 
+	category:"Griffon Studios Tools" 
+    internalcategory:"Griffon Studios Tools"
+	tooltip:"Animation Window" 
+    buttonText:"Animation Window"
+    icon:#("GriffonStudios",1)
 (
     
     if(GriffonStudios_AnimationWindow != undefined) then destroydialog GriffonStudios_AnimationWindow

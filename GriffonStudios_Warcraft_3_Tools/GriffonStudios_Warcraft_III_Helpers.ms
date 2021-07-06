@@ -28,7 +28,6 @@ STRUCT Warcraft_III_Helpers
         anim.KG = kg
         return anim
     ),
-    
     function ReadQuatAnim stream=
     (
         struct anim800 ( numPts, LineType, ParentId, KG )
@@ -58,7 +57,6 @@ STRUCT Warcraft_III_Helpers
         anim.KG = kg
         return anim
     ),
-    
     function ReadFloatAnim stream=
     (
         
@@ -94,9 +92,69 @@ STRUCT Warcraft_III_Helpers
         local vector3 = [readFloat stream, readFloat stream, readFloat stream]
         return vector3
     ),
+    function ReadColor stream=
+    (
+        local r = (readFloat stream * 255.0) as integer
+        local g = (readFloat stream * 255.0) as integer
+        local b = (readFloat stream * 255.0) as integer
+        return ( color r g b )
+    ),
     function ReadTris stream=
     (
         local tris = [readshort stream + 1, readshort stream + 1, readshort stream + 1]
         return tris
+    ),
+    function ReadColorAnim stream=
+    (
+        local anim = Warcraft3_Reforged_ANIM()
+        local kg = #()
+        
+        anim.numPts = readLong stream
+        anim.lineType = readLong stream
+        anim.parentId = readLong stream + 1
+        
+        for i=1 to anim.numPts do
+        (
+            local k = Warcraft3_Reforged_KG()
+            
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
+            k.Point = Warcraft3_Reforged.ReadColor stream -- always 1, indicating it starts or ends
+
+            if( anim.lineType > 1)  then
+            (
+                k.inTan = readFloat stream
+                k.outTan = readFloat stream
+            )
+            append kg k
+        )
+        anim.KG = kg
+        return anim
+    ),
+    function ReadLongAnim stream=
+    (
+        local anim = Warcraft3_Reforged_ANIM()
+        local kg = #()
+        
+        anim.numPts = readLong stream
+        anim.lineType = readLong stream
+        anim.parentId = readLong stream + 1
+        
+        for i=1 to anim.numPts do
+        (
+            local k = Warcraft3_Reforged_KG()
+            
+            k.Time = GriffonStudios_Helpers.RoundToFrame ( ReadLong stream )
+            k.Point = readLong stream -- always 1, indicating it starts or ends
+
+            if( anim.lineType > 1)  then
+            (
+                k.inTan = readFloat stream
+                k.outTan = readFloat stream
+            )
+            append kg k
+        )
+        anim.KG = kg
+        return anim
+        
     )
 )

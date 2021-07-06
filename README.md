@@ -42,6 +42,22 @@
 - See the following video on how to install a macro and create a button of it:
 [How to install a macro in 3D Studio Max](https://www.youtube.com/watch?v=kvaAY8TCRdo)
 
+## How to use the Griffon Studios Icons
+
+Currently there are 3 icons
+
+![WCIIIImport](MaxIcons/GriffonStudios_24i.bmp)
+
+1. Animation list icons; used for the animation window
+2. MDX import
+3. MDX export ( not used yet )
+
+Place both the _24i.bmp and the _16i.bmp in the following directory to be able to use them or so that the macro script recognizes it.
+
+    c:\Users\<your user name>\AppData\Local\Autodesk\3dsMax\<version of max>\ENU\usericons\
+
+You need to restart max to take affect.
+
 ## How to install the Warcraft 3 Reforged Tools
 
 - Download the ***GriffonStudios_Warcraft_3_Reforged_Tools.ms*** and the ***GriffonStudios_Warcraft_3_Reforged_Tools*** folder content.

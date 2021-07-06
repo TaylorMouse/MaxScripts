@@ -9,23 +9,103 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 0.4 - Added plugins: Attachment, Material, Event and Ribbon
     | 0.3 - Clean up for usage
     | 0.2 - Applied correct skinning ( after re-reading nintoxicated's script )
     | 0.1 - Initial setup
 
 */
 
-clearlistener()
-fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
+
+/* Required plugins */
 fileIn "GriffonStudios_Warcraft_III_Plugins_Attachment.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Event.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Ribbon.ms"
+
+/* Helper methods */
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL WC3_MDX = undefined
+
+clearlistener()
 STRUCT WC3_MDX800
 (   
+    function ReadRIBB800 stream tag=
+    (
+        struct ribb800 
+            ( size, headerSize, name, id, parentId, flags, above, below, edgesSec, edgesLife, gravity, vAlpha, vColor, flipbookRows, flipbookCols, flipBookSlot, mtlsId,
+              KGTR, KGRT, KGSC, KRHA, KRHB, KRAL, KRCO, KRTX, KRVS
+            )
+        
+        fseek stream tag.offset #seek_set
+        
+        local totalSize = tag.size
+        local ribbs = #()
+        
+        while (totalSize > 0 ) do
+        (
+            local ribb = ribb800()
+            
+            ribb.size         = readLong stream
+            ribb.headerSize   = readLong stream
+            ribb.name         = GriffonStudios_Helpers.ReadFixedString stream 80
+            ribb.id           = readLong stream + 1
+            ribb.parentId     = readLong stream + 1
+            ribb.flags        = readLong stream
+            
+            totalSize        -= ribb.size
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KGTR" ) then ribb.KGTR = Warcraft_III_Helpers.ReadVector3Anim stream
+                if( kg == "KGRT" ) then ribb.KGRT = Warcraft_III_Helpers.ReadQuatAnim stream
+                if( kg == "KGSC" ) then ribb.KGSC = Warcraft_III_Helpers.ReadVector3Anim stream
+            )
+            
+            if( ribb.KGSC == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGTR == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KGRT == undefined ) then fseek stream -4 #seek_cur
+            
+            ribb.above          = readFloat stream
+            ribb.below          = readFloat stream
+            ribb.valpha         = readFloat stream
+            ribb.vcolor         = Warcraft_III_Helpers.ReadColor stream
+            ribb.edgesLife      = readFloat stream
+            ribb.flipBookSlot   = readLong stream
+            ribb.edgesSec       = readLong stream
+            ribb.flipbookRows   = readLong stream
+            ribb.flipbookCols   = readLong stream
+            ribb.mtlsId         = readLong stream + 1
+            ribb.gravity        = readFloat stream
+            
+            for i=1 to 6 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KRHA" ) then ribb.KRHA = Warcraft_III_Helpers.ReadFloatAnim stream -- heightAbove
+                if( kg == "KRHB" ) then ribb.KRHB = Warcraft_III_Helpers.ReadFloatAnim stream  -- heightBelow
+                if( kg == "KRAL" ) then ribb.KRAL = Warcraft_III_Helpers.ReadFloatAnim stream -- alpha
+                if( kg == "KRCO" ) then ribb.KRCO = Warcraft_III_Helpers.ReadColorAnim stream -- color
+                if( kg == "KRTX" ) then ribb.KRTX = Warcraft_III_Helpers.ReadLongAnim stream  -- texture
+                if( kg == "KRVS" ) then ribb.KRVS = Warcraft_III_Helpers.ReadFloatAnim stream -- visibility
+            )
+            if( ribb.KRHA == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRHB == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRAL == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRCO == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRTX == undefined ) then fseek stream -4 #seek_cur
+            if( ribb.KRVS == undefined ) then fseek stream -4 #seek_cur
+            
+            append ribbs ribb
+        )
+        
+        if WC3_MDX800_DEBUG then print ribbs
+        return ribbs
+        
+    ),
     function ReadCAMS800 stream tag=
     (
         struct cam800 ( size, name, camPos, FOV, farClip, nearClip, targetPos )
@@ -80,7 +160,7 @@ STRUCT WC3_MDX800
             currentStreamPos = ftell stream
             
             append tags tag
-            --print tag
+            if WC3_MDX800_DEBUG then print tag
         )
         return tags
     ),
@@ -771,7 +851,10 @@ STRUCT WC3_MDX800
         
         WC3_MDX800.BuildMaterials800 mdx
         for geo in mdx.geos do
-            geo.meshRef.material = mdx.mtls[geo.mats.id+1].materialRef
+        (
+            if geo.meshRef != undefined then 
+                geo.meshRef.material = mdx.mtls[geo.mats.id+1].materialRef
+        )
 
     ),
     function BuildMaterials800 mdx=
@@ -1363,6 +1446,99 @@ STRUCT WC3_MDX800
         )  
         
     ),
+    function BuildRIBB800 mdx=
+    (
+        if mdx.ribb == undefined then return undefined  
+        format "Building Ribbons \n"
+        local layer = GriffonStudios_Helpers.CreateLayer "Ribbons"    
+        
+        for r in mdx.ribb do
+        (    
+            local ribbon = WarcraftIII_Ribbon()
+            layer.addNode ribbon
+            
+            ribbon.name = r.name
+            ribbon.pos  = mdx.pivt[r.id].translationPart
+            
+            ribbon.staticHeightAbove = r.above
+            ribbon.staticHeightBelow = r.below
+            ribbon.staticAlpha       = r.vAlpha
+            ribbon.staticColor       = r.vColor
+            ribbon.lifeSpan          = r.edgesLife
+            ribbon.emissionRate      = r.edgesSec
+            ribbon.flipbookRows      = r.flipbookRows
+            ribbon.flipbookColumns   = r.flipbookCols
+            ribbon.flipbookSlot      = r.flipBookSlot
+            ribbon.gravity           = r.gravity
+            
+            if ( r.ParentId > 0 ) then ribbon.parent = mdx.objs[r.parentId]
+            if ( mdx.mtls != undefined) then ribbon.mtlsId = mdx.mtls[r.mtlsId].materialRef
+            
+            -- animation time !
+            -- heightAbove
+            if ( r.KRHA != undefined ) then
+            for anim in r.KRHA.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticHeightAbove = p
+            )
+            -- heightBelow
+            if ( r.KRHB != undefined ) then
+            for anim in r.KRHB.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticHeightBelow = p
+            )
+            -- alpha
+            if ( r.KRAL != undefined ) then
+            for anim in r.KRAL.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticAlpha = p
+            )
+            -- color
+            if ( r.KRCO != undefined ) then
+            for anim in r.KRCO.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.staticColor = p
+            )
+            -- slot
+            if ( r.KRTX != undefined ) then
+            for anim in r.KRTX.KG do
+            (
+                local t = anim.time + 10
+                local p = anim.point
+                with animate on at time t ribbon.flipbookSlot = p
+            )
+            -- visibility
+            if ( r.KRVS != undefined ) then
+            (
+                local isVisibilityTrackRequired = false
+                for anim in r.KRVS.KG do
+                (
+                    if ( anim.point == 0) then isVisibilityTrackRequired = true
+                )
+                if ( isVisibilityTrackRequired == true ) then
+                (
+                    ribbon.Visibility = on
+                    ribbon.Visibility.controller = on_off()
+
+                    for anim in r.KRVS.KG do 
+                        with animate on at time ( anim.Time + 10 )
+                            if (anim.point == 1) then 
+                                ribbon.Visibility = on
+                            else
+                                ribbon.Visibility = off
+                )
+            )
+            
+        )
+    ),
     function Import file=
     (
         clearlistener()
@@ -1373,7 +1549,7 @@ STRUCT WC3_MDX800
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
         struct mdx800 
-            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, objs )
+            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, objs )
         
         local mdx = mdx800()
         mdx.fileName = file
@@ -1397,6 +1573,7 @@ STRUCT WC3_MDX800
             if tag.name == "EVTS" then mdx.evts = WC3_MDX800.ReadEVTS800 stream tag
             if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag
+            if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag
         )
         
         fclose stream
@@ -1416,15 +1593,28 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildCAMS800 mdx
         WC3_MDX800.BuildGEOA800 mdx
 
+        WC3_MDX800.BuildRIBB800 mdx
+        
         format "Done!\n"
         gc()
         setArrowCursor() 
     )
 )
 
-file = getOpenFileName caption:"Import MDX" \
-                       types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|"
+--WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 
-if ( file != undefined and doesfileexist file ) then 
-    WC3_MDX800.Import file -- @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
-        
+macroScript GriffonStudios_ImportWarcraftIIIMdx800
+    category:"Griffon Studios Tools"
+    internalcategory:"Griffon Studios Tools"
+    buttonText:"Import Warcraft III Model"
+    toolTip:"Import a 3D Model (.mdx) from Warcraft III version 800"
+    icon:#("GriffonStudios",2)
+(
+    on execute do (
+        file = getOpenFileName caption:"Import MDX" \
+                           types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|"
+
+        if ( file != undefined and doesfileexist file ) then 
+            WC3_MDX800.Import file -- @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+    )
+)
