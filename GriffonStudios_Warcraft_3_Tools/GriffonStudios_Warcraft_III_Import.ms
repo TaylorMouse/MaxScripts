@@ -3,7 +3,7 @@
     | Importer for Warcraft III mdx (old version = version 800 )
     
     .COPYRIGHT
-    | ©2021 Griffon Studios
+    | ï¿½2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -22,6 +22,7 @@ fileIn "GriffonStudios_Warcraft_III_Plugins_Attachment.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Event.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Ribbon.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_ParticleEmitter.ms"
 
 /* Helper methods */
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
@@ -33,6 +34,71 @@ GLOBAL WC3_MDX = undefined
 clearlistener()
 STRUCT WC3_MDX800
 (   
+    function ReadPREM800 stream tag=
+    (
+        
+        struct prem800 
+            ( size, headerSize, name, id, parentId, mdlName, flags, emissionrate, gravity, longitude, latitude, lifeSpan, speed, KPEV )
+              
+                
+                --speed, variation, coneAngle, life, partsSec, squirt, width, length, lineEmitter, blendMode, texture, rowCount, colCount, unshaded, sort_z, unfogged, replacableText, particleType, tailLength, midTime, startColor, midColor, endColor, startAlpha, midAlpha, endAlpha, startSize, midSize, endSize, startLifespanUVAnim, midLifespanUVAnim, endLifespanUVAnim, startDecayUVAnim, midDecayUVAnim, endDecayUVAnim, startTailUVAnim, midTailUVAnim, endTailUVAnim, startTailDecayUVAnim, midTailDecayUVAnim, endTailDecayUVAnim, priorityPlane, particlesInModelSpace, xyQuads
+
+        
+        
+        local totalSize = tag.size
+        local currentOffset = tag.offset
+        local prems = #()
+        
+        while (totalSize > 0 ) do
+        (
+            fseek stream currentOffset #seek_set
+            
+            local p = prem800()
+            p.size = readLong stream
+            p.headerSize   = readLong stream
+            p.name         = GriffonStudios_Helpers.ReadFixedString stream 80
+            p.id           = readLong stream + 1
+            p.parentId     = readLong stream + 1
+            p.flags        = readLong stream
+            
+            p.gravity      = readFloat stream
+            p.emissionRate = readFloat stream
+            p.longitude    = readFloat stream
+            p.latitude     = readFloat stream
+            
+            p.mdlName = GriffonStudios_Helpers.ReadFixedString stream 260
+            
+            p.lifeSpan = readFloat stream
+            p.speed = readFloat stream
+            
+            -- Keys for Particle Emitter Visibility
+            local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+            if( kg == "KPEV" ) then p.KPEV = Warcraft_III_Helpers.ReadFloatAnim stream
+            if( p.KPEV == undefined ) then fseek stream -4 #seek_cur
+
+            
+            
+            totalSize -= p.size
+            currentOffset += p.size
+            append prems p
+        )
+        if WC3_MDX800_DEBUG then print prems
+        return prems
+        
+       -- see https://wowdev.wiki/MDX#MDLGENOBJECT to implement the flags
+--         -- 0x8000 --> uses MDL
+--         -- 0x10000 --> uses TGA
+--         
+--         bit.and 36864 0x00020000
+--         
+--         for i= 1 to 20 do
+--         (
+--             local x = bit.shift 0x1 i
+--             if bit.and 36864 x > 0 then print x
+--         )
+--         0x1000
+            
+    ),
     function ReadRIBB800 stream tag=
     (
         struct ribb800 
@@ -81,7 +147,7 @@ STRUCT WC3_MDX800
             ribb.flipbookCols   = readLong stream
             ribb.mtlsId         = readLong stream + 1
             ribb.gravity        = readFloat stream
-            
+      
             for i=1 to 6 do
             (
                 local kg = GriffonStudios_Helpers.ReadFixedString stream 4
@@ -1003,7 +1069,7 @@ STRUCT WC3_MDX800
             if ( obj.KGRT != undefined ) then 
             (
                -- b.assumeSkinPose()
-                
+               
                 local dr = dummy name:"DummyRotationController"
                 dr.rotation.controller = b.rotation.controller
                 local q0 = dr.transform
@@ -1121,6 +1187,8 @@ STRUCT WC3_MDX800
             )
             if ( h.KGTR != undefined ) then
             (
+
+                
                     local dp = dummy name:"DummyPositionController" 
                     dp.position.controller = d.position.controller
                     local p0 = dp.transform
@@ -1146,7 +1214,6 @@ STRUCT WC3_MDX800
             
             if ( h.KGSC != undefined ) then
             (
-               -- b.assumeSkinPose()
                 
                 local ds = dummy name:"DummyScaleController" 
                 ds.scale.controller = d.scale.controller
@@ -1539,6 +1606,7 @@ STRUCT WC3_MDX800
             
         )
     ),
+    
     function Import file=
     (
         clearlistener()
@@ -1549,7 +1617,7 @@ STRUCT WC3_MDX800
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
         struct mdx800 
-            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, objs )
+            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, pre2, prem, objs )
         
         local mdx = mdx800()
         mdx.fileName = file
@@ -1574,6 +1642,7 @@ STRUCT WC3_MDX800
             if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag
             if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag
+            if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag
         )
         
         fclose stream
@@ -1592,7 +1661,6 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildATCH800 mdx
         WC3_MDX800.BuildCAMS800 mdx
         WC3_MDX800.BuildGEOA800 mdx
-
         WC3_MDX800.BuildRIBB800 mdx
         
         format "Done!\n"
@@ -1601,7 +1669,7 @@ STRUCT WC3_MDX800
     )
 )
 
---WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
     category:"Griffon Studios Tools"

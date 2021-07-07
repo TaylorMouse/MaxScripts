@@ -13,7 +13,7 @@
 
 plugin simpleManipulator WarcraftIII_Ribbon
     name: "Ribbon"
-    classID:#(0x179912f0, 0x414f6213)
+    classID:#(0x17a92fa0, 0x1f3612d1)
     category:"Warcraft III"
 (
     local heightA = [0,0,0]
