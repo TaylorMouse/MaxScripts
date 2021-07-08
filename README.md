@@ -14,14 +14,15 @@
 
 - This will install the following plugins:
 
-    - Warcraft III Standard Material *(found in the Material Editor)*
-    - Warcraft III Event *(found in Helpers in the Create tab )*
-    - Warcraft III Attachment *(found in Helpers in the Create tab )*
+  - Warcraft III Standard Material *(found in the Material Editor)*
+  - Warcraft III Event *(found in Helpers in the Create tab )*
+  - Warcraft III Attachment *(found in Helpers in the Create tab )*
+  - Warcraft III Ribbon *(found in Helpers in the Create tab )*
 
 - Prior to importing the model, convert the .blp files to .TGA, use the BLPconv.exe to do this conversion. Just drag and drop the .blp file onto the exe after you extracted it from the zip file.
 
 - Run the ***GriffonStudios_Warcraft_III_Import.ms*** script.
-
+- This will install a macro scrip that you can add to a toolbar so you can access it every time
 - This window will ask you to select a .mdx file, *(version 800 !!)*
 
 - After the import is done, you should be able to have the following
@@ -52,7 +53,7 @@ Currently there are 3 icons
 2. MDX import
 3. MDX export ( not used yet )
 
-Place both the _24i.bmp and the _16i.bmp in the following directory to be able to use them or so that the macro script recognizes it.
+Place both the "_24i.bmp" and the "_16i.bmp" in the following directory to be able to use them or so that the macro script recognizes it.
 
     c:\Users\<your user name>\AppData\Local\Autodesk\3dsMax\<version of max>\ENU\usericons\
 
