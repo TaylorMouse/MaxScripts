@@ -36,68 +36,54 @@ STRUCT WC3_MDX800
 (   
     function ReadPREM800 stream tag=
     (
-        
         struct prem800 
             ( size, headerSize, name, id, parentId, mdlName, flags, emissionrate, gravity, longitude, latitude, lifeSpan, speed, KPEV )
-              
+        
+        try (
+        
+            local totalSize = tag.size
+            local currentOffset = tag.offset
+            local prems = #()
+            
+            while (totalSize > 0 ) do
+            (
+                fseek stream currentOffset #seek_set
                 
-                --speed, variation, coneAngle, life, partsSec, squirt, width, length, lineEmitter, blendMode, texture, rowCount, colCount, unshaded, sort_z, unfogged, replacableText, particleType, tailLength, midTime, startColor, midColor, endColor, startAlpha, midAlpha, endAlpha, startSize, midSize, endSize, startLifespanUVAnim, midLifespanUVAnim, endLifespanUVAnim, startDecayUVAnim, midDecayUVAnim, endDecayUVAnim, startTailUVAnim, midTailUVAnim, endTailUVAnim, startTailDecayUVAnim, midTailDecayUVAnim, endTailDecayUVAnim, priorityPlane, particlesInModelSpace, xyQuads
+                local p = prem800()
+                p.size = readLong stream
+                p.headerSize   = readLong stream
+                p.name         = GriffonStudios_Helpers.ReadFixedString stream 80
+                p.id           = readLong stream + 1
+                p.parentId     = readLong stream + 1
+                p.flags        = readLong stream
+                
+                p.gravity      = readFloat stream
+                p.emissionRate = readFloat stream
+                p.longitude    = readFloat stream
+                p.latitude     = readFloat stream
+                
+                p.mdlName = GriffonStudios_Helpers.ReadFixedString stream 260
+                
+                p.lifeSpan = readFloat stream
+                p.speed = readFloat stream
+                
+                -- Keys for Particle Emitter Visibility
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                if( kg == "KPEV" ) then p.KPEV = Warcraft_III_Helpers.ReadFloatAnim stream
+                if( p.KPEV == undefined ) then fseek stream -4 #seek_cur
 
-        
-        
-        local totalSize = tag.size
-        local currentOffset = tag.offset
-        local prems = #()
-        
-        while (totalSize > 0 ) do
-        (
-            fseek stream currentOffset #seek_set
-            
-            local p = prem800()
-            p.size = readLong stream
-            p.headerSize   = readLong stream
-            p.name         = GriffonStudios_Helpers.ReadFixedString stream 80
-            p.id           = readLong stream + 1
-            p.parentId     = readLong stream + 1
-            p.flags        = readLong stream
-            
-            p.gravity      = readFloat stream
-            p.emissionRate = readFloat stream
-            p.longitude    = readFloat stream
-            p.latitude     = readFloat stream
-            
-            p.mdlName = GriffonStudios_Helpers.ReadFixedString stream 260
-            
-            p.lifeSpan = readFloat stream
-            p.speed = readFloat stream
-            
-            -- Keys for Particle Emitter Visibility
-            local kg = GriffonStudios_Helpers.ReadFixedString stream 4
-            if( kg == "KPEV" ) then p.KPEV = Warcraft_III_Helpers.ReadFloatAnim stream
-            if( p.KPEV == undefined ) then fseek stream -4 #seek_cur
-
-            
-            
-            totalSize -= p.size
-            currentOffset += p.size
-            append prems p
+                
+                
+                totalSize -= p.size
+                currentOffset += p.size
+                append prems p
+            )
+            if WC3_MDX800_DEBUG then print prems
+            return prems
         )
-        if WC3_MDX800_DEBUG then print prems
-        return prems
+        catch()
         
-       -- see https://wowdev.wiki/MDX#MDLGENOBJECT to implement the flags
---         -- 0x8000 --> uses MDL
---         -- 0x10000 --> uses TGA
---         
---         bit.and 36864 0x00020000
---         
---         for i= 1 to 20 do
---         (
---             local x = bit.shift 0x1 i
---             if bit.and 36864 x > 0 then print x
---         )
---         0x1000
--- test git
+
 
     ),
     function ReadRIBB800 stream tag=
