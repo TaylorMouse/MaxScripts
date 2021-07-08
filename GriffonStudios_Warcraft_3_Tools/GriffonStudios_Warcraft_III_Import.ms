@@ -98,6 +98,7 @@ STRUCT WC3_MDX800
 --         )
 --         0x1000
             
+
     ),
     function ReadRIBB800 stream tag=
     (
