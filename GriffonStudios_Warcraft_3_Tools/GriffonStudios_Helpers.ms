@@ -1,5 +1,49 @@
 struct GriffonStudios_Helpers
 (
+    function GetAllAnimatedKeyFrames=
+    (
+        local uniqueKeys = #()
+        for obj in objects do
+        (
+            
+                --print obj.Name
+                --if(obj.Name == "bone_turret" ) then 
+                for i=1 to obj.numSubs do 
+                (
+                    if obj[i].Keys != undefined then
+                    (
+                        
+                        for j=1 to obj[i].numsubs do
+                        (
+                            if obj[i][j].Keys != undefined then
+                            (
+                                --print obj[i][j].keys
+                                for k in obj[i][j].keys do
+                                (
+                                    local strTime = k.time as string
+                                    local iTime = substring strTime 1 (strTime.count - 1 ) as integer
+                                    
+                                    appendifunique uniqueKeys iTime
+                                    
+                                )
+                            )
+                        )
+                    )
+                    
+                )
+        )
+
+        local sortedKeys = sort uniqueKeys   
+        return sortedKeys
+        
+    ),
+    /* Get the last key on the animation track from ALL objects */
+    function FindLastKeyFrame =
+    (
+        local allKeys = GriffonStudios_Helper_Functions.GetAllAnimatedKeyFrames()
+        
+        return allKeys[allKeys.count]
+    ),
     function CheckFile file=
     (
         if ( file == undefined ) then  

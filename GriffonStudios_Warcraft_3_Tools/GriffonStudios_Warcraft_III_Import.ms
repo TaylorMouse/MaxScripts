@@ -29,6 +29,7 @@ fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
+GLOBAL WC3_DEBUG = true
 GLOBAL WC3_MDX = undefined
 
 clearlistener()
@@ -1382,7 +1383,7 @@ STRUCT WC3_MDX800
         if mdx.modl.radius > 0 then 
         (
             local pos = obj.max.z/2.0
-            local obj2 = sphere name:"Selection Sphere" radius:mdx.modl.radius pos:[0,0,pos]
+            local obj2 = sphere name:"Selection_Sphere" radius:mdx.modl.radius pos:[0,0,pos]
         
             freeze obj2
             obj2.boxmode = true
@@ -1656,6 +1657,7 @@ STRUCT WC3_MDX800
     )
 )
 
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
