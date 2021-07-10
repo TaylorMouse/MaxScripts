@@ -11,6 +11,9 @@
     .CHANGELOG
     | 0.1 - Initial setup
 
+    .NOTE
+    | DOES NOT  WORK YET !!
+
 */
 
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
@@ -88,7 +91,7 @@ STRUCT WC3_MDX800_EXPORTER
         format "Writing MTLS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "MTLS" 4
         
-        TODO : Warcraft_III_Helpers.GetMTLS mdx
+       -- TODO : Warcraft_III_Helpers.GetMTLS mdx
         
     ),
     function Export file=
