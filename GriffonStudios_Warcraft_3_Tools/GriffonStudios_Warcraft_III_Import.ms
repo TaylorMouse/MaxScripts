@@ -37,6 +37,7 @@ STRUCT WC3_MDX800
 (   
     function ReadPREM800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct prem800 
             ( size, headerSize, name, id, parentId, mdlName, flags, emissionrate, gravity, longitude, latitude, lifeSpan, speed, KPEV )
         
@@ -89,6 +90,7 @@ STRUCT WC3_MDX800
     ),
     function ReadRIBB800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct ribb800 
             ( size, headerSize, name, id, parentId, flags, above, below, edgesSec, edgesLife, gravity, vAlpha, vColor, flipbookRows, flipbookCols, flipBookSlot, mtlsId,
               KGTR, KGRT, KGSC, KRHA, KRHB, KRAL, KRCO, KRTX, KRVS
@@ -162,6 +164,7 @@ STRUCT WC3_MDX800
     ),
     function ReadCAMS800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct cam800 ( size, name, camPos, FOV, farClip, nearClip, targetPos )
         
         local cams = #()
@@ -220,6 +223,7 @@ STRUCT WC3_MDX800
     ),
     function ReadEVTS800 stream tag=
     (
+        format "Reading %\n" tag.name
         /*
             for a full understanding what these sounds are, see the official Warcraft III Art Tools documentation
             
@@ -265,6 +269,7 @@ STRUCT WC3_MDX800
     ),
     function ReadATCH800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct atch800 ( Id, Name, ParentBoneId, Flags, Offset, Size, KGTR, KGRT, KGSC, KATV)
         
         fseek stream tag.Offset #seek_set
@@ -327,6 +332,7 @@ STRUCT WC3_MDX800
     ),
     function ReadBONE800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct bone800 ( Id, Name, ParentBoneId, Flags, boneRef, KGTR, KGRT, KGSC, offset, geosetId, geosetAnimationId )
         
         fseek stream tag.offset #seek_set
@@ -382,6 +388,7 @@ STRUCT WC3_MDX800
     ),
     function ReadCLID800 stream tag=
     (
+        format "Reading %\n" tag.name
         /*
             0: cube
             1: plane
@@ -441,6 +448,7 @@ STRUCT WC3_MDX800
     ),
     function ReadPIVT800 stream tag=
     (
+        format "Reading %\n" tag.name
         fseek stream tag.offset #seek_set
         local nbr = tag.Size / 12.0
         local pivts = #()
@@ -455,7 +463,7 @@ STRUCT WC3_MDX800
     ),
     function ReadHELP800 stream tag=
     (
-        
+        format "Reading %\n" tag.name
         local totalSize = tag.Size
         local helperList = #()
         
@@ -493,7 +501,7 @@ STRUCT WC3_MDX800
     ),
     function ReadGEOA800 stream tag=
     (
-        
+        format "Reading %\n" tag.name
         local totalSize = tag.Size
         local currentOffset = tag.Offset
         local geoa = #()
@@ -503,7 +511,7 @@ STRUCT WC3_MDX800
         while ( totalSize > 0 ) do
         (
             fseek stream currentOffset #seek_set
-            
+            local kgao = undefined --> weird memory leak ...
             local g = geoa800()
             g.size      = readLong stream
             g.opacity   = readFloat stream
@@ -513,7 +521,7 @@ STRUCT WC3_MDX800
             
             if ( g.size > 28 ) then 
             local kgao = GriffonStudios_Helpers.ReadFixedString stream 4
-            
+
             if ( kgao == "KGAO" ) then
                 g.KGAO = Warcraft_III_Helpers.ReadFloatAnim stream
             else
@@ -530,6 +538,7 @@ STRUCT WC3_MDX800
     ),
     function ReadVERS800 stream tag=
     (
+        format "Reading %\n" tag.name
         fseek stream tag.Offset #seek_set
         local version = readLong stream
         if(version != 800 ) then 
@@ -538,6 +547,7 @@ STRUCT WC3_MDX800
     ),
     function ReadTEXS800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct texs800 ( replacableId, path, flags )
         fseek stream tag.offset #seek_set
         local texs = #()
@@ -559,7 +569,7 @@ STRUCT WC3_MDX800
     ),
     function ReadMTLS800 stream tag=
     (
-        
+        format "Reading %\n" tag.name
         struct layer800 ( name, size, priority, flags, nMaps, maps = #(), materialRef )
         struct map800 ( size, filterMode, shadingFlags, textureId, parentId, coordId, alpha, kmta, kmte )
         
@@ -620,6 +630,7 @@ STRUCT WC3_MDX800
     ),
     function ReadGEOS800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct geo800  
             (   uniqueName, VRTX = #(), NRMS = #(), PTYP = #(), PCNT = #(), PVTX = #(), GNDX = #(), MTGC = #(), MATS = #(), UVS = #(), meshRef, 
                 bones = #(),  --> bones indexes for weighing the vertices, vertices are equally weighted -> 2 bones => so 1 vertex is 0.5
@@ -745,6 +756,7 @@ STRUCT WC3_MDX800
     ),
     function ReadMODL800 stream tag=
     (
+        format "Reading %\n" tag.name
         struct modl800 ( name, path, radius, bbox, Always150 )
         local modl = modl800()
         fseek stream tag.offset #seek_set
@@ -762,6 +774,7 @@ STRUCT WC3_MDX800
     ),
     function ReadGLBS800 stream tag=
     (
+        format "Reading %\n" tag.name
         fseek stream tag.offset #seek_set
         local glbs = #()
         
@@ -776,7 +789,7 @@ STRUCT WC3_MDX800
     ),
     function ReadSEQS800 stream tag=
     (
-        
+        format "Reading %\n" tag.name
         struct seqs800 ( Name, StartFrame, EndFrame, MovementSpeed, NoLoop, Rarity,Priority,Default, BBox )
         
         fseek stream tag.offset #seek_set
@@ -1659,7 +1672,7 @@ STRUCT WC3_MDX800
 
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
-
+WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
     category:"Griffon Studios Tools"
     internalcategory:"Griffon Studios Tools"
