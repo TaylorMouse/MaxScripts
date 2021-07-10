@@ -18,7 +18,8 @@
   - Warcraft III Event *(found in Helpers in the Create tab )*
   - Warcraft III Attachment *(found in Helpers in the Create tab )*
   - Warcraft III Ribbon *(found in Helpers in the Create tab )*
-
+  - Warcraft III Behavior *(found in Helpers in the Create tab )*
+  
 - Prior to importing the model, convert the .blp files to .TGA, use the BLPconv.exe to do this conversion. Just drag and drop the .blp file onto the exe after you extracted it from the zip file.
 
 - Run the ***GriffonStudios_Warcraft_III_Import.ms*** script.

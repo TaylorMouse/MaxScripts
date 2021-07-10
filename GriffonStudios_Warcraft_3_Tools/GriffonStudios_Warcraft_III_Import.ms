@@ -9,6 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 0.6 - Added Global Sequence behavior
+    | 0.5 - Added Particle Emitter reading v1
     | 0.4 - Added plugins: Attachment, Material, Event and Ribbon
     | 0.3 - Clean up for usage
     | 0.2 - Applied correct skinning ( after re-reading nintoxicated's script )
@@ -18,11 +20,12 @@
 
 
 /* Required plugins */
+fileIn "GriffonStudios_Warcraft_III_Plugins_ParticleEmitter.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Attachment.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Material.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Event.ms"
 fileIn "GriffonStudios_Warcraft_III_Plugins_Ribbon.ms"
-fileIn "GriffonStudios_Warcraft_III_Plugins_ParticleEmitter.ms"
+fileIn "GriffonStudios_Warcraft_III_Plugins_Behavior.ms"
 
 /* Helper methods */
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
@@ -1067,10 +1070,10 @@ STRUCT WC3_MDX800
             
             b.assumeSkinPose()
 
+            -- Translation
             if ( obj.KGRT != undefined ) then 
             (
-               -- b.assumeSkinPose()
-               
+
                 local dr = dummy name:"DummyRotationController"
                 dr.rotation.controller = b.rotation.controller
                 local q0 = dr.transform
@@ -1079,6 +1082,8 @@ STRUCT WC3_MDX800
                 for anim in obj.KGRT.KG do
                 (
                     local t = anim.Time + 10
+                    if obj.KGRT.glbsId > 0 then t = anim.Time
+                    
                     local q = anim.Point
                     
                     if ( prevTime == t ) then continue else prevTime = t
@@ -1093,34 +1098,38 @@ STRUCT WC3_MDX800
                 delete dr
 
             )
+            
+            -- Rotation
             if ( obj.KGTR != undefined ) then
             (
-                    local dp = dummy name:"DummyPositionController" 
-                    dp.position.controller = b.position.controller
-                    local p0 = dp.transform
-                    local prevTime = 0
+                local dp = dummy name:"DummyPositionController" 
+                dp.position.controller = b.position.controller
+                local p0 = dp.transform
+                local prevTime = 0
 
-                    for anim in obj.KGTR.KG do
-                    (
-                        local t = anim.Time + 10
-                        local p = anim.Point
-
-                        if ( prevTime == t ) then continue else prevTime = t
+                for anim in obj.KGTR.KG do
+                (
+                    local t = anim.Time + 10
+                    if obj.KGTR.glbsId > 0 then t = anim.Time
                         
-                        with animate on 
-                            at time t
-                            (
-                                in coordsys p0 dp.position = p 
-                            )
-                    )
-                    with animate on b.position.controller = copy dp.position.controller
+                    local p = anim.Point
+
+                    if ( prevTime == t ) then continue else prevTime = t
                     
-                    delete dp
+                    with animate on 
+                        at time t
+                        (
+                            in coordsys p0 dp.position = p 
+                        )
+                )
+                with animate on b.position.controller = copy dp.position.controller
+                
+                delete dp
             )
             
+            -- Scale
             if ( obj.KGSC != undefined ) then
             (
-               -- b.assumeSkinPose()
                 
                 local ds = dummy name:"DummyScaleController" 
                 ds.scale.controller = b.scale.controller
@@ -1130,6 +1139,8 @@ STRUCT WC3_MDX800
                 for anim in obj.KGSC.KG do
                 (
                     local t = anim.Time + 10
+                    if obj.KGSC.glbsId > 0 then t = anim.Time
+                        
                     local p = anim.Point
                         
                     if ( prevTime == t ) then continue else prevTime = t
@@ -1607,7 +1618,35 @@ STRUCT WC3_MDX800
             
         )
     ),
-    
+    function BuildGLBS800 mdx=
+    (
+        if mdx.glbs == undefined or mdx.glbs.count == 0 then return undefined
+        format "Building Global Sequence Behavior\n"
+        
+        local layer = GriffonStudios_Helpers.CreateLayer "Global Sequence"  
+        local behavior = WarcraftIII_Behavior()
+        local listOfBones = #()
+        
+        for i=1 to mdx.BONE.count do
+        (
+            if (mdx.BONE[i].KGSC != undefined ) then
+                if (mdx.BONE[i].KGSC.glbsId  > 0 ) then 
+                    appendifUnique listOfBones mdx.BONE[i].boneRef
+            
+            if (mdx.BONE[i].KGRT != undefined ) then
+                if (mdx.BONE[i].KGRT.glbsId  > 0 ) then 
+                    appendifUnique listOfBones mdx.BONE[i].boneRef
+            
+            if (mdx.BONE[i].KGTR != undefined ) then
+                if (mdx.BONE[i].KGTR.glbsId  > 0 ) then 
+                    appendifUnique listOfBones mdx.BONE[i].boneRef
+            
+        )
+        if WC3_MDX800_DEBUG then print listOfBones
+        behavior.listOfBones = listOfBones
+
+       
+    ),
     function Import file=
     (
         clearlistener()
@@ -1626,24 +1665,23 @@ STRUCT WC3_MDX800
         
         for tag in mdx.tags do 
         (
-            --format "Reading TAG: %\n" tag.name
-            if tag.name == "VERS" then mdx.vers = WC3_MDX800.ReadVERS800 stream tag
-            if tag.name == "MODL" then mdx.modl = WC3_MDX800.ReadMODL800 stream tag
-            if tag.name == "SEQS" then mdx.seqs = WC3_MDX800.ReadSEQS800 stream tag
-            if tag.name == "GLBS" then mdx.glbs = WC3_MDX800.ReadGLBS800 stream tag
-            if tag.name == "MTLS" then mdx.mtls = WC3_MDX800.ReadMTLS800 stream tag
-            if tag.name == "TEXS" then mdx.texs = WC3_MDX800.ReadTEXS800 stream tag
-            if tag.name == "GEOS" then mdx.geos = WC3_MDX800.ReadGEOS800 stream tag
-            if tag.name == "GEOA" then mdx.geoa = WC3_MDX800.ReadGEOA800 stream tag
-            if tag.name == "BONE" then mdx.bone = WC3_MDX800.ReadBONE800 stream tag
-            if tag.name == "HELP" then mdx.help = WC3_MDX800.ReadHELP800 stream tag
-            if tag.name == "ATCH" then mdx.atch = WC3_MDX800.ReadATCH800 stream tag
-            if tag.name == "PIVT" then mdx.pivt = WC3_MDX800.ReadPIVT800 stream tag
-            if tag.name == "EVTS" then mdx.evts = WC3_MDX800.ReadEVTS800 stream tag
-            if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag
-            if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag
-            if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag
-            if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag
+            if tag.name == "VERS" then mdx.vers = WC3_MDX800.ReadVERS800 stream tag --> Version number
+            if tag.name == "MODL" then mdx.modl = WC3_MDX800.ReadMODL800 stream tag --> Model properties
+            if tag.name == "SEQS" then mdx.seqs = WC3_MDX800.ReadSEQS800 stream tag --> Animation Sequences
+            if tag.name == "GLBS" then mdx.glbs = WC3_MDX800.ReadGLBS800 stream tag --> Global Sequences
+            if tag.name == "MTLS" then mdx.mtls = WC3_MDX800.ReadMTLS800 stream tag --> Materials
+            if tag.name == "TEXS" then mdx.texs = WC3_MDX800.ReadTEXS800 stream tag --> Textures
+            if tag.name == "GEOS" then mdx.geos = WC3_MDX800.ReadGEOS800 stream tag --> Geometry Sets
+            if tag.name == "GEOA" then mdx.geoa = WC3_MDX800.ReadGEOA800 stream tag --> Geomatry Animatons
+            if tag.name == "BONE" then mdx.bone = WC3_MDX800.ReadBONE800 stream tag --> Bone structure
+            if tag.name == "HELP" then mdx.help = WC3_MDX800.ReadHELP800 stream tag --> Animation Helpers
+            if tag.name == "ATCH" then mdx.atch = WC3_MDX800.ReadATCH800 stream tag --> Attachment Points
+            if tag.name == "PIVT" then mdx.pivt = WC3_MDX800.ReadPIVT800 stream tag --> Pivot Points
+            if tag.name == "EVTS" then mdx.evts = WC3_MDX800.ReadEVTS800 stream tag --> Events
+            if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag --> Collision Definition
+            if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag --> Cameras
+            if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag --> Ribbon Emitters
+            if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag --> Particle Emitters
         )
         
         fclose stream
@@ -1656,6 +1694,7 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildBonesAndHelpers mdx
         WC3_MDX800.BuildHELP800 mdx
         WC3_MDX800.BuildBONE800 mdx
+        WC3_MDX800.BuildGLBS800 mdx
         WC3_MDX800.BuildEVTS800 mdx
         WC3_MDX800.BuildCLID800 mdx
         WC3_MDX800.ApplySkinning mdx
@@ -1673,6 +1712,7 @@ STRUCT WC3_MDX800
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
+
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
     category:"Griffon Studios Tools"
     internalcategory:"Griffon Studios Tools"
@@ -1685,6 +1725,6 @@ macroScript GriffonStudios_ImportWarcraftIIIMdx800
                            types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|"
 
         if ( file != undefined and doesfileexist file ) then 
-            WC3_MDX800.Import file -- @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+            WC3_MDX800.Import file
     )
 )
