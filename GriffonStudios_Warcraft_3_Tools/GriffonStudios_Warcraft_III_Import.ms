@@ -1672,7 +1672,7 @@ STRUCT WC3_MDX800
 
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
-WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
     category:"Griffon Studios Tools"
     internalcategory:"Griffon Studios Tools"
