@@ -23,8 +23,9 @@ STRUCT WC3_MDX800_EXPORTER
 (
     function WriteMDLX800 mdx=
     (
-        format "Writing Header\n"
+        format "Writing MDLX\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "MDLX" 4
+        format "Writing VERS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "VERS" 4
         writeLong mdx.stream 4
         writeLong mdx.stream 800
@@ -80,10 +81,37 @@ STRUCT WC3_MDX800_EXPORTER
     (
         format "Writing GLBS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "GLBS" 4
-
-        writeLong mdx.stream 0
         
-        --> implement a behaviour object that holds frame numbers and bones
+        local glbs = #()
+        
+        for obj in objects do 
+        (
+            if (  classof obj == WarcraftIII_Behavior) then
+            (
+                for b in obj.listOfBones  do
+                (
+                    local maxFrame =  0
+                    local posStr = b.pos.controller.keys[b.pos.controller.keys.count].time as string
+                    local rotStr = b.rotation.controller.keys[b.rotation.controller.keys.count].time as string
+                    local scaleStr = b.scale.controller.keys[b.scale.controller.keys.count].time as string
+                    
+                    local posTime = substring posStr 1 (posStr.count - 1 ) as integer
+                    local rotTime = substring rotStr 1 (rotStr.count - 1 ) as integer
+                    local scaleTime = substring scaleStr 1 (scaleStr.count - 1 ) as integer
+                    
+                    if posTime > maxFrame then maxFrame = posTime
+                    if rotTime > maxFrame then maxFrame = rotTime
+                    if scaleTime > maxFrame then maxFrame = scaleTime
+                        
+                    maxFrame = maxFrame * 1000 / 30 as integer
+                    append glbs maxFrame
+                )
+                exit
+            )
+        )
+        if ( WC3_MDX800_DEBUG ) then print glbs
+        writeLong mdx.stream (glbs.count * 4)
+        for g in glbs do writeLong mdx.stream g
 
     ),
     function WriteMTLS800 mdx=
@@ -91,8 +119,24 @@ STRUCT WC3_MDX800_EXPORTER
         format "Writing MTLS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "MTLS" 4
         
+        mdx.texs = Warcraft_III_Helpers.GetTexs()
        -- TODO : Warcraft_III_Helpers.GetMTLS mdx
         
+    ),
+    function WriteTEXS800 mdx=
+    (
+        format "Writing TEXS\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "TEXS" 4
+        
+        writeLong mdx.stream ( mdx.texs.count * 268 ) 
+        
+        for tex in mdx.texs do
+        (
+            writeLong mdx.stream tex.replacableId
+            Warcraft_III_Helpers.WriteFixedString mdx.stream tex.path 260
+            writeLong mdx.stream tex.flags
+        )
+
     ),
     function Export file=
     (
@@ -114,6 +158,7 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteSEQS800 mdx
         export.WriteGLBS800 mdx
         export.WriteMTLS800 mdx
+        export.WriteTEXS800 mdx
         
         
         

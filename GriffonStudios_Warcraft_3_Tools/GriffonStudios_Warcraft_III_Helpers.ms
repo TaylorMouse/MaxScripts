@@ -334,207 +334,67 @@ STRUCT Warcraft_III_Helpers
         
         return seqs
     ),
-    /* Get the list of materials and their properties and the list of associated textures */
-    function GetMTLS mdx=
+    function GetTEXS =
     (
-        
-        struct _mtls ( TotalSize = 0, ShaderList = #(), TEXSList = #() )
-        
-        struct _shaders ( shaderSizeIncluded, priorityPlane, shaderName = default_shader_name, flag = 0, Layers = #() )
-        struct _lays ( layerSizeIncluded, emissive_multiplier = 0.0, filterMode, shadingFlag, textureId, textureAnimationId, KMTA, KMTE )
-        struct _kmta ( timeList = #(), valueList = #() )
-        struct _kmte ( timeList = #(), valueList = #() )
-        local mtls = _mtls()
-        
-        local uniqueMaterials = #()
+        struct texs800 ( replacableId, path= "", flags = 3, check )
+        local texs = #()
         
         for obj in objects do
         (
-            if ( obj.material != undefined and ( classof obj.material == WC3RefMaterial ) ) then
-                appendIfUnique uniqueMaterials obj.material
-        )
-
-        /* get the textures, their ID is important in writing the MTLS */
-        _TEXSList = GriffonStudios_Helper_Functions.GetUniqueTextures uniqueMaterials
-        
-        mtls.TEXSList = _TEXSList
-        
-        for mat in uniqueMaterials do
-        (
-            mtls.TotalSize = mtls.TotalSize + 92 --> 92 bytes -> priority plane, shadername, flag
-            
-            local s = _shaders()
-            
-            s.shaderSizeIncluded = 92 --> starter header size 
-            s.priorityPlane = mat.priorityplane
-
-            if ( mat.twosided ) then s.flag = 0x02
-            
-            s.shaderSizeIncluded = s.shaderSizeIncluded + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
-            mtls.TotalSize = mtls.TotalSize + 8 --> 4 byte characters LAYS, 4 bytes nbr layers
-
-            -- LAYS
-            for i=1 to 6 do
+            if ( classof obj == Editable_Mesh and obj.material != undefined ) then
             (
-                local lay = _lays()
-                
-                lay.layerSizeIncluded = 52
-                s.shaderSizeIncluded = s.shaderSizeIncluded + 52
-                mtls.TotalSize = mtls.TotalSize + 52
-                lay.filterMode = mat.filterMode - 1
-                lay.shadingFlag = 0
-                
-                lay.emissive_multiplier = mat.emissive_multiplier
-                
-                if( mat.twosided ) then lay.shadingFlag = 0x10
-                
-                if (i==1) then 
+                if ( classof obj.material == compositematerial) then 
                 (
-                    lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.diffuse_map
-                    
-                    if ( mat.material_alpha.controller != undefined ) then 
+                    for subMat in obj.material.materialList do
                     (
-                        --> KMTA, nbr Key Values, Linetype, parent Id -> extra 16 bytes
-                        s.shaderSizeIncluded  = s.shaderSizeIncluded + 16
-                        mtls.TotalSize        = mtls.TotalSize + 16
-                        lay.layerSizeIncluded = lay.layerSizeIncluded + 16
-                        
-                        local kmta = _kmta()
-                        
-                        for key in mat.material_alpha.controller.keys do
+                        if ( classof subMat == WarcraftIII_Standard ) then
                         (
-                            s.shaderSizeIncluded  = s.shaderSizeIncluded + 8
-                            mtls.TotalSize        = mtls.TotalSize + 8
-                            lay.layerSizeIncluded = lay.layerSizeIncluded + 8
-                            
-                            local theTime = help.TimeToInt key.time
-                            theTime = theTime * 1000 / 30
-                            append kmta.timeList theTime
-                            append kmta.valueList ( key.value / 100.0 )
+                            local tex = texs800()
+                            tex.replacableId = subMat.ReplaceableTexture - 1
+                            if( tex.replacableId == 0 ) then 
+                                tex.path = ( getfilenamefile subMat.Diffuse_map.filename ) + ".blp" 
+                            if ( tex.replacableId == 2 ) then tex.flags = 0
+                            tex.check = tex.replacableId as string + tex.path + tex.flags as string
+                            append texs tex
                         )
-                        
-                        lay.KMTA = kmta
-                    )
-                    
-                )
-                if (i==2) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.normal_map
-                if (i==3) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.orm_map
-                if (i==4) then 
-                (
-                    lay.emissive_multiplier = mat.emissive_multiplier
-                    lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.emissive_map
-                    
-                    if ( mat.emissive_alpha.controller != undefined ) then 
-                    (
-                        --> KMTE, nbr Key Values, Linetype, parent Id -> extra 16 bytes
-                        s.shaderSizeIncluded  = s.shaderSizeIncluded + 16
-                        mtls.TotalSize        = mtls.TotalSize + 16
-                        lay.layerSizeIncluded = lay.layerSizeIncluded + 16
-                        
-                        local kmte = _kmte()
-                        
-                        for key in mat.emissive_alpha.controller.keys do
-                        (
-                            s.shaderSizeIncluded  = s.shaderSizeIncluded + 8
-                            mtls.TotalSize        = mtls.TotalSize + 8
-                            lay.layerSizeIncluded = lay.layerSizeIncluded + 8
-                            
-                            local theTime = help.TimeToInt key.time
-                            theTime = theTime * 1000 / 30
-                            append kmte.timeList theTime
-                            append kmte.valueList key.value
-                        )
-                        
-                        lay.KMTE = kmte
                     )
                 )
-                if (i==5) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.replacable_map
-                if (i==6) then lay.textureId = GriffonStudios_Helper_Functions.GetLayerTextureId2 _TEXSList mat.reflection_map
+                if ( classof obj.material == WarcraftIII_Standard ) then
+                (
+                    local tex = texs800()
+                    tex.replacableId = obj.material.ReplaceableTexture - 1
+                    if( tex.replacableId == 0 ) then 
+                        tex.path = ( getfilenamefile obj.material.Diffuse_map.filename ) + ".blp" 
+                    if ( tex.replacableId == 2 ) then tex.flags = 0
+                    tex.check = tex.replacableId as string + tex.path + tex.flags as string
+                    append texs tex
+                )
                 
-                lay.textureAnimationId = -1
-                
-                
-                append s.Layers lay
             )
-            
-            
-            append mtls.shaderlist s
         )
-
-        return mtls
-    ),
-    /* Get the unique list of textures so that a reference can be made when writing the mtls block */
-    function GetTEXS bitmap=
-    (
-        if ( TEXTURE_PATH == undefined ) then TEXTURE_PATH = "war3mapImported/" 
-        if( bitmap==undefined ) then 
-            tex = ""
-        else
+        uniqueTexs = #()
+        for t in texs do
         (
-            --local fileName = filenameFromPath bitmap.fileName
-            local fileName = (getFilenameFile  bitmap.fileName ) + ".dds"
-            
-            if( fileName == "" or fileName.count <=4 ) then 
-                tex = ""
+            if uniqueTexs.count == 0 then 
+            (
+                append uniqueTexs t
+            )
             else
             (
-                
-                
-                tex = TEXTURE_PATH + fileName 
-                
+                local addit = true
+                for u in uniqueTexs do
+                (
+                    if u.check == t.check then
+                    (
+                       addit = false
+                        exit
+                    )
+                )
+                if ( addit ) then append uniqueTexs t
             )
         )
-        return tex
-    ),
-    /* helper function to list only the unique texs based on the reference to texture files */
-    function GetUniqueTextures uniqueMaterials=
-    (
-        struct _texs ( id, replaceableId, fileName, flag = 3 )
-        
-        /* get the list of textures */
-        local texsList = #()
-        for mat in uniqueMaterials do
-        (
-            local tex  = undefined
-            
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.diffuse_map
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
 
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.normal_map
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
-            
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.orm_map
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
-            
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.emissive_map
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
-            
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.replacable_map
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
-            
-            tex = GriffonStudios_Helper_Functions.GetTEXS mat.reflection_map
-            if ( getfilenamefile tex == "EnvironmentMap" and USE_ENVIRONMENT_MAP == true ) then tex = "ReplaceableTextures/EnvironmentMap.blp"
-            if ( getfilenamefile tex == "Black32" and USE_BLACK32 == true ) then tex = "Textures/Black32.blp"
-            appendIfUnique texsList tex
-            
-        )
-        
-        local mtlsTextures = #()
-        for i=1 to texsList.count do
-        (
-            textureFile = texsList[i]
-            local t = _texs id:i replaceableId:1 fileName:"" --> replaceable Id 1 holds no texture
-            
-            if ( textureFile != "" ) then t = _texs id:i replaceableId:0 fileName:textureFile
-            
-            append mtlsTextures t
-        )
-        
-        return mtlsTextures
+        if WC3_MDX800_DEBUG then  for t in uniqueTexs do print t
+        return uniqueTexs
     )
 )
