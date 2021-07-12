@@ -334,6 +334,7 @@ STRUCT Warcraft_III_Helpers
         
         return seqs
     ),
+    /* get the unique list of TEXS */
     function GetTEXS =
     (
         struct texs800 ( replacableId, path= "", flags = 3, check )
@@ -397,6 +398,7 @@ STRUCT Warcraft_III_Helpers
         if WC3_MDX800_DEBUG then  for t in uniqueTexs do print t
         return uniqueTexs
     ),
+    /* get a unique list of materials */
     function GetMTLS = 
     (
         local matList = #()
@@ -414,5 +416,93 @@ STRUCT Warcraft_III_Helpers
         )
         if WC3_MDX800_DEBUG then for m in matList do print m
         return matList
+    ),
+    function GetBoneList=
+    (
+        local boneList = #()
+        for obj in objects do 
+            if (classof obj == boneGeometry ) then append boneList obj
+    ),
+    function GetWeights theMesh=
+    (
+        local boneList = GriffonStudios_Helper_Functions.GetBones()
+        select theMesh
+        max modify mode
+        local sk = modPanel.getCurrentObject()
+        
+        struct vertexWeights ( vertexId, boneIndices, weights )
+        local vertices = #()
+        
+        if (classof sk == Skin ) then
+        (
+            for v=1 to skinOps.getnumbervertices sk do
+            (
+                local count = skinops.getvertexweightcount sk v
+                local boneIndices = #(0,0,0,0)
+                local weights = #(0,0,0,0)
+                
+                if count > 4 then count = 4
+                for k=1 to count do
+                (
+                    local weight = skinOps.getvertexweight sk v k
+                    local boneId = skinOps.getvertexweightboneid sk v k
+                    local boneName = skinOps.getBonename sk boneId 0
+                    
+                    for b=1 to boneList.count do
+                    (
+                        if ( boneList[b].name == boneName ) then 
+                        (
+                            boneId = b - 1
+                            exit
+                        )
+                    )
+                    
+                    boneIndices[k] = boneId
+                    weights[k] = ( weight * 255 ) as integer
+                )
+                
+                if( 255 - weights[1] - weights[2] - weights[3] - weights[4] != 0 ) then
+                    weights[1] = 255 - weights[2] - weights[3] - weights[4]
+
+                local vertex = vertexWeights vertexId:v boneIndices:boneIndices weights:weights
+                
+                append vertices vertex
+            )
+            
+        )
+        deselect theMesh
+        return vertices
+    ),
+    function GetGeos=
+    (
+        struct geo800  
+            (   uniqueName, VRTX = #(), NRMS = #(), PTYP = #(), PCNT = #(), PVTX = #(), GNDX = #(), MTGC = #(), MATS = #(), UVS = #(), meshRef, 
+                bones = #(),  --> bones indexes for weighing the vertices, vertices are equally weighted -> 2 bones => so 1 vertex is 0.5
+                uniqueBoneIds = #() --> the list of bones required for this whole mesh
+            )
+
+        /* get the mesh references that can be exported */
+        geos = #()
+        for obj in objects do
+        (
+            if ( classof obj == editable_mesh or classof obj == PolyMeshObject ) then
+            (
+                if ( obj.ishidden == false ) then
+                (
+                    if ( classof obj.material == WarcraftIII_Standard or
+                          (  classof obj.material == CompositeMaterial and 
+                             classof obj.material.materialList[1] == WarcraftIII_Standard and
+                              classof obj.material.materialList[2] == WarcraftIII_Standard 
+                          )
+                        ) then
+                        (
+                            local geo = geo800 meshRef:obj
+                            append geos geo
+                        )
+                )
+            )
+        )
+        
+        
     )
 )

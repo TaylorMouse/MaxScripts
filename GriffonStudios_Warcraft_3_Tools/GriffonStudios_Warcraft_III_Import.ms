@@ -611,12 +611,12 @@ STRUCT WC3_MDX800
                     for x=1 to 2 do
                     (
                         local km = GriffonStudios_Helpers.ReadFixedString stream 4
-                        if ( km == "KMTA" ) then lay.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream
-                        if ( km == "KMTE" ) then lay.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream
+                        if ( km == "KMTA" ) then map.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream
+                        if ( km == "KMTE" ) then map.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream
                         
                     )
-                    if ( lay.KMTA == undefined ) then fseek stream -4 #seek_cur
-                    if ( lay.KMTE == undefined ) then fseek stream -4 #seek_cur
+                    if ( map.KMTA == undefined ) then fseek stream -4 #seek_cur
+                    if ( map.KMTE == undefined ) then fseek stream -4 #seek_cur
                 )
                 append layer.maps map
                 

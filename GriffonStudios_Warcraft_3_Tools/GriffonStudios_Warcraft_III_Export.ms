@@ -90,14 +90,10 @@ STRUCT WC3_MDX800_EXPORTER
             (
                 for b in obj.listOfBones  do
                 (
-                    local maxFrame =  0
-                    local posStr = b.pos.controller.keys[b.pos.controller.keys.count].time as string
-                    local rotStr = b.rotation.controller.keys[b.rotation.controller.keys.count].time as string
-                    local scaleStr = b.scale.controller.keys[b.scale.controller.keys.count].time as string
-                    
-                    local posTime = substring posStr 1 (posStr.count - 1 ) as integer
-                    local rotTime = substring rotStr 1 (rotStr.count - 1 ) as integer
-                    local scaleTime = substring scaleStr 1 (scaleStr.count - 1 ) as integer
+                    local maxFrame  =  0
+                    local posTime   = (b.pos.controller.keys[b.pos.controller.keys.count].time as integer)/ticksperframe
+                    local rotTime   = (b.rotation.controller.keys[b.rotation.controller.keys.count].time as integer)/ticksperframe
+                    local scaleTime = (b.scale.controller.keys[b.scale.controller.keys.count].time as integer)/ticksperframe
                     
                     if posTime > maxFrame then maxFrame = posTime
                     if rotTime > maxFrame then maxFrame = rotTime
@@ -235,10 +231,22 @@ STRUCT WC3_MDX800_EXPORTER
         )
 
     ),
+    function WriteGEOS800 mdx=
+    (
+        format "Writing GEOS\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "GEOS" 4
+        
+        mdx.boneList = Warcraft_III_Helpers.GetBoneList() --> required to make the weights etc... does not yet get the animation data
+        mdx.geos = Warcraft_III_Helpers.GetGeos()
+        
+        
+        
+        
+    ),
     function Export file=
     (
         clearlistener()
-        struct mdx800 ( file, stream, seqs, mtls, texs )
+        struct mdx800 ( file, stream, seqs, mtls, texs, geos, boneList )
         local mdx = mdx800()
         local export = WC3_MDX800_EXPORTER()
         
@@ -256,7 +264,8 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteGLBS800 mdx
         export.WriteMTLS800 mdx
         export.WriteTEXS800 mdx
-
+        export.WriteGEOS800 mdx
+        
         fFlush mdx.stream
         fClose mdx.stream
         animationrange = interval animationInterval.start animationInterval.end

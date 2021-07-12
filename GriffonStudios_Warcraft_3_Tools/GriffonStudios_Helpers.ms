@@ -164,6 +164,7 @@ struct GriffonStudios_Helpers
     (
         if (val == undefined ) then false else true
     ),
+    /* creates a layer if it does not exist by name else returns a reference to the existing layer */
     function CreateLayer layerName =
     (
         layer = LayerManager.GetLayerFromName layerName
