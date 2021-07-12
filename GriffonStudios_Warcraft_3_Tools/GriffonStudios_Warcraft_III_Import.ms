@@ -1270,7 +1270,7 @@ STRUCT WC3_MDX800
             if ( evt.parentId > 0 ) then evt.pos = mdx.pivt[evt.parentId].translationpart
             
             for key in evt.KEVT do
-                pnt.AddKey key
+                append pnt.keyList key
             
             evt.objRef = pnt
             layer.AddNode pnt
@@ -1705,6 +1705,8 @@ STRUCT WC3_MDX800
         
         format "Done!\n"
         gc()
+        clearSelection()
+        max zoomext sel --> zoom out
         setArrowCursor() 
     )
 )
