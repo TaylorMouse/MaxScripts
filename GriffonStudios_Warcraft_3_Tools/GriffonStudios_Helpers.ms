@@ -1,5 +1,18 @@
+/*
+    .SYNOPSIS
+    | Some usefull functions :)
+    
+    .COPYRIGHT
+    | (c)2005 - 2021 Griffon Studios
+    
+    .AUTHOR
+    | Taylor Mouse
+
+*/
+
 struct GriffonStudios_Helpers
 (
+    /* get all unique keys from all objects */
     function GetAllAnimatedKeyFrames=
     (
         local uniqueKeys = #()
@@ -44,6 +57,7 @@ struct GriffonStudios_Helpers
         
         return allKeys[allKeys.count]
     ),
+    /* Check if the file exists */
     function CheckFile file=
     (
         if ( file == undefined ) then  
@@ -54,12 +68,14 @@ struct GriffonStudios_Helpers
             return undefined 
         )  
         return true
-    ),    
+    ), 
+    /* Read a Vector 3 => 3 floats from a binary stream */    
     function ReadVector3 stream=
     (
         local vector3 = [readFloat stream, readFloat stream, readFloat stream]
         return vector3
     ),
+    /* Read a triangle => 3 shorts(2bytes) from a binary stream */
     function ReadTris stream=
     (
         local tris = [readshort stream + 1, readshort stream + 1, readshort stream + 1]
@@ -90,6 +106,7 @@ struct GriffonStudios_Helpers
         
         return spline
     ),
+    /* build a spline box based on 2 corner points */
     function BuildBoundingBox bbBox=
     (
         local p1 = bbBox[1]

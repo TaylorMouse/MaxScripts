@@ -16,14 +16,12 @@ plugin simpleManipulator WarcraftIII_Event
     classID:#(0x72b66f71, 0x5f4ea111)
     category:"Warcraft III"
 (
-    local myNoteTrack
-    local listOfKeys = #()
+
     local selectedKey
     
     parameters main rollout:params
     (
-       -- eventNotes type:#noteTrack
-        
+       keyList type:#IntTab tabSizeVariable:true
     )
     rollout params "Event Properties"
     (
@@ -31,8 +29,8 @@ plugin simpleManipulator WarcraftIII_Event
         
         dotNetControl lvNotes "System.Windows.Forms.ListView" width:130 height:200 align:#center
         
-        button btnAddNote "Add key" height:30 width:130
-        button btnRemNote "Remove key" height:30 width:130
+        button btnAddKey  "Add" height:30 width:62 align:#left offset:[2,0]
+        button btnRemoveKey "Remove" height:30 width:62 align:#right offset:[-2,-35]
         button btnInfo "Info" height:30 width:130
         
         groupbox group1 "Common" height:400 width:155 pos:[3,5]
@@ -43,19 +41,10 @@ plugin simpleManipulator WarcraftIII_Event
             listOfKeys = #()
             lvNotes.Items.Clear()
             
-            if ( myNoteTrack == undefined ) then return undefined
-            
-            local allKeys = myNoteTrack.keys
-            
-            for k in allKeys do
+            for k in keyList do
             (
-                
-                local t = (k.Time as integer)/ticksperframe
-                append listOfKeys t
-                
                 local item = dotNetObject "System.Windows.Forms.ListViewItem"
-                item.Text = t as string
-                
+                item.Text = k as string
                 append items item
             )
             
@@ -75,9 +64,7 @@ plugin simpleManipulator WarcraftIII_Event
         on lvNotes ItemSelectionChanged arg do
         (
             selectedKey = arg.Item.Text
-            
         )
-        
         
         function ShowMessageBox message title=
         (
@@ -88,65 +75,34 @@ plugin simpleManipulator WarcraftIII_Event
             msgbox.show message title msgboxbuttons.OK msgboxicons.none
         )
             
-        on btnAddNote pressed do
+        on btnAddKey pressed do
         (
-            if ( myNoteTrack == undefined ) then myNoteTrack = notetrack "Notes"
-                
             local keyFrame = (sliderTime as integer)/ticksperframe
-            local keyAlreadyExists = false
-            for key in listOfKeys do
-            (
-                if ( key == keyFrame ) then keyAlreadyExists = true
-            )
-            
-            if ( keyAlreadyExists == false ) then 
-            (
-                addNewNoteKey myNoteTrack keyFrame
-            
-                UpdateListOfKeys()
-            )
+            appendifunique keyList keyFrame
+            UpdateListOfKeys()
             
         )
         
-        on btnRemNote pressed do
+        on btnRemoveKey pressed do
         (
-            if ( myNoteTrack != undefined and selectedKey != undefined ) then 
-            (
-                local allKeys = myNoteTrack.keys
-                local keyToRemoveAtTime = selectedKey as integer
+            if selectedKey == undefined then return undefined
+            print selectedKey
+            for i=1 to keyList.count do
+                if selectedKey == (keyList[i] as string) then deleteItem keyList i
                 
-                for i=1 to allKeys.count do
-                (
-                    local k = allKeys[i]
-                    if k.Time == keyToRemoveAtTime then
-                    (
-                        deleteNoteKey myNoteTrack i
-                        exit
-                    )
-                )
+            selectedKey = undefined
                 
-                selectedKey = undefined
-                
-                UpdateListOfKeys()
-            )
+            UpdateListOfKeys()
+            
         )
         
         on btnInfo pressed do
         (
-            ShowMessageBox "The events will happen on the places where the keys are set.\nThe names of the objects can be found in the official Warcraft III Art Tools Documentation" "Reforged Event Info"
+            ShowMessageBox "The events will happen on the places where the keys are set.\nThe names of the objects can be found in the official Warcraft III Art Tools Documentation" "Warcraft III Event Info"
         )
         
     )
-    
-    function AddKey key=
-    (
-        if ( myNoteTrack == undefined ) then myNoteTrack = notetrack "Notes"
-        
-        addNewNoteKey myNoteTrack key
-        
-    )
-    
-   
+       
     tool create
     (
         on mousePoint click do

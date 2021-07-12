@@ -1,6 +1,8 @@
 STRUCT Warcraft_III_Helpers
 (
-    /*
+    function ReadVector3Anim stream=
+    (
+        /*
         .INFO
         | LineType:
         |   NO_INTERP = 0x0
@@ -8,9 +10,7 @@ STRUCT Warcraft_III_Helpers
         |   HERMITE   = 0x2
         |   BEZIER    = 0x3
 
-    */
-    function ReadVector3Anim stream=
-    (
+        */
         struct anim800 ( numPts, LineType, glbsId, KG )
         struct kg800   ( Time, Point, inTan, outTan, LineType )
         local anim = anim800()
@@ -341,7 +341,7 @@ STRUCT Warcraft_III_Helpers
         
         for obj in objects do
         (
-            if ( classof obj == Editable_Mesh and obj.material != undefined ) then
+            if ( obj.material != undefined ) then
             (
                 if ( classof obj.material == compositematerial) then 
                 (
@@ -396,5 +396,23 @@ STRUCT Warcraft_III_Helpers
 
         if WC3_MDX800_DEBUG then  for t in uniqueTexs do print t
         return uniqueTexs
+    ),
+    function GetMTLS = 
+    (
+        local matList = #()
+        for obj in objects do
+        (
+            if ( obj.material != undefined ) then 
+            (
+                if ( classof obj.material == compositeMaterial ) then
+                (
+                    if( classof obj.material.materialList[1] == WarcraftIII_Standard ) then appendIfUnique matList obj.material
+                )
+                if ( classof obj.material == WarcraftIII_Standard ) then
+                    appendIfUnique matList obj.material
+            )
+        )
+        if WC3_MDX800_DEBUG then for m in matList do print m
+        return matList
     )
 )

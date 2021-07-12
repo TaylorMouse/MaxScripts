@@ -16,12 +16,14 @@ plugin simpleManipulator WarcraftIII_Behavior
     classID:#(0x23d03ade, 0x7a156813)
     category:"Warcraft III"
 (
-    local listOfBones = #()
-    
     local selectedItem
     local selectedBone
     
-    parameters main rollout:params ( )
+    parameters main rollout:params 
+    ( 
+        listOfBones type:#nodeTab tabSizeVariable:true
+    )
+    
     rollout params "Behavior Properties"
     (
         label lbl1 "Press the Add button and pick a bone to add to the list" align:#left offset:[0,20] width:130 height:50
@@ -104,26 +106,11 @@ plugin simpleManipulator WarcraftIII_Behavior
 
         )
         
-        on btnAdd pressed do
-        (
-            AddItem()
-        )
-        
-        on btnRemove pressed do
-        (
-            RemoveItem()
-
-        )
-         
-        on btnInfo pressed do
-        (
-            ShowMessageBox "The selected bone(s) will be marked for the Global Sequence (GLBS) Animation " "Warcraft III Global Sequence Animation"
-        )
+        on btnAdd    pressed do ( AddItem() )
+        on btnRemove pressed do ( RemoveItem() )
+        on btnInfo   pressed do ( ShowMessageBox "The selected bone(s) will be marked for the Global Sequence (GLBS) Animation " "Warcraft III Global Sequence Animation" )
         
     )
-    
-   
-    
     
     tool create
     (
