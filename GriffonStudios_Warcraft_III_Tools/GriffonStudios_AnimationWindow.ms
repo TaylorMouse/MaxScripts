@@ -4,7 +4,7 @@
     | Compatible with Warcraft III, Warcraft III Reforged and StarCraft II
     
     .COPYRIGHT
-    | ©2020 Griffon Studios
+    | ï¿½2020 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -68,7 +68,7 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
         button btn_removeNoteTrack "Remove all animations (note track)" width:180 height:30
     )
     
-    label lblTM "©2021 Taylor Mouse"
+    label lblTM "ï¿½2021 Taylor Mouse"
     
     function SetAnimationNoteTrack anim=
     (
@@ -396,16 +396,4 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
         ResetListView()
     
     )
-)
-
-macroscript Animation_Window 
-	category:"Griffon Studios Tools" 
-    internalcategory:"Griffon Studios Tools"
-	tooltip:"Animation Window" 
-    buttonText:"Animation Window"
-    icon:#("GriffonStudios",1)
-(
-    
-    if(GriffonStudios_AnimationWindow != undefined) then destroydialog GriffonStudios_AnimationWindow
-            CreateDialog GriffonStudios_AnimationWindow lockwidth: true      
 )
