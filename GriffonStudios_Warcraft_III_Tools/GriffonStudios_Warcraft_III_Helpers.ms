@@ -422,6 +422,8 @@ STRUCT Warcraft_III_Helpers
         local boneList = #()
         for obj in objects do 
             if (classof obj == boneGeometry ) then append boneList obj
+        
+        return boneList
     ),
     function GetWeights theMesh=
     (
@@ -430,7 +432,7 @@ STRUCT Warcraft_III_Helpers
         max modify mode
         local sk = modPanel.getCurrentObject()
         
-        struct vertexWeights ( vertexId, boneIndices, weights )
+        struct vertexWeights ( vertexId, boneIndices, boneNames, weights )
         local vertices = #()
         
         if (classof sk == Skin ) then
@@ -439,6 +441,7 @@ STRUCT Warcraft_III_Helpers
             (
                 local count = skinops.getvertexweightcount sk v
                 local boneIndices = #(0,0,0,0)
+                local boneNames = #("", "", "", "")
                 local weights = #(0,0,0,0)
                 
                 if count > 4 then count = 4
@@ -458,13 +461,14 @@ STRUCT Warcraft_III_Helpers
                     )
                     
                     boneIndices[k] = boneId
+                    boneNames[k] = boneName
                     weights[k] = ( weight * 255 ) as integer
                 )
                 
                 if( 255 - weights[1] - weights[2] - weights[3] - weights[4] != 0 ) then
                     weights[1] = 255 - weights[2] - weights[3] - weights[4]
 
-                local vertex = vertexWeights vertexId:v boneIndices:boneIndices weights:weights
+                local vertex = vertexWeights vertexId:v boneIndices:boneIndices boneNames:boneNames weights:weights
                 
                 append vertices vertex
             )
@@ -473,26 +477,30 @@ STRUCT Warcraft_III_Helpers
         deselect theMesh
         return vertices
     ),
-    function GetGeos=
+    function GetGeos mdx=
     (
         struct geo800  
-            (   uniqueName, VRTX = #(), NRMS = #(), PTYP = #(), PCNT = #(), PVTX = #(), GNDX = #(), MTGC = #(), MATS = #(), UVS = #(), meshRef, 
+            (   size, vrtx = #(), nrms = #(), ptyp, pcnt, pvtx = #(), gndx = #() , mtgc = #(), mats, uvas, uvbs = #(), meshRef,
                 bones = #(),  --> bones indexes for weighing the vertices, vertices are equally weighted -> 2 bones => so 1 vertex is 0.5
                 uniqueBoneIds = #() --> the list of bones required for this whole mesh
             )
-
+        struct mats800 ( nbrItems, name, matrices = #(), materialId, sectionGroupId, sectionGroupType, sevenFloats = #(), nbrFloats, floats = #() )
+            
         /* get the mesh references that can be exported */
-        geos = #()
+        local geos = #()
+        local mtls =  Warcraft_III_Helpers.GetMTLS()
+            
         for obj in objects do
         (
-            if ( classof obj == editable_mesh or classof obj == PolyMeshObject ) then
+            if ( classof obj == editable_mesh ) then
             (
                 if ( obj.ishidden == false ) then
                 (
                     if ( classof obj.material == WarcraftIII_Standard or
-                          (  classof obj.material == CompositeMaterial and 
-                             classof obj.material.materialList[1] == WarcraftIII_Standard and
-                              classof obj.material.materialList[2] == WarcraftIII_Standard 
+                          ( 
+                            classof obj.material == CompositeMaterial and 
+                            classof obj.material.materialList[1] == WarcraftIII_Standard and
+                            classof obj.material.materialList[2] == WarcraftIII_Standard 
                           )
                         ) then
                         (
@@ -503,6 +511,217 @@ STRUCT Warcraft_III_Helpers
             )
         )
         
+        /* for each mesh in this list of meshed do */
+        for geo in geos do
+        (
+            local theMesh = geo.meshRef
+            local original_vertices = #()
+            local original_normals  = #()
+            local original_weights  = Warcraft_III_Helpers.GetWeights theMesh
+
+            /* because a vertex can have multiple vertex coordinates keep track of them */
+            for v=1 to theMesh.numVerts do
+            (
+                original_vertices[v] = getVert theMesh v
+                original_normals[v]  = getNormal theMesh v
+            )
+
+            local tvVertices = #()
+            local faces = #()
+            for i=1 to theMesh.numFaces do
+            (
+                local f = getFace theMesh i
+                local u = getTvFace theMesh i
+
+                faces[i] = u
+                tvVertices[u.x] = f.x
+                tvVertices[u.y] = f.y
+                tvVertices[u.z] = f.z
+            )
+
+            -- if there are isolated vertices, these will show up in the tvVertices as undefined -> fix this
+            for i=1 to tvVertices.count do
+            (
+                if (tvVertices[i] == undefined ) then tvVertices[i] = i as float
+            )
+            
+            local vertices = #()
+            local normals = #()
+            local uvs = #()
+            local weights = #()
+            for i=1 to tvVertices.count do
+            (
+                local uv = getTvert theMesh i
+                
+                uvs[i] = [uv.x, 1.0 - uv.y]
+                vertices[i] = original_vertices[tvVertices[i]]
+                normals[i]  = original_normals[tvVertices[i]]
+                weights[i]  = original_weights[tvVertices[i]]
+            )
         
+            geo.Size = 4 --> start initial size
+            
+            -- VRTX
+            geo.Size += 8
+            geo.vrtx = vertices --> vector 3
+            geo.Size += vertices.count * 12
+            
+            -- NRMS
+            geo.Size += 8
+            geo.nrms = normals --> vector 3
+            geo.Size += normals.count * 12
+            
+            -- PTYP --> type = triangle
+            geo.Size += 12
+            geo.ptyp = 0x4
+            
+            -- PCNT
+            geo.Size += 12
+            geo.pcnt = m.numFaces * 3 --> number of corners or indices in the group
+            
+            -- PVTX
+            geo.Size += 8
+            for f=1 to faces.count do
+            (
+                local face = faces[f]
+                append geo.pvtx [face.x - 1, face.y - 1, face.z - 1]
+            )
+            geo.Size += faces.count * 6
+            
+            -- UVAS / UVBS
+            geo.Size += 8
+
+            geo.uvas = 1 --help.GetNumUVMaps m
+            for u=1 to geo.uvas do
+            (
+                geo.Size += 8
+                geo.uvbs = uvs
+                geo.Size += uvs.count * 8
+            )
+            
+            -- MATS
+            geo.Size += 8
+            geo.mats = mats800()
+                        
+            local boneindices = #()
+            for w in original_weights do 
+            (
+                if( boneIndices.count == 0 ) then
+                    append boneIndices w.boneIndices
+                else
+                (
+                    local foundIt = false
+                    for bi in boneIndices do
+                    (   
+                         if bi[1] == w.boneIndices[1] and bi[2] == w.boneIndices[2] and bi[3] == w.boneIndices[3] and bi[4] == w.boneIndices[4] then foundIt = true
+                    )   
+                    if foundIt == false then append boneIndices w.boneIndices
+                )
+            )
+
+            local matrices = #()
+            for i=1 to boneIndices.count do
+            (
+                if boneIndices[i][1] != 0 then append matrices boneIndices[i][1]
+                if boneIndices[i][2] != 0 then append matrices boneIndices[i][2]
+                if boneIndices[i][3] != 0 then append matrices boneIndices[i][3]
+                if boneIndices[i][4] != 0 then append matrices boneIndices[i][4]
+                
+            )
+
+            geo.mats.matrices = matrices
+            geo.Size += matrices.count * 4
+            
+            for x=1 to mtls.count do
+            (
+                if ( theMesh.material.name == mtls[x].name ) then geo.mats.materialId = x - 1
+            )
+            
+            geo.Size += 4 --> texture ID
+            
+            geo.mats.sectionGroupId = 0 --> always 0
+            geo.mats.sectionGroupType = 0 --> if this would be an unselectable mesh, it should be 4
+            geo.Size += 8 --> section group id, section group type
+            
+            local baseExtend = #()
+            with animate on at time 0
+            (
+                local rad = distance theMesh.min theMesh.max
+                append baseExtend rad
+                append baseExtend theMesh.min.x
+                append baseExtend theMesh.min.y
+                append baseExtend theMesh.min.z
+                append baseExtend theMesh.max.x
+                append baseExtend theMesh.max.y
+                append baseExtend theMesh.max.z
+                geo.mats.sevenFloats = baseExtend
+            )
+
+            geo.Size += 7 * 4
+
+            geo.Size += 4 --> one long --> nbr of seqs
+            geo.mats.nbrFloats = mdx.SEQS.count
+            
+            for seqs in mdx.SEQS do
+            (
+                with animate on
+                    at time seqs.startFrame
+                    (
+                        local extend = #()
+                        local rad = distance theMesh.min theMesh.max
+                        append Extend rad
+                        append Extend theMesh.min.x
+                        append Extend theMesh.min.y
+                        append Extend theMesh.min.z
+                        append Extend theMesh.max.x
+                        append Extend theMesh.max.y
+                        append Extend theMesh.max.z
+                        
+                        /* only when there is a scaling involved during certain animations, the extend is different */
+                        local floatsToAdd = baseExtend
+                        if ( matchpattern seqs.name pattern:"death*" or matchpattern seqs.name pattern:"dissipate" or matchpattern seqs.name pattern:"decay*" ) then 
+                            floatsToAdd = Extend
+
+                        for fl in floatsToAdd do append geo.mats.floats fl
+                        
+                    )
+            )
+
+            geo.Size += mdx.SEQS.count * 7 * 4
+            
+            -- GNDX
+            geo.Size += 8 --> GNDX and nbr of gndx's 
+            for w in original_weights do 
+            (
+                for bi=1 to boneIndices.count do
+                (
+                    if boneIndices[bi][1] == w.boneIndices[1] and
+                       boneIndices[bi][2] == w.boneIndices[2] and
+                       boneIndices[bi][3] == w.boneIndices[3] and
+                       boneIndices[bi][4] == w.boneIndices[4] then
+                    append geo.gndx bi
+                )
+            )
+            geo.Size += geo.gndx.count --> only byte
+            
+            -- MTGC
+            geo.Size += 8
+            for n=1 to boneIndices.count do 
+            (
+                local counter = 0
+                
+                for bi in boneIndices do 
+                    if bi != 0 then counter += 1
+                
+                append geo.mtgc counter
+            )
+            geo.Size += boneIndices.count * 4
+            
+            if WC3_MDX800_DEBUG then format " - Size: %\n" geo.size
+           --append geos.geos geo
+        )
+        
+        mdx.geos = geos
+        return geos
     )
 )

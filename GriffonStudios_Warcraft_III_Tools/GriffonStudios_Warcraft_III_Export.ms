@@ -19,6 +19,8 @@
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
+GLOBAL WC3_MDX800_DEBUG = true
+
 STRUCT WC3_MDX800_EXPORTER
 (
     function WriteMDLX800 mdx=
@@ -160,9 +162,9 @@ STRUCT WC3_MDX800_EXPORTER
                     if ( path == undefined ) then path = ""
                     
                     local texsID = 0
-                    for t=1 to texs.count do 
+                    for t=1 to mdx.texs.count do 
                     (
-                        if texs[t].replacableId == replacableId and texs[t].path == path then 
+                        if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
                         (
                             texsID = t-1
                             exit
@@ -200,9 +202,9 @@ STRUCT WC3_MDX800_EXPORTER
                 if ( path == undefined ) then path = ""
                 
                 local texsID = 0
-                for t=1 to texs.count do 
+                for t=1 to mdx.texs.count do 
                 (
-                    if texs[t].replacableId == replacableId and texs[t].path == path then 
+                    if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
                     (
                         texsID = t-1
                         exit
@@ -237,8 +239,13 @@ STRUCT WC3_MDX800_EXPORTER
         Warcraft_III_Helpers.WriteFixedString mdx.stream "GEOS" 4
         
         mdx.boneList = Warcraft_III_Helpers.GetBoneList() --> required to make the weights etc... does not yet get the animation data
-        mdx.geos = Warcraft_III_Helpers.GetGeos()
+        mdx.geos = Warcraft_III_Helpers.GetGeos mdx
         
+        local totalSize = 0
+        for geo in mdx.geos do totalSize += geo.size
+        
+        writeLong mdx.stream totalSize
+        if WC3_MDX800_DEBUG then format " - total size: %\n" totalSize
         
         
         

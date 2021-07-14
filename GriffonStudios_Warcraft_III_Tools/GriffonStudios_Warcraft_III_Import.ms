@@ -650,7 +650,7 @@ STRUCT WC3_MDX800
             
             local geo = geo800() 
             local chunk_size = readLong stream
-            
+            if WC3_MDX800_DEBUG then format " - chunkSize: %\n" chunk_size 
             for h=1 to 9 do
             (
                 local header = GriffonStudios_Helpers.ReadFixedString stream 4
@@ -703,11 +703,11 @@ STRUCT WC3_MDX800
                     geo.mats.Id = readlong stream
                     geo.mats.sectionGroupId = readlong stream
                     geo.mats.sectionGroupType = readlong stream
-                    for i=1 to 7 do append geo.mats.sevenFloats (readfloat stream) -- vector3 + quaternian ?
+                    for i=1 to 7 do append geo.mats.sevenFloats (readfloat stream) -- bounding radius + bbox
                     
-                    geo.mats.nbrFloats = readLong stream
-                    for i=1 to geo.mats.nbrFloats * 7 do append geo.mats.floats (readfloat stream )
-                    --format "Material Structures: % %\n" header geo.mats.nbrItems
+                    geo.mats.nbrFloats = readLong stream --> for each seqs
+                    for i=1 to geo.mats.nbrFloats * 7 do append geo.mats.floats (readfloat stream ) -- bounding radius + bbox
+                    
                 )
 
                 if header == "UVAS" then 
@@ -944,7 +944,8 @@ STRUCT WC3_MDX800
             local map = mtl.maps[1]
             local mat = WC3_MDX800.CreateWC3Material mdx map m
             
-
+            m = m + 1
+            
             if( mtl.nMaps == 1 ) then 
             (
                 mtl.materialRef = mat
@@ -952,7 +953,7 @@ STRUCT WC3_MDX800
             )
             else
             (
-                m = m + 1
+                
                 mtl.materialRef = compositematerial()
                 mtl.materialRef.name = mdx.modl.name + "_COMPOSITE_" + ( m as string )
                 
