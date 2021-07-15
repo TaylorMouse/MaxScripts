@@ -60,7 +60,7 @@ STRUCT WC3_MDX800_EXPORTER
         format "Writing SEQS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "SEQS" 4
         
-        writeLong mdx.stream ( 132 * seqs.count)
+        writeLong mdx.stream ( 132 * mdx.seqs.count)
         
         for seq in mdx.seqs do
         (

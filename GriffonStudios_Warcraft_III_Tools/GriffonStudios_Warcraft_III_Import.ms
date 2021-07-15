@@ -197,6 +197,7 @@ STRUCT WC3_MDX800
     ),
     function ReadTAGS800 stream streamLen=
     (
+        format "Reading CHUNKS\n"
         struct tag800 ( Name, Offset, Size )     
         
         local tags = #() 
@@ -1663,6 +1664,7 @@ STRUCT WC3_MDX800
         animationrange = interval 0 150
         slidertime = 0
         local stream = fOpen file "rb"
+        if ( doesFileExist file != true or stream == undefined ) then return undefined
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
         struct mdx800 
@@ -1696,7 +1698,7 @@ STRUCT WC3_MDX800
         
         fclose stream
         if WC3_MDX800_DEBUG then WC3_MDX = mdx
-        
+--         
         WC3_MDX800.BuildMODL800 mdx
         WC3_MDX800.BuildGEOS800 mdx
         WC3_MDX800.BuildSEQS800 mdx
@@ -1712,6 +1714,7 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildCAMS800 mdx
         WC3_MDX800.BuildGEOA800 mdx
         WC3_MDX800.BuildRIBB800 mdx
+        
 --         WC3_MDX800.BuildPREM800 mdx
 --         WC3_MDX800.BuildPRE2800 mdx
         
@@ -1722,7 +1725,7 @@ STRUCT WC3_MDX800
         setArrowCursor() 
     )
 )
-
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
