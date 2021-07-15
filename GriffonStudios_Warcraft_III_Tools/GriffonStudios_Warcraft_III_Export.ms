@@ -20,7 +20,7 @@ fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
-
+GLOBAL MDX_EXPORT = undefined
 STRUCT WC3_MDX800_EXPORTER
 (
     function WriteMDLX800 mdx=
@@ -59,10 +59,10 @@ STRUCT WC3_MDX800_EXPORTER
     (
         format "Writing SEQS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "SEQS" 4
-        local seqs = Warcraft_III_Helpers.GetSEQS()
+        
         writeLong mdx.stream ( 132 * seqs.count)
         
-        for seq in seqs do
+        for seq in mdx.seqs do
         (
             Warcraft_III_Helpers.WriteFixedString mdx.stream seq.Name 80
             WriteLong  mdx.stream seq.StartFrame
@@ -77,48 +77,23 @@ STRUCT WC3_MDX800_EXPORTER
             Warcraft_III_Helpers.WriteVector3 mdx.stream seq.BBox[2]
 
         )
-        mdx.seqs = seqs
+
     ),
     function WriteGLBS800 mdx=
     (
         format "Writing GLBS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "GLBS" 4
         
-        local glbs = #()
+        Warcraft_III_Helpers.GetGLBS mdx
+       
+        writeLong mdx.stream (mdx.glbs.count * 4)
+        for g in mdx.glbs do writeLong mdx.stream g
         
-        for obj in objects do 
-        (
-            if (  classof obj == WarcraftIII_Behavior) then
-            (
-                for b in obj.listOfBones  do
-                (
-                    local maxFrame  =  0
-                    local posTime   = (b.pos.controller.keys[b.pos.controller.keys.count].time as integer)/ticksperframe
-                    local rotTime   = (b.rotation.controller.keys[b.rotation.controller.keys.count].time as integer)/ticksperframe
-                    local scaleTime = (b.scale.controller.keys[b.scale.controller.keys.count].time as integer)/ticksperframe
-                    
-                    if posTime > maxFrame then maxFrame = posTime
-                    if rotTime > maxFrame then maxFrame = rotTime
-                    if scaleTime > maxFrame then maxFrame = scaleTime
-                        
-                    maxFrame = maxFrame * 1000 / 30 as integer
-                    append glbs maxFrame
-                )
-                exit
-            )
-        )
-        if ( WC3_MDX800_DEBUG ) then print glbs
-        writeLong mdx.stream (glbs.count * 4)
-        for g in glbs do writeLong mdx.stream g
-
     ),
     function WriteMTLS800 mdx=
     (
         format "Writing MTLS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "MTLS" 4
-        
-        mdx.mtls = Warcraft_III_Helpers.GetMtls()
-        mdx.texs = Warcraft_III_Helpers.GetTexs()
 
         local size = 0
         
@@ -238,22 +213,102 @@ STRUCT WC3_MDX800_EXPORTER
         format "Writing GEOS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "GEOS" 4
         
-        mdx.boneList = Warcraft_III_Helpers.GetBoneList() --> required to make the weights etc... does not yet get the animation data
-        mdx.geos = Warcraft_III_Helpers.GetGeos mdx
-        
         local totalSize = 0
         for geo in mdx.geos do totalSize += geo.size
         
         writeLong mdx.stream totalSize
         if WC3_MDX800_DEBUG then format " - total size: %\n" totalSize
         
+        for geo in mdx.geos do
+        (
+            writeLong mdx.stream geo.size
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "VRTX" 4
+            writeLong mdx.stream geo.VRTX.count
+            for v in geo.VRTX do Warcraft_III_Helpers.WriteVector3 mdx.stream v
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "NRMS" 4
+            writeLong mdx.stream geo.NRMS.count
+            for n in geo.NRMS do Warcraft_III_Helpers.WriteVector3 mdx.stream n
+
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "PTYP" 4
+            writeLong mdx.stream 1
+            writeLong mdx.stream geo.PTYP
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "PCNT" 4
+            writeLong mdx.stream 1
+            writeLong mdx.stream geo.PCNT
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "PVTX" 4
+            writeLong mdx.stream ( geo.PVTX.count * 3 )
+            for p in geo.PVTX do Warcraft_III_Helpers.WriteTris mdx.stream p
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "GNDX" 4
+            writeLong mdx.stream geo.GNDX.count
+            for g in geo.GNDX do writeByte mdx.stream g
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "MTGC" 4
+            writeLong mdx.stream geo.MTGC.count
+            for m in geo.MTGC do writeLong mdx.stream m
+                
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "MATS" 4
+            writeLong mdx.stream geo.MATS.matrices.count
+            for m in geo.MATS.matrices do writeLong mdx.stream (m - 1)
+            writeLong mdx.stream geo.MATS.materialId
+            writeLong mdx.stream geo.MATS.sectionGroupId
+            writeLong mdx.stream geo.MATS.sectionGroupType
+            for f=1 to 7 do writeFloat mdx.stream geo.MATS.sevenFloats[f]
+            writeLong mdx.stream geo.MATS.nbrFloats
+            for f=1 to geo.MATS.nbrFloats*7 do writeFloat mdx.stream geo.MATS.floats[f]
+            
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "UVAS" 4
+            writeLong mdx.stream 1
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "UVBS" 4
+            writeLong mdx.stream geo.UVBS.count
+            for uv in geo.UVBS do 
+            (
+                writeFloat mdx.stream uv[1]
+                writeFloat mdx.stream uv[2]
+            )
         
+        )
         
+    ),
+    function WriteGEOA800 mdx=
+    (
+        format "Writing GEOA\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "GEOA" 4
+        
+        local totalSize = 0
+        for geoa in mdx.geoa do totalSize += geoa.size
+        writeLong  mdx.stream totalSize
+        for geoa in mdx.geoa do
+        (
+            writeLong  mdx.stream geoa.size
+            writeFloat mdx.stream geoa.opacity
+            writeLong  mdx.stream geoa.type
+            for i=1 to 3 do writeFloat mdx.stream geoa.color[i]
+            writeLong  mdx.stream geoa.geoId
+
+            if ( geoa.KGAO != undefined ) then 
+            (
+                Warcraft_III_Helpers.WriteFixedString mdx.stream "KGAO" 4
+                writeLong  mdx.stream geoa.KGAO.numPts
+                writeLong  mdx.stream geoa.KGAO.LineType
+                writeLong  mdx.stream geoa.KGAO.GLBSID #signed
+                for kg in geoa.KGAO.KG do
+                (
+                    writeLong  mdx.stream kg.time
+                    writeFloat mdx.stream kg.point
+                )
+                
+            )
+        )
     ),
     function Export file=
     (
         clearlistener()
-        struct mdx800 ( file, stream, seqs, mtls, texs, geos, boneList )
+        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, boneList )
         local mdx = mdx800()
         local export = WC3_MDX800_EXPORTER()
         
@@ -265,6 +320,17 @@ STRUCT WC3_MDX800_EXPORTER
         mdx.file = file
         mdx.stream = fOpen file "wb"
         
+        Warcraft_III_Helpers.GetBoneList mdx --> required to make the weights etc... does not yet get the animation data
+        
+        Warcraft_III_Helpers.GetSEQS mdx
+        Warcraft_III_Helpers.GetGLBS mdx
+        Warcraft_III_Helpers.GetMTLS mdx
+        Warcraft_III_Helpers.GetTEXS mdx
+        Warcraft_III_Helpers.GetGEOS mdx
+        Warcraft_III_Helpers.GetGEOA mdx
+        
+        if WC3_MDX800_DEBUG then MDX_EXPORT = mdx
+        
         export.WriteMDLX800 mdx
         export.WriteMODL800 mdx
         export.WriteSEQS800 mdx
@@ -272,6 +338,7 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteMTLS800 mdx
         export.WriteTEXS800 mdx
         export.WriteGEOS800 mdx
+        export.WriteGEOA800 mdx
         
         fFlush mdx.stream
         fClose mdx.stream
@@ -279,5 +346,5 @@ STRUCT WC3_MDX800_EXPORTER
         gc() 
     )
 )
-
-WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"

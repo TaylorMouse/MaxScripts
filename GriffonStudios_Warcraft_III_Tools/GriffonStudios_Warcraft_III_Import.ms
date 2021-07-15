@@ -9,6 +9,7 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 0.7 - Cleanup based on my understanding during export code
     | 0.6 - Added Global Sequence behavior
     | 0.5 - Added Particle Emitter reading v1
     | 0.4 - Added plugins: Attachment, Material, Event and Ribbon
@@ -702,7 +703,8 @@ STRUCT WC3_MDX800
                     
                     geo.mats.Id = readlong stream
                     geo.mats.sectionGroupId = readlong stream
-                    geo.mats.sectionGroupType = readlong stream
+                    geo.mats.sectionGroupType = readlong stream --> if this is 4 it becomes unselectable.
+                    
                     for i=1 to 7 do append geo.mats.sevenFloats (readfloat stream) -- bounding radius + bbox
                     
                     geo.mats.nbrFloats = readLong stream --> for each seqs
@@ -835,10 +837,8 @@ STRUCT WC3_MDX800
          (
             local geo = mdx.geos[i]
             
-            local r = random 1 255
-            local g = random 1 255
-            local b = random 1 255
-            local wireColor = color r g b
+            local c = random 10 100
+            local wireColor = color c c c
             
             local v = geo.VRTX
             local n = geo.NRMS
@@ -1044,6 +1044,7 @@ STRUCT WC3_MDX800
         (
             local d = dummy name:h.name
             d.showLinks = true
+            d.wirecolor = color 0 255 0
             helpLayer.addNode d
             d.pos = mdx.pivt[h.id].translationpart
             h.helperRef = d
@@ -1412,7 +1413,7 @@ STRUCT WC3_MDX800
         
             freeze obj2
             obj2.boxmode = true
-            obj2.wirecolor = color 100 100 100
+            obj2.wirecolor = color 150 10 10
             layer.addNode obj2
         )
         
@@ -1624,9 +1625,10 @@ STRUCT WC3_MDX800
         if mdx.glbs == undefined or mdx.glbs.count == 0 then return undefined
         format "Building Global Sequence Behavior\n"
         
-        local layer = GriffonStudios_Helpers.CreateLayer "Global Sequence"  
-        local behavior = WarcraftIII_Behavior()
+        
         local listOfBones = #()
+        
+        
         
         for i=1 to mdx.BONE.count do
         (
@@ -1644,9 +1646,15 @@ STRUCT WC3_MDX800
             
         )
         if WC3_MDX800_DEBUG then print listOfBones
-        behavior.listOfBones = listOfBones
+        
+        if listOfBones.count > 0 then
+        (
+            local layer = GriffonStudios_Helpers.CreateLayer "Global Sequence"  
+            local behavior = WarcraftIII_Behavior()
+            layer.addNode behavior
+            behavior.listOfBones = listOfBones
 
-       
+        )
     ),
     function Import file=
     (
@@ -1673,7 +1681,7 @@ STRUCT WC3_MDX800
             if tag.name == "MTLS" then mdx.mtls = WC3_MDX800.ReadMTLS800 stream tag --> Materials
             if tag.name == "TEXS" then mdx.texs = WC3_MDX800.ReadTEXS800 stream tag --> Textures
             if tag.name == "GEOS" then mdx.geos = WC3_MDX800.ReadGEOS800 stream tag --> Geometry Sets
-            if tag.name == "GEOA" then mdx.geoa = WC3_MDX800.ReadGEOA800 stream tag --> Geomatry Animatons
+            if tag.name == "GEOA" then mdx.geoa = WC3_MDX800.ReadGEOA800 stream tag --> Geometry Animatons
             if tag.name == "BONE" then mdx.bone = WC3_MDX800.ReadBONE800 stream tag --> Bone structure
             if tag.name == "HELP" then mdx.help = WC3_MDX800.ReadHELP800 stream tag --> Animation Helpers
             if tag.name == "ATCH" then mdx.atch = WC3_MDX800.ReadATCH800 stream tag --> Attachment Points
@@ -1683,6 +1691,7 @@ STRUCT WC3_MDX800
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag --> Cameras
             if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag --> Ribbon Emitters
             if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag --> Particle Emitters
+--             if tag.name == "PRE2" then mdx.prem = WC3_MDX800.ReadPRE2800 stream tag --> Particle Emitters v2
         )
         
         fclose stream
@@ -1703,6 +1712,8 @@ STRUCT WC3_MDX800
         WC3_MDX800.BuildCAMS800 mdx
         WC3_MDX800.BuildGEOA800 mdx
         WC3_MDX800.BuildRIBB800 mdx
+--         WC3_MDX800.BuildPREM800 mdx
+--         WC3_MDX800.BuildPRE2800 mdx
         
         format "Done!\n"
         gc()

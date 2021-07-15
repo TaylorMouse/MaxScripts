@@ -182,6 +182,12 @@ STRUCT Warcraft_III_Helpers
         for i=1 to (len - str.count) do
             writeByte stream 0
     ),
+    function WriteTris stream tris=
+    (
+        writeShort stream tris[1]
+        writeShort stream tris[2]
+        writeShort stream tris[3]
+    ),
     function WriteVector3 stream vector3=
     (
          writeFloat stream vector3.X
@@ -241,8 +247,6 @@ STRUCT Warcraft_III_Helpers
         local bbox = #()
         append bbox minPoint
         append bbox maxPoint
-        
-        --format "%\n" bbox
 
         return bbox
     ),
@@ -257,7 +261,7 @@ STRUCT Warcraft_III_Helpers
         
     ),
     /* get the list of animation sequences from the animation track */
-    function GetSEQS =
+    function GetSEQS mdx=
     (
         struct WC3AnimSequence ( Name, StartFrame, EndFrame, MovementSpeed=0.0, NoLoop=0, Rarity=0, Priority=0, Default=0, BBox )
         
@@ -281,15 +285,9 @@ STRUCT Warcraft_III_Helpers
                 
                 s.name = parts[1]
                 if ( WC3_DEBUG ) then  format " %\n" s.name
-                local StartFrameStr = (getnotekeytime track i) as string 
-                local EndFrameStr = (getnotekeytime track (i+1)) as string 
-                
-                StartFrameStr = substring StartFrameStr 1 (StartFrameStr.count-1)
-                EndFrameStr   = substring EndFrameStr 1 (EndFrameStr.count-1)
-                
-                local startFrame = StartFrameStr as integer
-                local endFrame = EndFrameStr as integer
-
+                local StartFrame = (getnotekeytime track i)  as integer / TicksPerFrame
+                local EndFrame = (getnotekeytime track (i+1)) as integer / TicksPerFrame
+            
                 s.BBox = Warcraft_III_Helpers.GetMODLBoundingBoxBetweenFrames startFrame endFrame
                 s.StartFrame =  startFrame * 1000 / 30 --wc3startFrame
                 s.EndFrame =  EndFrame * 1000 / 30 -- wc3EndFrame
@@ -332,10 +330,41 @@ STRUCT Warcraft_III_Helpers
             append seqs seq
         )
         
-        return seqs
+        mdx.seqs = seqs
+    ),
+    function GetGLBS mdx=
+    (
+        local glbs = #()
+        
+        for obj in objects do 
+        (
+            if (  classof obj == WarcraftIII_Behavior) then
+            (
+                for b in obj.listOfBones  do
+                (
+                    local maxFrame  =  0
+                    local posTime   = (b.pos.controller.keys[b.pos.controller.keys.count].time as integer)/ticksperframe
+                    local rotTime   = (b.rotation.controller.keys[b.rotation.controller.keys.count].time as integer)/ticksperframe
+                    local scaleTime = (b.scale.controller.keys[b.scale.controller.keys.count].time as integer)/ticksperframe
+                    
+                    if posTime > maxFrame then maxFrame = posTime
+                    if rotTime > maxFrame then maxFrame = rotTime
+                    if scaleTime > maxFrame then maxFrame = scaleTime
+                        
+                    maxFrame = maxFrame * 1000 / 30 as integer
+                    append glbs maxFrame
+                )
+                exit
+            )
+        )
+        
+        mdx.GLBS = glbs
+        
+        if ( WC3_MDX800_DEBUG ) then print glbs
+        
     ),
     /* get the unique list of TEXS */
-    function GetTEXS =
+    function GetTEXS mdx=
     (
         struct texs800 ( replacableId, path= "", flags = 3, check )
         local texs = #()
@@ -394,12 +423,13 @@ STRUCT Warcraft_III_Helpers
                 if ( addit ) then append uniqueTexs t
             )
         )
-
+        mdx.texs = uniqueTexs
+        
         if WC3_MDX800_DEBUG then  for t in uniqueTexs do print t
-        return uniqueTexs
+        
     ),
     /* get a unique list of materials */
-    function GetMTLS = 
+    function GetMTLS mdx= 
     (
         local matList = #()
         for obj in objects do
@@ -415,16 +445,18 @@ STRUCT Warcraft_III_Helpers
             )
         )
         if WC3_MDX800_DEBUG then for m in matList do print m
-        return matList
+        mdx.mtls = matList
     ),
-    function GetBoneList=
+    /* get a quick list of the bones and keep them in momery to have a correct list during export */
+    function GetBoneList mdx=
     (
         local boneList = #()
         for obj in objects do 
             if (classof obj == boneGeometry ) then append boneList obj
         
-        return boneList
+        mdx.BoneList = boneList
     ),
+    /* get the weights from the vertices per mesh */
     function GetWeights theMesh=
     (
         local boneList = GriffonStudios_Helper_Functions.GetBones()
@@ -455,7 +487,7 @@ STRUCT Warcraft_III_Helpers
                     (
                         if ( boneList[b].name == boneName ) then 
                         (
-                            boneId = b - 1
+                            boneId = b
                             exit
                         )
                     )
@@ -477,7 +509,8 @@ STRUCT Warcraft_III_Helpers
         deselect theMesh
         return vertices
     ),
-    function GetGeos mdx=
+    /* get the geometry sets from the scene */
+    function GetGEOS mdx=
     (
         struct geo800  
             (   size, vrtx = #(), nrms = #(), ptyp, pcnt, pvtx = #(), gndx = #() , mtgc = #(), mats, uvas, uvbs = #(), meshRef,
@@ -488,7 +521,7 @@ STRUCT Warcraft_III_Helpers
             
         /* get the mesh references that can be exported */
         local geos = #()
-        local mtls =  Warcraft_III_Helpers.GetMTLS()
+        local mtls =  mdx.mtls
             
         for obj in objects do
         (
@@ -514,6 +547,7 @@ STRUCT Warcraft_III_Helpers
         /* for each mesh in this list of meshed do */
         for geo in geos do
         (
+            format "Reading data from %\n" geo.meshRef.name
             local theMesh = geo.meshRef
             local original_vertices = #()
             local original_normals  = #()
@@ -577,7 +611,7 @@ STRUCT Warcraft_III_Helpers
             
             -- PCNT
             geo.Size += 12
-            geo.pcnt = m.numFaces * 3 --> number of corners or indices in the group
+            geo.pcnt = theMesh.numFaces * 3 --> number of corners or indices in the group
             
             -- PVTX
             geo.Size += 8
@@ -632,15 +666,24 @@ STRUCT Warcraft_III_Helpers
             geo.mats.matrices = matrices
             geo.Size += matrices.count * 4
             
+            local theMaterial = undefined 
             for x=1 to mtls.count do
             (
-                if ( theMesh.material.name == mtls[x].name ) then geo.mats.materialId = x - 1
+                if ( theMesh.material.name == mtls[x].name ) then 
+                (
+                    geo.mats.materialId = x - 1
+                    theMaterial = mtls[x]
+                )
             )
             
             geo.Size += 4 --> texture ID
             
             geo.mats.sectionGroupId = 0 --> always 0
             geo.mats.sectionGroupType = 0 --> if this would be an unselectable mesh, it should be 4
+            
+            if ( theMaterial != undefined and classof theMaterial != compositeMaterial ) then
+                if theMaterial.ReplaceableTexture == 3 then geo.mats.sectionGroupType = 4
+            
             geo.Size += 8 --> section group id, section group type
             
             local baseExtend = #()
@@ -699,7 +742,7 @@ STRUCT Warcraft_III_Helpers
                        boneIndices[bi][2] == w.boneIndices[2] and
                        boneIndices[bi][3] == w.boneIndices[3] and
                        boneIndices[bi][4] == w.boneIndices[4] then
-                    append geo.gndx bi
+                    append geo.gndx ( bi - 1 )
                 )
             )
             geo.Size += geo.gndx.count --> only byte
@@ -713,15 +756,57 @@ STRUCT Warcraft_III_Helpers
                 for bi in boneIndices do 
                     if bi != 0 then counter += 1
                 
-                append geo.mtgc counter
+                append geo.mtgc ( counter - 1 )
             )
             geo.Size += boneIndices.count * 4
             
-            if WC3_MDX800_DEBUG then format " - Size: %\n" geo.size
+            --if WC3_MDX800_DEBUG then format " - Size: %\n" geo.size
            --append geos.geos geo
         )
         
         mdx.geos = geos
-        return geos
+
+    ),
+    /* get the visibility tracks from each of the objects */
+    function GetGEOA mdx=
+    (
+        mdx.geoa = #()
+        struct geoa800 (size, opacity, geoId, color, type, KGAO)
+        struct anim800 ( numPts, LineType = 0, glbsId = -1, KG = #() )
+        struct kg800   ( Time, Point = 0.0, inTan, outTan, LineType = 0 )
+        
+        for g=1 to mdx.geos.count do
+        (
+            
+            local geoa = geoa800 size:28 opacity:1.0 color:[1.0,1.0,1.0] type:2 geoId:(g - 1)
+            
+            local theMesh = mdx.geos[g].meshRef
+            local visController = GetVisController theMesh
+            
+            if (visController != undefined) then 
+            (
+                geoa.size += 16 --> KGAO, nbr of points, linetype, glbsId
+                geoa.KGAO = anim800 numPts:visController.Keys.count
+
+                geoa.size += geoa.KGAO.numPts * 8
+                
+                for p=1 to geoa.KGAO.numPts do
+                (
+                    local kg = kg800()
+                    with animate on 
+                        at time visController.Keys[p].time
+                        (
+                            local t = visController.keys[p].time as integer / TicksPerFrame
+                            kg.Time = t * 1000 / 30
+                            if theMesh.visibility then kg.Point = 1.0
+                        )
+                    append geoa.KGAO.KG kg
+                )
+            )
+
+            if WC3_MDX800_DEBUG then format " - %\n" geoa
+            append mdx.geoa geoa
+        )
+        
     )
 )
