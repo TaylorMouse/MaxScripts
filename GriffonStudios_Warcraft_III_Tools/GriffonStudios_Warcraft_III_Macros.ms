@@ -66,7 +66,7 @@ macroScript GriffonStudios_ToggleCollisionObject
     
         if ( $ != undefined ) then
         (
-            
+            if ( classof $ != box and classof $ != sphere and classof $ != plane and classof $ != cylinder ) then return undefined
             if ( getUserProp $ "COLLISION-OBJECT" == undefined or getUserProp $ "COLLISION-OBJECT" == false ) then
             (
                 setUserProp $ "COLLISION-OBJECT" true

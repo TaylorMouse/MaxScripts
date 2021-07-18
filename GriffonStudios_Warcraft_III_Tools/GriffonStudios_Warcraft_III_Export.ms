@@ -9,7 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
-    | 0.7 - Gather Objects
+    | 0.8 - Export CLID, EVTS, PIVT, ATCH
+    | 0.7 - Gather all Objects 
     | 0.6 - Export GEOA
     | 0.5 - Export GEOS
     | 0.4 - Export MTLS & TEXS
@@ -530,4 +531,4 @@ STRUCT WC3_MDX800_EXPORTER
     )
 )
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
-WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
