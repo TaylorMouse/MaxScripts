@@ -26,7 +26,7 @@ macroscript Animation_Window
 
 /* Import an mdx model */
 macroScript GriffonStudios_ImportWarcraftIIIMdx800
-    category:"Griffon Studios Tools"
+    category:"Warcraft III Tools"
     internalcategory:"Griffon Studios Tools"
     buttonText:"Import Warcraft III Model"
     toolTip:"Import a 3D Model (.mdx) from Warcraft III version 800"
@@ -42,7 +42,7 @@ macroScript GriffonStudios_ImportWarcraftIIIMdx800
 
 /* Export an mdx model */
 macroScript GriffonStudios_ExportWarcraftIIIMdx800
-    category:"Griffon Studios Tools"
+    category:"Warcraft III Tools"
     internalcategory:"Griffon Studios Tools"
     buttonText:"Export Warcraft III Model"
     toolTip:"Export a 3D Model (.mdx) from Warcraft III version 800"
@@ -52,5 +52,38 @@ macroScript GriffonStudios_ExportWarcraftIIIMdx800
         file = getSaveFileName caption:"Export MDX" types:"WarCraft III MDX File (*.mdx)|*.mdx|All Files (*.*)|*.*|" historyCategory:"ExportWarcraftIIImdx"
         
         WC3_MDX800_EXPORTER.Export file
+    )
+)
+/* set or unset an object as a collision object */
+macroScript GriffonStudios_ToggleCollisionObject
+    category:"Warcraft III Tools"
+    internalcategory:"Griffon Studios Tools"
+    buttonText:"Toggle collision object"
+    toolTip:"Toggle the selected object as a Warcraft III collision box"
+    icon:#("GriffonStudios",4)
+(
+    on execute do (
+    
+        if ( $ != undefined ) then
+        (
+            
+            if ( getUserProp $ "COLLISION-OBJECT" == undefined or getUserProp $ "COLLISION-OBJECT" == false ) then
+            (
+                setUserProp $ "COLLISION-OBJECT" true
+                $.boxmode = true
+                $.wirecolor = color 64 128 255
+                $.renderable = off
+                $.castShadows = off
+                $.receiveshadows = off
+                freeze $
+            )
+            else
+            (
+                setUserProp $ "COLLISION-OBJECT" false
+                $.boxmode = false
+                unfreeze $
+            )
+        )
+        
     )
 )

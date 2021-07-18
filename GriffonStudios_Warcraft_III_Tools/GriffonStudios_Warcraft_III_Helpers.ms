@@ -447,15 +447,6 @@ STRUCT Warcraft_III_Helpers
         if WC3_MDX800_DEBUG then for m in matList do print m
         mdx.mtls = matList
     ),
-    /* get a quick list of the bones and keep them in momery to have a correct list during export */
-    function GetBoneList mdx=
-    (
-        local boneList = #()
-        for obj in objects do 
-            if (classof obj == boneGeometry ) then append boneList obj
-        
-        mdx.BoneList = boneList
-    ),
     /* get the weights from the vertices per mesh */
     function GetWeights theMesh=
     (
@@ -808,5 +799,224 @@ STRUCT Warcraft_III_Helpers
             append mdx.geoa geoa
         )
         
+    ),
+    /* get the bone animations AND helper animations */
+    function GetObjects mdx=
+    (
+        struct object800 ( TotalSize = 0, HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId, geosetAnimationId )
+     
+        local allobjects = #() 
+        local id = 0
+
+        -- BONE
+        for obj in objects do 
+            if (classof obj == boneGeometry ) then
+            (   
+                local o = object800 Id:id Name:obj.name Flags:0x100 objRef:obj
+                id +=1
+                append allObjects o
+            )
+
+        -- HELP
+        for obj in objects do
+            if (classof obj == dummy ) then 
+            (
+                local o = object800 Id:id Name:obj.name Flags:0x00 objRef:obj
+                id +=1
+                append allObjects o
+            )
+        
+        -- ATCH
+        for obj in objects do
+            if (classof obj == WarcraftIII_Attachment ) then 
+            (
+                local o = object800 Id:id Name:obj.name Flags:0x800 objRef:obj TotalSize:364
+                id +=1
+                append allObjects o
+            )
+        
+        -- EVTS
+        for obj in objects do
+            if (classof obj == WarcraftIII_Event ) then
+            (
+                if ( obj.keyList.count > 0 ) then 
+                (
+                    local o = object800 Id:id Name:obj.name Flags:0x400 objRef:obj
+                    id +=1
+                    append allObjects o
+                )
+            )
+            
+        -- CLID
+        for obj in objects do
+            if ( getUserProp obj "COLLISION-OBJECT" != undefined and getUserProp obj "COLLISION-OBJECT" == true ) then
+            (
+                if ( classof obj == box or classof obj == sphere or classof obj == plane or classof obj == cylinder ) then
+                (
+                    local o = object800 Id:id Name:obj.name Flags:0x2000 objRef:obj
+                    id +=1
+                    append allObjects o
+                )
+            )
+        
+        /* build the hierarchy of objects */
+        for x=1 to allobjects.count do
+        (
+            if ( allobjects[x].objRef.parent != undefined ) then
+            (
+                for i=1 to allObjects.count do
+                (
+                    if allObjects[i].name == allObjects[x].objRef.parent.name then
+                    (
+                        allObjects[x].ParentId = allObjects[i].Id
+                        exit
+                    )
+                )
+                
+            )
+        )
+        
+        /* get the animations of these objects */
+        for obj in allObjects do
+        (
+            obj.KGTR = Warcraft_III_Helpers.GetKGTR obj.objRef
+            obj.KGRT = Warcraft_III_Helpers.GetKGRT obj.objRef
+            obj.KGSC = Warcraft_III_Helpers.GetKGSC obj.objRef
+            
+            if obj.KGTR.nbrKeys > 0 then obj.TotalSize += obj.KGTR.Size
+            if obj.KGRT.nbrKeys > 0 then obj.TotalSize += obj.KGRT.Size
+            if obj.KGSC.nbrKeys > 0 then obj.TotalSize += obj.KGSC.Size
+        )
+        
+        mdx.allObjects = allObjects
+        
+    ),
+    function GetKGTR obj =
+    (
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGTR", LineType=1, ParentId = -1, glbsId = -1, AnimBlock = #() )  
+        struct KeyValuePair ( Key, Val )
+
+        obj.assumeSkinPose()
+        local basePos = obj.pos
+        
+        if obj.parent != undefined then 
+            in coordsys parent
+                basepos = obj.pos
+        
+        local kgtr =  anim800()
+        
+        for behavior in objects do 
+        (
+            if ( classof behavior == WarcraftIII_Behavior ) then
+            (
+                for b = 1 to behavior.listOfBones.count do
+                    if behavior.listOfBones[b].name == obj.name then 
+                    ( 
+                        kgtr.glbsId = b - 1
+                        exit
+                    )
+            )
+            
+        )
+            
+        kgtr.nbrKeys = numkeys obj.pos.controller
+        kgtr.size += kgtr.nbrKeys * 16
+            
+        for k=1 to kgtr.nbrKeys do
+        (
+            local kv = KeyValuePair()
+            kv.key =  ( getKeyTime obj.pos.controller k ) as integer / TicksPerFrame
+                
+            at time kv.key 
+            (
+                kv.val = obj.pos - basepos
+                if ( obj.parent != undefined ) then
+                    in coordsys parent
+                        kv.val= obj.pos - basepos
+            )
+            append kgtr.AnimBlock kv
+        )
+        return kgtr
+    ),
+    function GetKGRT obj =
+    (
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, glbsId = -1, ParentId = -1, AnimBlock = #() )  
+        struct KeyValuePair ( Key, Val )
+
+        local kgrt =  anim800()
+        
+        kgrt.nbrKeys = numkeys obj.rotation.controller
+        kgrt.size += kgrt.nbrKeys * 20
+         
+        for behavior in objects do 
+        (
+            if ( classof behavior == WarcraftIII_Behavior ) then
+            (
+                for b = 1 to behavior.listOfBones.count do
+                    if behavior.listOfBones[b].name == obj.name then 
+                    ( 
+                        kgrt.glbsId = b - 1
+                        exit
+                    )
+            )
+            
+        )
+        
+        for k=1 to kgrt.nbrKeys do
+        (
+            local kv = KeyValuePair()
+            kv.key =  ( getKeyTime obj.rotation.controller k ) as integer / TicksPerFrame
+                
+            at time kv.key 
+            (
+                kv.val = obj.rotation
+                if ( obj.parent != undefined ) then
+                    kv.val = obj.rotation - obj.parent.rotation
+            )
+            append kgrt.AnimBlock kv
+        )
+        return kgrt
+    ),
+    function GetKGSC obj =
+    (
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGSC", LineType=1, glbsId = -1, ParentId = -1, AnimBlock = #() )  
+        struct KeyValuePair ( Key, Val )
+
+        local kgsc =  anim800()
+        
+        kgsc.nbrKeys = numkeys obj.scale.controller
+        kgsc.size += kgsc.nbrKeys * 16
+           
+        for behavior in objects do 
+        (
+            if ( classof behavior == WarcraftIII_Behavior ) then
+            (
+                for b = 1 to behavior.listOfBones.count do
+                    if behavior.listOfBones[b].name == obj.name then 
+                    ( 
+                        kgsc.glbsId = b - 1
+                        exit
+                    )
+            )
+            
+        )
+        
+        for k=1 to kgsc.nbrKeys do
+        (
+            local kv = KeyValuePair()
+            kv.key =  ( getKeyTime obj.scale.controller k ) as integer / TicksPerFrame
+
+            at time kv.key 
+                kv.val = obj.scale
+
+            append kgsc.AnimBlock kv
+        )
+        return kgsc
     )
 )
+
+
+
+
+
+

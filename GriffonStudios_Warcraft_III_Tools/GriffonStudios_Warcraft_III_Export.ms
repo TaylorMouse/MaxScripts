@@ -9,6 +9,12 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 0.7 - Gather Objects
+    | 0.6 - Export GEOA
+    | 0.5 - Export GEOS
+    | 0.4 - Export MTLS & TEXS
+    | 0.3 - Export GLBS
+    | 0.2 - Export MODL & SEQS
     | 0.1 - Initial setup
 
     .NOTE
@@ -305,11 +311,183 @@ STRUCT WC3_MDX800_EXPORTER
             )
         )
     ),
+    function WriteBONE800 mdx=
+    (
+        format "Writing BONE\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "BONE" 4
+        
+        
+        /* 
+            NOTE: when writing the KGSC  KGTR & KGRT -> if their are not animations ( anim800 ) available, don't write it !
+        */
+        
+        
+    ),
+    function WriteATCH800 mdx=
+    (
+        format "Writing ATCH\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "ATCH" 4
+        
+        local totalSize = 0
+        
+        for obj in mdx.allObjects do
+            if obj.flags == 0x800 then totalSize += obj.TotalSize
+        
+        writeLong mdx.stream totalSize
+            
+        local index = 0
+        for obj in mdx.allObjects do
+        (
+            if obj.flags == 0x800 then 
+            (
+                writeLong mdx.stream obj.totalSize
+                writeLong mdx.stream obj.headerSize
+                Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
+                writeLong mdx.stream obj.id
+                writeLong mdx.stream obj.parentId #signed
+                writeLong mdx.stream obj.flags
+                Warcraft_III_Helpers.WriteFixedString mdx.stream "" 260
+                writeLong mdx.stream index
+                
+                index += 1
+            )
+        )
+        
+    ),
+    function WritePIVT800 mdx=
+    (
+        format "Writing PIVT\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "PIVT" 4  
+        
+        local totalSize = mdx.allObjects.count * 12
+        writeLong mdx.stream totalSize
+        
+        for obj in mdx.allobjects do
+        (
+            writeFloat mdx.stream obj.objRef.pos.x
+            writeFloat mdx.stream obj.objRef.pos.y
+            writeFloat mdx.stream obj.objRef.pos.z
+        )
+        
+    ),
+    function WriteEVTS800 mdx=
+    (
+        format "Writing EVTS\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "EVTS" 4
+        
+        local totalSize = 0
+        for obj in mdx.allObjects do
+        (
+            if ( obj.flags == 0x400 ) then 
+            if ( obj.objRef.keyList.count > 0 ) then 
+            (
+                totalSize += obj.headerSize
+                totalSize += 12 --> KEVT + nbrKeys + ParentId 
+                totalSize += obj.objRef.keyList.count * 4
+            )
+        )
+        writeLong mdx.stream totalSize
+        
+        for obj in mdx.allObjects do
+        (
+            if ( obj.flags == 0x400 ) then 
+            if ( obj.objRef.keyList.count > 0 ) then 
+            (
+                writeLong mdx.stream obj.headerSize
+                Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
+                writeLong mdx.stream obj.id
+                writeLong mdx.stream obj.parentId #signed
+                writeLong mdx.stream obj.flags
+                
+                Warcraft_III_Helpers.WriteFixedString mdx.stream "KEVT" 4
+                writeLong mdx.stream obj.objRef.keyList.count
+                writeLong mdx.stream -1 #signed
+                for i=1 to obj.objRef.keyList.count do
+                    writeLong mdx.stream obj.objRef.keyList[i]
+
+            )
+        )
+        
+    ),
+    function WriteCLID800 mdx=
+    (
+        format "Writing CLID\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "CLID" 4  
+        
+        local totalSize = 0
+        for obj in mdx.allobjects do
+        (
+            if obj.Flags == 0x2000 then
+            (
+                totalSize += obj.headerSize
+                if ( classof obj.objRef == box ) then totalSize += 28
+                if ( classof obj.objRef == plane ) then totalSize += 28
+                if ( classof obj.objRef == sphere ) then totalSize += 20
+                if ( classof obj.objRef == cylinder ) then totalSize += 32
+            )
+        )
+        writeLong mdx.stream totalSize
+
+        for obj in mdx.allobjects do
+        (
+            if obj.Flags == 0x2000 then
+            ( 
+                writeLong mdx.stream obj.headerSize
+                Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
+                writeLong mdx.stream obj.id
+                writeLong mdx.stream obj.parentId #signed
+                writeLong mdx.stream obj.flags
+                
+                if ( classof obj.objRef == box ) then 
+                (
+                    writeLong mdx.stream 0
+                    writeFloat mdx.stream obj.objRef.min.x
+                    writeFloat mdx.stream obj.objRef.min.y
+                    writeFloat mdx.stream obj.objRef.min.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                )    
+                if ( classof obj.objRef == plane ) then 
+                (
+                    writeLong mdx.stream 1
+                    writeFloat mdx.stream obj.objRef.min.x
+                    writeFloat mdx.stream obj.objRef.min.y
+                    writeFloat mdx.stream obj.objRef.min.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                    writeFloat mdx.stream obj.objRef.max.z
+                )    
+                if ( classof obj.objRef == sphere ) then 
+                (
+                    writeLong mdx.stream 2
+                    writeFloat mdx.stream obj.objRef.pos.x
+                    writeFloat mdx.stream obj.objRef.pos.y
+                    writeFloat mdx.stream obj.objRef.pos.z
+                    writeFloat mdx.stream obj.objRef.radius
+                )                
+                if ( classof obj.objRef == cylinder ) then 
+                (
+                    writeLong mdx.stream 3
+                    writeFloat mdx.stream obj.objRef.pos.x
+                    writeFloat mdx.stream obj.objRef.pos.y
+                    writeFloat mdx.stream obj.objRef.pos.z
+                    writeFloat mdx.stream obj.objRef.pos.x
+                    writeFloat mdx.stream obj.objRef.pos.y
+                    writeFloat mdx.stream ( obj.objRef.pos.z + obj.objRef.height )
+                    writeFloat mdx.stream obj.objRef.radius
+                ) 
+            )
+        )
+        
+    ),
     function Export file=
     (
+        if ( file == undefined ) then return undefined
         clearlistener()
-        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, boneList )
+        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, allObjects )
         local mdx = mdx800()
+        mdx.file = file
         local export = WC3_MDX800_EXPORTER()
         
         -- set the T-pose of the object to export correctly
@@ -317,10 +495,7 @@ STRUCT WC3_MDX800_EXPORTER
         animationrange = interval 0 100
         slidertime = 0
 
-        mdx.file = file
-        mdx.stream = fOpen file "wb"
-        
-        Warcraft_III_Helpers.GetBoneList mdx --> required to make the weights etc... does not yet get the animation data
+        Warcraft_III_Helpers.GetObjects mdx --> contains all animation data for the objects ( bones & helpers )
         
         Warcraft_III_Helpers.GetSEQS mdx
         Warcraft_III_Helpers.GetGLBS mdx
@@ -328,6 +503,8 @@ STRUCT WC3_MDX800_EXPORTER
         Warcraft_III_Helpers.GetTEXS mdx
         Warcraft_III_Helpers.GetGEOS mdx
         Warcraft_III_Helpers.GetGEOA mdx
+        
+        mdx.stream = fOpen file "wb"
         
         if WC3_MDX800_DEBUG then MDX_EXPORT = mdx
         
@@ -339,6 +516,12 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteTEXS800 mdx
         export.WriteGEOS800 mdx
         export.WriteGEOA800 mdx
+--         export.WriteBONE800 mdx
+--         export.WriteHELP800 mdx
+        export.WriteATCH800 mdx
+        export.WritePIVT800 mdx
+        export.WriteEVTS800 mdx
+        export.WriteCLID800 mdx
         
         fFlush mdx.stream
         fClose mdx.stream
@@ -347,4 +530,4 @@ STRUCT WC3_MDX800_EXPORTER
     )
 )
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"

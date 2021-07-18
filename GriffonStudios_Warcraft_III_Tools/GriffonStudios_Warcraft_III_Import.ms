@@ -275,62 +275,37 @@ STRUCT WC3_MDX800
     function ReadATCH800 stream tag=
     (
         format "Reading %\n" tag.name
-        struct atch800 ( Id, Name, ParentBoneId, Flags, Offset, Size, KGTR, KGRT, KGSC, KATV)
+        struct atch800 ( Size, HeaderSize, Id, ParentBoneId, Name, FullPath, Flags, Index, KGTR, KGRT, KGSC, KATV)
         
-        fseek stream tag.Offset #seek_set
+        
         
         local atchs = #()
 
-        while ( (ftell stream) < tag.offset + tag.size ) do
+        local totalSize = tag.Size
+        local offSet = tag.Offset
+        
+        while ( totalSize > 0 ) do
         (
+            fseek stream offSet #seek_set
+            
             local att = atch800()
             
-            local size = readLong stream
-            local headerSize = readLong stream --> 96 bytes consisting of name, id, parentId and flagid and headerSize
+            att.size = readLong stream
+            att.headerSize = readLong stream --> 96 bytes consisting of name, id, parentId and flagid and headerSize
 
             att.name = GriffonStudios_Helpers.ReadFixedString stream 80
             att.Id = readLong stream + 1
             att.ParentBoneId = readLong stream + 1
             att.flags = readLong stream
-            att.Offset = ftell stream
-            att.Size = size - 4 - 4 - 80 - 8 - 4
+            att.FullPath = GriffonStudios_Helpers.ReadFixedString stream 260
+            att.Index = readLong stream
+
+            totalSize -= att.Size
+            offset += att.Size
             
-            GriffonStudios_Helpers.SkipBytes stream att.Size
-        
             append atchs att
         )
         
-        for att in atchs do
-        (
-            fseek stream att.offset #seek_set
-            local kgtr -- transformation
-            local kgrt -- rotation
-            local kgsc -- scale
-            
-            for i=1 to 3 do
-            (
-                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
-
-                if ( kg == "KGTR" ) then kgtr = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
-                if ( kg == "KGRT" ) then kgrt = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
-                if ( kg == "KGSC" ) then kgsc = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
-            )
-            
-            att.KGTR = kgtr
-            att.KGRT = kgrt
-            att.KGSC = kgsc
-            local correction = 0
-            if ( kgtr == undefined ) then correction = correction + 4
-            if ( kgrt == undefined ) then correction = correction + 4
-            if ( kgsc == undefined ) then correction = correction + 4
-           
-            GriffonStudios_Helpers.SkipBytes stream ( 264 - correction)
-
-            local katv = GriffonStudios_Helpers.ReadFixedString stream 4
-            
-            if( katv == "KATV") then att.katv = Warcraft_III_Helpers.ReadFloatAnim stream -- visibility track ?
-
-        )
         
         return atchs
         
@@ -1300,7 +1275,7 @@ STRUCT WC3_MDX800
             )
             
             -- PLANE
-            if(cl.CollisionType == 0 ) then 
+            if(cl.CollisionType == 1 ) then 
             (
                 local x = distance [cl.startPosition.x,0,0] [cl.EndPosition.x,0,0]
                 local y = distance [0,cl.startPosition.y,0] [0,cl.EndPosition.y,0]
@@ -1370,6 +1345,7 @@ STRUCT WC3_MDX800
             clObj.inheritVisibility = off
             clObj.primaryVisibility = off
             clObj.secondaryVisibility = off
+            setUserProp clObj "COLLISION-OBJECT" true
             freeze clObj
             layer.addnode clObj
         )
@@ -1698,22 +1674,22 @@ STRUCT WC3_MDX800
         
         fclose stream
         if WC3_MDX800_DEBUG then WC3_MDX = mdx
---         
-        WC3_MDX800.BuildMODL800 mdx
-        WC3_MDX800.BuildGEOS800 mdx
-        WC3_MDX800.BuildSEQS800 mdx
-        WC3_MDX800.BuildAndAssignMaterials mdx
-        WC3_MDX800.BuildBonesAndHelpers mdx
-        WC3_MDX800.BuildHELP800 mdx
-        WC3_MDX800.BuildBONE800 mdx
-        WC3_MDX800.BuildGLBS800 mdx
-        WC3_MDX800.BuildEVTS800 mdx
-        WC3_MDX800.BuildCLID800 mdx
-        WC3_MDX800.ApplySkinning mdx
-        WC3_MDX800.BuildATCH800 mdx
-        WC3_MDX800.BuildCAMS800 mdx
-        WC3_MDX800.BuildGEOA800 mdx
-        WC3_MDX800.BuildRIBB800 mdx
+        
+--         WC3_MDX800.BuildMODL800 mdx
+--         WC3_MDX800.BuildGEOS800 mdx
+--         WC3_MDX800.BuildSEQS800 mdx
+--         WC3_MDX800.BuildAndAssignMaterials mdx
+--         WC3_MDX800.BuildBonesAndHelpers mdx
+--         WC3_MDX800.BuildHELP800 mdx
+--         WC3_MDX800.BuildBONE800 mdx
+--         WC3_MDX800.BuildGLBS800 mdx
+--         WC3_MDX800.BuildEVTS800 mdx
+--         WC3_MDX800.BuildCLID800 mdx
+--         WC3_MDX800.ApplySkinning mdx
+--         WC3_MDX800.BuildATCH800 mdx
+--         WC3_MDX800.BuildCAMS800 mdx
+--         WC3_MDX800.BuildGEOA800 mdx
+--         WC3_MDX800.BuildRIBB800 mdx
         
 --         WC3_MDX800.BuildPREM800 mdx
 --         WC3_MDX800.BuildPRE2800 mdx
@@ -1721,10 +1697,12 @@ STRUCT WC3_MDX800
         format "Done!\n"
         gc()
         clearSelection()
-        max zoomext sel --> zoom out
+        max tool zoomextents all --> zoom out
         setArrowCursor() 
     )
 )
+
+WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
