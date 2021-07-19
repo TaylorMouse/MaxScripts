@@ -803,7 +803,7 @@ STRUCT Warcraft_III_Helpers
     /* get the bone animations AND helper animations */
     function GetObjects mdx=
     (
-        struct object800 ( TotalSize = 0, HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId, geosetAnimationId )
+        struct object800 ( TotalSize = 0, HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId = -1, geosetAnimationId = -1 )
      
         local allobjects = #() 
         local id = 0
@@ -812,7 +812,7 @@ STRUCT Warcraft_III_Helpers
         for obj in objects do 
             if (classof obj == boneGeometry ) then
             (   
-                local o = object800 Id:id Name:obj.name Flags:0x100 objRef:obj
+                local o = object800 Id:id Name:obj.name Flags:0x100 objRef:obj TotalSize:96 
                 id +=1
                 append allObjects o
             )
@@ -821,7 +821,7 @@ STRUCT Warcraft_III_Helpers
         for obj in objects do
             if (classof obj == dummy ) then 
             (
-                local o = object800 Id:id Name:obj.name Flags:0x00 objRef:obj
+                local o = object800 Id:id Name:obj.name Flags:0x00 objRef:obj TotalSize:96
                 id +=1
                 append allObjects o
             )
@@ -893,7 +893,7 @@ STRUCT Warcraft_III_Helpers
     ),
     function GetKGTR obj =
     (
-        struct anim800   ( Size = 16, nbrKeys, Type = "KGTR", LineType=1, ParentId = -1, glbsId = -1, AnimBlock = #() )  
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGTR", LineType=1, glbsId = -1, AnimBlock = #() )  
         struct KeyValuePair ( Key, Val )
 
         obj.assumeSkinPose()
@@ -920,8 +920,8 @@ STRUCT Warcraft_III_Helpers
         )
             
         kgtr.nbrKeys = numkeys obj.pos.controller
-        kgtr.size += kgtr.nbrKeys * 16
-            
+        kgtr.size += kgtr.nbrKeys * 16 --> framenbr, position
+        
         for k=1 to kgtr.nbrKeys do
         (
             local kv = KeyValuePair()
@@ -940,7 +940,7 @@ STRUCT Warcraft_III_Helpers
     ),
     function GetKGRT obj =
     (
-        struct anim800   ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, glbsId = -1, ParentId = -1, AnimBlock = #() )  
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, glbsId = -1, AnimBlock = #() )  
         struct KeyValuePair ( Key, Val )
 
         local kgrt =  anim800()
@@ -979,7 +979,7 @@ STRUCT Warcraft_III_Helpers
     ),
     function GetKGSC obj =
     (
-        struct anim800   ( Size = 16, nbrKeys, Type = "KGSC", LineType=1, glbsId = -1, ParentId = -1, AnimBlock = #() )  
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGSC", LineType=1, glbsId = -1, AnimBlock = #() )  
         struct KeyValuePair ( Key, Val )
 
         local kgsc =  anim800()
@@ -1012,6 +1012,54 @@ STRUCT Warcraft_III_Helpers
             append kgsc.AnimBlock kv
         )
         return kgsc
+    ),
+    function WriteVector3 stream vector3=
+    (
+         writeFloat stream vector3.X
+         writeFloat stream vector3.Y
+         writeFloat stream vector3.Z
+        
+        
+    ),
+    function WriteQuat stream quaternian=
+    (
+        writeFloat stream quaternian.x
+        writeFloat stream quaternian.y
+        writeFloat stream quaternian.z
+        writeFloat stream quaternian.w
+
+    ),
+    function WriteKGAnim stream kgAnim=
+    (
+        if ( kgAnim.nbrKeys > 0 ) then 
+        (
+            Warcraft_III_Helpers.WriteFixedString stream kgAnim.Type 4            
+            writeLong stream kgAnim.nbrKeys
+            writeLong stream kgAnim.lineType
+            writeLong stream kgAnim.glbsId #signed
+            
+            for anim in kgAnim.AnimBlock do
+            (
+                
+                local theKey = anim.Key * 1000 / 30
+                writeLong stream theKey
+                              
+                if ( kgAnim.Type == "KGTR" ) then Warcraft_III_Helpers.WriteVector3 stream anim.Val
+                if ( kgAnim.Type == "KGRT" ) then Warcraft_III_Helpers.WriteQuat    stream anim.Val 
+                if ( kgAnim.Type == "KGSC" ) then Warcraft_III_Helpers.WriteVector3 stream anim.Val
+            
+            )
+            
+            
+        )
+        
+        
+    ),
+    function GetBehavior=
+    (
+        for obj in objects do 
+            if (classof obj == WarcraftIII_Behavior ) then
+                return obj
     )
 )
 

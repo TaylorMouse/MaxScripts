@@ -9,6 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 1.0 - bugfix:  MTLS incorrect TEXS & incorrect BONE size
+    | 0.9 - Export BONE, HELP
     | 0.8 - Export CLID, EVTS, PIVT, ATCH
     | 0.7 - Gather all Objects 
     | 0.6 - Export GEOA
@@ -28,6 +30,7 @@ fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL MDX_EXPORT = undefined
+
 STRUCT WC3_MDX800_EXPORTER
 (
     function WriteMDLX800 mdx=
@@ -117,6 +120,8 @@ STRUCT WC3_MDX800_EXPORTER
         (
             if classof mat == compositeMaterial then
             (
+                print mat.name
+                
                 writeLong mdx.stream 76 --> size --> currently only supports 2 sub materials
                 writeLong mdx.stream 0 --> priority
                 writeLong mdx.stream 0 --> flags
@@ -139,16 +144,20 @@ STRUCT WC3_MDX800_EXPORTER
                     
                     writeLong mdx.stream shadingFlags
                     
-                    local replacableId = mat.materialList[i].ReplaceableTexture
+                    local replacableId = mat.materialList[i].ReplaceableTexture - 1
                     local path = mat.materialList[i].diffuse_map.fileName
-                    if ( path == undefined ) then path = ""
+                    
+                    if ( path == undefined ) then path = "" --> no textures selected
+                    if ( path.count > 0 ) then path = (getfilenamefile path) + ".blp" --> extension only
+                    
+                    if replacableId == 2 then path = ""
                     
                     local texsID = 0
                     for t=1 to mdx.texs.count do 
                     (
                         if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
                         (
-                            texsID = t-1
+                            texsID = t - 1
                             exit
                         )
                     )
@@ -179,16 +188,20 @@ STRUCT WC3_MDX800_EXPORTER
                 
                 writeLong mdx.stream shadingFlags
                 
-                local replacableId = mat.ReplaceableTexture
+                local replacableId = mat.ReplaceableTexture - 1
                 local path = mat.diffuse_map.fileName
-                if ( path == undefined ) then path = ""
                 
+                if ( path == undefined ) then path = "" --> no textures selected
+                if ( path.count > 0 ) then path = (getfilenamefile path) + ".blp" --> extension only
+                
+                if replacableId == 2 then path = ""
+
                 local texsID = 0
                 for t=1 to mdx.texs.count do 
                 (
                     if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
                     (
-                        texsID = t-1
+                        texsID = t - 1
                         exit
                     )
                 )
@@ -317,11 +330,80 @@ STRUCT WC3_MDX800_EXPORTER
         format "Writing BONE\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "BONE" 4
         
+        local totalSize = 0
         
-        /* 
-            NOTE: when writing the KGSC  KGTR & KGRT -> if their are not animations ( anim800 ) available, don't write it !
-        */
+        local behavior = Warcraft_III_Helpers.GetBehavior()
         
+        for obj in mdx.allObjects do
+        (
+            if ( obj.flags == 0x100 ) then
+            (
+                totalSize += obj.totalSize + 8 --> headersize + geosetid + geosetAnimId
+                
+                if ( behavior != undefined ) then 
+                (
+                    for b in behavior.listOfBones do 
+                    (
+                        if ( obj.objref.name == b.name ) then 
+                        (
+                            obj.geosetId = 2
+                            obj.geosetAnimationId = 2
+                        )
+                    )
+                )
+            )
+        )
+        writeLong mdx.stream totalSize
+        
+        for obj in mdx.allObjects do
+        (                
+            if ( obj.flags == 0x100 ) then
+            (
+                writeLong mdx.stream obj.totalSize
+                Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
+                writeLong mdx.stream obj.id
+                writeLong mdx.stream obj.parentId #signed
+                writeLong mdx.stream obj.flags
+                
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGTR
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGRT
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGSC
+                
+                writeLong mdx.stream obj.geosetId
+                writeLong mdx.stream obj.geosetAnimationId
+            )
+        )
+        
+    ),
+    function WriteHELP800 mdx=
+    (
+        format "Writing HELP\n"
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "HELP" 4
+        
+        local totalSize = 0
+        
+        for obj in mdx.allObjects do
+            if ( obj.flags == 0x00 ) then
+                totalSize += obj.totalSize
+        
+        writeLong mdx.stream totalSize
+        
+        for obj in mdx.allObjects do
+        (                
+            if ( obj.flags == 0x00 ) then
+            (
+                writeLong mdx.stream obj.totalSize
+                Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
+                writeLong mdx.stream obj.id
+                writeLong mdx.stream obj.parentId #signed
+                writeLong mdx.stream obj.flags
+                
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGTR
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGRT
+                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGSC
+                
+            )
+        )
         
     ),
     function WriteATCH800 mdx=
@@ -332,7 +414,7 @@ STRUCT WC3_MDX800_EXPORTER
         local totalSize = 0
         
         for obj in mdx.allObjects do
-            if obj.flags == 0x800 then totalSize += obj.TotalSize
+            if obj.flags == 0x800 then totalSize += 364  -- obj.TotalSize --> no animations yet
         
         writeLong mdx.stream totalSize
             
@@ -341,7 +423,7 @@ STRUCT WC3_MDX800_EXPORTER
         (
             if obj.flags == 0x800 then 
             (
-                writeLong mdx.stream obj.totalSize
+                writeLong mdx.stream 364 --obj.totalSize
                 writeLong mdx.stream obj.headerSize
                 Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
                 writeLong mdx.stream obj.id
@@ -403,9 +485,7 @@ STRUCT WC3_MDX800_EXPORTER
                 Warcraft_III_Helpers.WriteFixedString mdx.stream "KEVT" 4
                 writeLong mdx.stream obj.objRef.keyList.count
                 writeLong mdx.stream -1 #signed
-                for i=1 to obj.objRef.keyList.count do
-                    writeLong mdx.stream obj.objRef.keyList[i]
-
+                for k in obj.objRef.keyList do writeLong mdx.stream ( k * 1000 / 30 )
             )
         )
         
@@ -517,8 +597,8 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteTEXS800 mdx
         export.WriteGEOS800 mdx
         export.WriteGEOA800 mdx
---         export.WriteBONE800 mdx
---         export.WriteHELP800 mdx
+        export.WriteBONE800 mdx
+        export.WriteHELP800 mdx
         export.WriteATCH800 mdx
         export.WritePIVT800 mdx
         export.WriteEVTS800 mdx

@@ -1244,8 +1244,11 @@ STRUCT WC3_MDX800
             local pnt = WarcraftIII_Event()  -- point name:evt.Name
             
             pnt.Name = evt.name
-
-            if ( evt.parentId > 0 ) then evt.pos = mdx.pivt[evt.parentId].translationpart
+            
+            pnt.pos = mdx.pivt[evt.id].translationpart
+            
+            if ( evt.parentId > 0 ) then 
+                pnt.pos = mdx.pivt[evt.parentId].translationpart
             
             for key in evt.KEVT do
                 append pnt.keyList key
@@ -1675,21 +1678,21 @@ STRUCT WC3_MDX800
         fclose stream
         if WC3_MDX800_DEBUG then WC3_MDX = mdx
         
---         WC3_MDX800.BuildMODL800 mdx
---         WC3_MDX800.BuildGEOS800 mdx
---         WC3_MDX800.BuildSEQS800 mdx
---         WC3_MDX800.BuildAndAssignMaterials mdx
---         WC3_MDX800.BuildBonesAndHelpers mdx
---         WC3_MDX800.BuildHELP800 mdx
---         WC3_MDX800.BuildBONE800 mdx
---         WC3_MDX800.BuildGLBS800 mdx
---         WC3_MDX800.BuildEVTS800 mdx
---         WC3_MDX800.BuildCLID800 mdx
---         WC3_MDX800.ApplySkinning mdx
---         WC3_MDX800.BuildATCH800 mdx
---         WC3_MDX800.BuildCAMS800 mdx
---         WC3_MDX800.BuildGEOA800 mdx
---         WC3_MDX800.BuildRIBB800 mdx
+        WC3_MDX800.BuildMODL800 mdx
+        WC3_MDX800.BuildGEOS800 mdx
+        WC3_MDX800.BuildSEQS800 mdx
+        WC3_MDX800.BuildAndAssignMaterials mdx
+        WC3_MDX800.BuildBonesAndHelpers mdx
+        WC3_MDX800.BuildHELP800 mdx
+        WC3_MDX800.BuildBONE800 mdx
+        WC3_MDX800.BuildGLBS800 mdx
+        WC3_MDX800.BuildEVTS800 mdx
+        WC3_MDX800.BuildCLID800 mdx
+        WC3_MDX800.ApplySkinning mdx
+        WC3_MDX800.BuildATCH800 mdx
+        WC3_MDX800.BuildCAMS800 mdx
+        WC3_MDX800.BuildGEOA800 mdx
+        WC3_MDX800.BuildRIBB800 mdx
         
 --         WC3_MDX800.BuildPREM800 mdx
 --         WC3_MDX800.BuildPRE2800 mdx
@@ -1702,7 +1705,7 @@ STRUCT WC3_MDX800
     )
 )
 
-WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
