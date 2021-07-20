@@ -450,55 +450,88 @@ STRUCT Warcraft_III_Helpers
     /* get the weights from the vertices per mesh */
     function GetWeights theMesh=
     (
-        local boneList = GriffonStudios_Helper_Functions.GetBones()
+        struct weights800 ( matrices = #(), mtgc = #(), gndx = #() )
+        struct vertex_weight ( vertex, boneIndices = #(), crc = "")
+        
+        local weights = weights800()
+        
         select theMesh
         max modify mode
-        local sk = modPanel.getCurrentObject()
-        
-        struct vertexWeights ( vertexId, boneIndices, boneNames, weights )
-        local vertices = #()
-        
-        if (classof sk == Skin ) then
-        (
-            for v=1 to skinOps.getnumbervertices sk do
-            (
-                local count = skinops.getvertexweightcount sk v
-                local boneIndices = #(0,0,0,0)
-                local boneNames = #("", "", "", "")
-                local weights = #(0,0,0,0)
-                
-                if count > 4 then count = 4
-                for k=1 to count do
-                (
-                    local weight = skinOps.getvertexweight sk v k
-                    local boneId = skinOps.getvertexweightboneid sk v k
-                    local boneName = skinOps.getBonename sk boneId 0
-                    
-                    for b=1 to boneList.count do
-                    (
-                        if ( boneList[b].name == boneName ) then 
-                        (
-                            boneId = b
-                            exit
-                        )
-                    )
-                    
-                    boneIndices[k] = boneId
-                    boneNames[k] = boneName
-                    weights[k] = ( weight * 255 ) as integer
-                )
-                
-                if( 255 - weights[1] - weights[2] - weights[3] - weights[4] != 0 ) then
-                    weights[1] = 255 - weights[2] - weights[3] - weights[4]
+        skinMod = modPanel.getCurrentObject()
 
-                local vertex = vertexWeights vertexId:v boneIndices:boneIndices boneNames:boneNames weights:weights
+        vertex_weight_list = #()
+        for v=1 to skinOps.getnumbervertices skinMod do
+        (
+            local vw = vertex_weight vertex:v
+            local vertexweightcount = skinops.getvertexweightcount skinMod v
+
+            for w=1 to vertexweightcount do
+            (
+                local boneId = skinOps.getvertexweightboneid skinMod v w
+                local boneName = skinOps.getBonename skinMod boneId 0
                 
-                append vertices vertex
+                for obj in mdx.allobjects do
+                (
+                    if ( obj.objRef.name == boneName ) then 
+                    (
+                        append vw.boneIndices obj.id
+                        vw.crc += obj.id as string + "|"
+                        exit
+                    )
+                )
+
             )
             
+            append vertex_weight_list vw
+            
+        )
+        -- > annoyingly necessary to apply the correct weights to the correct vertices
+        tvVertices = #()
+        for i=1 to theMesh.numFaces do
+        (
+            local f = getFace theMesh i
+            local u = getTvFace theMesh i
+            tvVertices[u.x] = f.x as integer
+            tvVertices[u.y] = f.y as integer
+            tvVertices[u.z] = f.z as integer
+        )
+        --> necessary as well as some models have isolated vertices...
+        for i=1 to tvVertices.count do if (tvVertices[i] == undefined ) then tvVertices[i] = i as integer
+
+        tv_vertex_weight_list = #()
+        for tv in tvVertices do
+            append tv_vertex_weight_list vertex_weight_list[tv]
+            
+        mtgcList = #()
+        for vw in tv_vertex_weight_list do appendIfUnique mtgcList vw.crc
+
+        -->  GEOS.MATS.matrices
+        for m in mtgcList do
+        (
+            local parts = filterstring m "|"
+            for p in parts do
+            (
+                if p != "" then append weights.matrices (p as integer )
+            )
+        )
+
+        --> GEOS.MTGC
+        for m in mtgcList do
+        (
+            local parts = filterstring m "|"
+            append weights.mtgc parts.count
+        )
+
+        --> GEOS.GNDX
+        for vw in tv_vertex_weight_list do
+        (
+            for m=1 to mtgcList.count do 
+            (
+                if mtgcList[m] == vw.crc then append weights.gndx m
+            )
         )
         deselect theMesh
-        return vertices
+        return weights
     ),
     /* get the geometry sets from the scene */
     function GetGEOS mdx=
@@ -542,7 +575,7 @@ STRUCT Warcraft_III_Helpers
             local theMesh = geo.meshRef
             local original_vertices = #()
             local original_normals  = #()
-            local original_weights  = Warcraft_III_Helpers.GetWeights theMesh
+            local weights  = Warcraft_III_Helpers.GetWeights theMesh
 
             /* because a vertex can have multiple vertex coordinates keep track of them */
             for v=1 to theMesh.numVerts do
@@ -573,7 +606,6 @@ STRUCT Warcraft_III_Helpers
             local vertices = #()
             local normals = #()
             local uvs = #()
-            local weights = #()
             for i=1 to tvVertices.count do
             (
                 local uv = getTvert theMesh i
@@ -581,7 +613,6 @@ STRUCT Warcraft_III_Helpers
                 uvs[i] = [uv.x, 1.0 - uv.y]
                 vertices[i] = original_vertices[tvVertices[i]]
                 normals[i]  = original_normals[tvVertices[i]]
-                weights[i]  = original_weights[tvVertices[i]]
             )
         
             geo.Size = 4 --> start initial size
@@ -627,35 +658,8 @@ STRUCT Warcraft_III_Helpers
             -- MATS
             geo.Size += 8
             geo.mats = mats800()
-                        
-            local boneindices = #()
-            for w in original_weights do 
-            (
-                if( boneIndices.count == 0 ) then
-                    append boneIndices w.boneIndices
-                else
-                (
-                    local foundIt = false
-                    for bi in boneIndices do
-                    (   
-                         if bi[1] == w.boneIndices[1] and bi[2] == w.boneIndices[2] and bi[3] == w.boneIndices[3] and bi[4] == w.boneIndices[4] then foundIt = true
-                    )   
-                    if foundIt == false then append boneIndices w.boneIndices
-                )
-            )
-
-            local matrices = #()
-            for i=1 to boneIndices.count do
-            (
-                if boneIndices[i][1] != 0 then append matrices boneIndices[i][1]
-                if boneIndices[i][2] != 0 then append matrices boneIndices[i][2]
-                if boneIndices[i][3] != 0 then append matrices boneIndices[i][3]
-                if boneIndices[i][4] != 0 then append matrices boneIndices[i][4]
-                
-            )
-
-            geo.mats.matrices = matrices
-            geo.Size += matrices.count * 4
+            geo.mats.matrices = weights.matrices
+            geo.Size += geo.mats.matrices.count * 4
             
             local theMaterial = undefined 
             for x=1 to mtls.count do
@@ -724,35 +728,15 @@ STRUCT Warcraft_III_Helpers
             geo.Size += mdx.SEQS.count * 7 * 4
             
             -- GNDX
-            geo.Size += 8 --> GNDX and nbr of gndx's 
-            for w in original_weights do 
-            (
-                for bi=1 to boneIndices.count do
-                (
-                    if boneIndices[bi][1] == w.boneIndices[1] and
-                       boneIndices[bi][2] == w.boneIndices[2] and
-                       boneIndices[bi][3] == w.boneIndices[3] and
-                       boneIndices[bi][4] == w.boneIndices[4] then
-                    append geo.gndx ( bi - 1 )
-                )
-            )
+            geo.Size += 8
+            geo.GNDX = weights.GNDX
             geo.Size += geo.gndx.count --> only byte
             
             -- MTGC
             geo.Size += 8
-            for n=1 to boneIndices.count do 
-            (
-                local counter = 0
-                
-                for bi in boneIndices do 
-                    if bi != 0 then counter += 1
-                
-                append geo.mtgc ( counter - 1 )
-            )
-            geo.Size += boneIndices.count * 4
-            
-            --if WC3_MDX800_DEBUG then format " - Size: %\n" geo.size
-           --append geos.geos geo
+            geo.MTGC = weights.mtgc
+            geo.Size += geo.MTGC.count * 4
+
         )
         
         mdx.geos = geos

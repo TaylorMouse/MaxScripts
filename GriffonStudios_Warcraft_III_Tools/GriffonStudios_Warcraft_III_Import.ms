@@ -663,7 +663,7 @@ STRUCT WC3_MDX800
                     --format "% %\n" header amount
                     
                 )
-                if header == "MTGC" then -- boneGroups
+                if header == "MTGC" then -- Matching Group Count
                 (
                     local amount = readLong stream
                     for v=1 to amount do append geo.mtgc (readLong stream)
@@ -1705,7 +1705,7 @@ STRUCT WC3_MDX800
     )
 )
 
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"

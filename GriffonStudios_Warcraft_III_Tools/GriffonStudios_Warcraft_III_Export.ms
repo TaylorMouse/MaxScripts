@@ -9,7 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
-    | 1.0 - bugfix:  MTLS incorrect TEXS & incorrect BONE size
+    | 1.1 - bugfix: vertex weights should be done on tv Vertices
+    | 1.0 - bugfix: MTLS incorrect TEXS & incorrect BONE size
     | 0.9 - Export BONE, HELP
     | 0.8 - Export CLID, EVTS, PIVT, ATCH
     | 0.7 - Gather all Objects 
@@ -265,15 +266,15 @@ STRUCT WC3_MDX800_EXPORTER
             
             Warcraft_III_Helpers.WriteFixedString mdx.stream "GNDX" 4
             writeLong mdx.stream geo.GNDX.count
-            for g in geo.GNDX do writeByte mdx.stream g
+            for g in geo.GNDX do writeByte mdx.stream ( g - 1 )
             
-            Warcraft_III_Helpers.WriteFixedString mdx.stream "MTGC" 4
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "MTGC" 4 --> matching bone group counts
             writeLong mdx.stream geo.MTGC.count
             for m in geo.MTGC do writeLong mdx.stream m
                 
-            Warcraft_III_Helpers.WriteFixedString mdx.stream "MATS" 4
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "MATS" 4 --> matching bone sets
             writeLong mdx.stream geo.MATS.matrices.count
-            for m in geo.MATS.matrices do writeLong mdx.stream (m - 1)
+            for m in geo.MATS.matrices do writeLong mdx.stream m
             writeLong mdx.stream geo.MATS.materialId
             writeLong mdx.stream geo.MATS.sectionGroupId
             writeLong mdx.stream geo.MATS.sectionGroupType
@@ -611,4 +612,4 @@ STRUCT WC3_MDX800_EXPORTER
     )
 )
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
