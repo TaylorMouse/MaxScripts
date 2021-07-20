@@ -9,6 +9,7 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 1.2 - First successfull export!
     | 1.1 - bugfix: vertex weights should be done on tv Vertices
     | 1.0 - bugfix: MTLS incorrect TEXS & incorrect BONE size
     | 0.9 - Export BONE, HELP
@@ -21,8 +22,6 @@
     | 0.2 - Export MODL & SEQS
     | 0.1 - Initial setup
 
-    .NOTE
-    | DOES NOT  WORK YET !!
 
 */
 
@@ -612,4 +611,4 @@ STRUCT WC3_MDX800_EXPORTER
     )
 )
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
-WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
