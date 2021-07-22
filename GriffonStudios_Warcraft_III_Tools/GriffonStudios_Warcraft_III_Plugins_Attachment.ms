@@ -65,8 +65,8 @@ plugin simpleManipulator WarcraftIII_Attachment
     (
         this.clearGizmos()
 
-        BuildGizmo #([0,-4,0], [5,0,0], [0,4,0], [0,-4,0], [0,0,10],[0,4,0] )
-        BuildGizmo #([0,0,10],[5,0,0])
+        BuildGizmo #([-4,0,0], [0,-5,0], [4,0,0], [-4,0,0], [0,0,10],[4,0,0] )
+        BuildGizmo #([0,0,10],[0,-5,0])
         
     )
     

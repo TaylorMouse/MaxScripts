@@ -58,32 +58,46 @@ macroScript GriffonStudios_ExportWarcraftIIIMdx800
 macroScript GriffonStudios_ToggleCollisionObject
     category:"Warcraft III Tools"
     internalcategory:"Griffon Studios Tools"
-    buttonText:"Toggle collision object"
-    toolTip:"Toggle the selected object as a Warcraft III collision box"
+    buttonText:"Toggle collision objects"
+    toolTip:"Toggle all collision object"
     icon:#("GriffonStudios",4)
 (
     on execute do (
     
-        if ( $ != undefined ) then
+        for obj in objects do
         (
-            if ( classof $ != box and classof $ != sphere and classof $ != plane and classof $ != cylinder ) then return undefined
-            if ( getUserProp $ "COLLISION-OBJECT" == undefined or getUserProp $ "COLLISION-OBJECT" == false ) then
+            if ( getUserProp obj "COLLISION-OBJECT" == true ) then 
             (
-                setUserProp $ "COLLISION-OBJECT" true
-                $.boxmode = true
-                $.wirecolor = color 64 128 255
-                $.renderable = off
-                $.castShadows = off
-                $.receiveshadows = off
-                freeze $
-            )
-            else
-            (
-                setUserProp $ "COLLISION-OBJECT" false
-                $.boxmode = false
-                unfreeze $
+                if obj.boxmode == true then 
+                (
+                    obj.boxmode = false
+                    unfreeze obj
+                    
+                )
+                else
+                (
+                    obj.boxmode = true
+                    obj.wirecolor = color 64 128 255
+                    obj.renderable = off
+                    obj.castShadows = off
+                    obj.receiveshadows = off
+                    freeze obj
+                )
             )
         )
-        
+    )
+)
+
+/* opens the User Property window */
+macroScript GriffonStudios_UserPropertyWindow
+    category:"Warcraft III Tools"
+    internalcategory:"Griffon Studios Tools"
+    buttonText:"Show User Property Window"
+    toolTip:"Show User Property Window"
+    icon:#("GriffonStudios",5)
+(
+    on execute do (
+        if(GriffonStudios_Warcraft_III_UserPropertyEditor != undefined) then destroydialog GriffonStudios_Warcraft_III_UserPropertyEditor
+            CreateDialog GriffonStudios_Warcraft_III_UserPropertyEditor lockwidth: true  
     )
 )

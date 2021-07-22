@@ -1046,6 +1046,8 @@ STRUCT WC3_MDX800
         (
             local b = obj.boneRef
             
+            Warcraft_III_Helpers.ApplyUserProperties obj.flags b
+            
             b.assumeSkinPose()
 
             -- Translation
@@ -1143,6 +1145,9 @@ STRUCT WC3_MDX800
         for h in mdx.help do
         (
             local d = h.helperRef
+            
+            Warcraft_III_Helpers.ApplyUserProperties h.flags d
+            
             if( h.parentId > 0 ) then 
                 d.parent = mdx.objs[h.parentId]
             
@@ -1705,6 +1710,7 @@ STRUCT WC3_MDX800
     )
 )
 
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\Abomination.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"

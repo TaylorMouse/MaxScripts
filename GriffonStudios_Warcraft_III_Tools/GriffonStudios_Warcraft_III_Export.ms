@@ -336,7 +336,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         for obj in mdx.allObjects do
         (
-            if ( obj.flags == 0x100 ) then
+            if ( obj.ObjectType == #wc3BONE ) then
             (
                 totalSize += obj.totalSize + 8 --> headersize + geosetid + geosetAnimId
                 
@@ -357,7 +357,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         for obj in mdx.allObjects do
         (                
-            if ( obj.flags == 0x100 ) then
+            if ( obj.ObjectType == #wc3BONE ) then
             (
                 writeLong mdx.stream obj.totalSize
                 Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
@@ -377,20 +377,25 @@ STRUCT WC3_MDX800_EXPORTER
     ),
     function WriteHELP800 mdx=
     (
+        local nbrHelpers = 0
+        for obj in mdx.allObjects do
+            if ( obj.ObjectType == #wc3HELP ) then nbrHelpers += 1
+        
+        if nbrHelpers == 0 then return undefined
         format "Writing HELP\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "HELP" 4
         
         local totalSize = 0
         
         for obj in mdx.allObjects do
-            if ( obj.flags == 0x00 ) then
+            if ( obj.ObjectType == #wc3HELP ) then
                 totalSize += obj.totalSize
         
         writeLong mdx.stream totalSize
         
         for obj in mdx.allObjects do
         (                
-            if ( obj.flags == 0x00 ) then
+            if ( obj.ObjectType == #wc3HELP ) then
             (
                 writeLong mdx.stream obj.totalSize
                 Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
@@ -398,9 +403,9 @@ STRUCT WC3_MDX800_EXPORTER
                 writeLong mdx.stream obj.parentId #signed
                 writeLong mdx.stream obj.flags
                 
-                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGTR
-                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGRT
-                Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGSC
+               Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGTR
+               Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGRT
+               Warcraft_III_Helpers.WriteKGAnim mdx.stream obj.KGSC
                 
             )
         )
@@ -414,14 +419,14 @@ STRUCT WC3_MDX800_EXPORTER
         local totalSize = 0
         
         for obj in mdx.allObjects do
-            if obj.flags == 0x800 then totalSize += 364  -- obj.TotalSize --> no animations yet
+            if obj.ObjectType == #wc3ATCH then totalSize += 364  -- obj.TotalSize --> no animations yet
         
         writeLong mdx.stream totalSize
             
         local index = 0
         for obj in mdx.allObjects do
         (
-            if obj.flags == 0x800 then 
+            if obj.ObjectType == #wc3ATCH then 
             (
                 writeLong mdx.stream 364 --obj.totalSize
                 writeLong mdx.stream obj.headerSize
@@ -461,7 +466,7 @@ STRUCT WC3_MDX800_EXPORTER
         local totalSize = 0
         for obj in mdx.allObjects do
         (
-            if ( obj.flags == 0x400 ) then 
+            if ( obj.ObjectType == #wc3EVTS ) then 
             if ( obj.objRef.keyList.count > 0 ) then 
             (
                 totalSize += obj.headerSize
@@ -473,7 +478,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         for obj in mdx.allObjects do
         (
-            if ( obj.flags == 0x400 ) then 
+            if ( obj.ObjectType == #wc3EVTS ) then 
             if ( obj.objRef.keyList.count > 0 ) then 
             (
                 writeLong mdx.stream obj.headerSize
@@ -498,7 +503,7 @@ STRUCT WC3_MDX800_EXPORTER
         local totalSize = 0
         for obj in mdx.allobjects do
         (
-            if obj.Flags == 0x2000 then
+            if obj.ObjectType == #wc3CLID then
             (
                 totalSize += obj.headerSize
                 if ( classof obj.objRef == box ) then totalSize += 28
@@ -511,7 +516,7 @@ STRUCT WC3_MDX800_EXPORTER
 
         for obj in mdx.allobjects do
         (
-            if obj.Flags == 0x2000 then
+            if obj.ObjectType == #wc3CLID then
             ( 
                 writeLong mdx.stream obj.headerSize
                 Warcraft_III_Helpers.WriteFixedString mdx.stream obj.name 80
@@ -572,6 +577,7 @@ STRUCT WC3_MDX800_EXPORTER
         local export = WC3_MDX800_EXPORTER()
         
         -- set the T-pose of the object to export correctly
+        
         local animationInterval = animationrange
         animationrange = interval 0 100
         slidertime = 0
@@ -608,7 +614,10 @@ STRUCT WC3_MDX800_EXPORTER
         fClose mdx.stream
         animationrange = interval animationInterval.start animationInterval.end
         gc() 
+        format "Done!\n"
     )
 )
+--WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Paladin (Sword)\Paladin (Sword)\paladin_export.mdx"

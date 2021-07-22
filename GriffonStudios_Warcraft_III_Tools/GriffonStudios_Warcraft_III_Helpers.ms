@@ -1,3 +1,15 @@
+/*
+    .SYNOPSIS
+    | Helper functions for Warcraft III mdx (old version = version 800 )
+    
+    .COPYRIGHT
+    | (c)2021 Griffon Studios
+    
+    .AUTHOR
+    | Taylor Mouse
+
+*/
+
 STRUCT Warcraft_III_Helpers
 (
     function ReadVector3Anim stream=
@@ -448,7 +460,7 @@ STRUCT Warcraft_III_Helpers
         mdx.mtls = matList
     ),
     /* get the weights from the vertices per mesh */
-    function GetWeights theMesh=
+    function GetWeights theMesh mdx=
     (
         struct weights800 ( matrices = #(), mtgc = #(), gndx = #() )
         struct vertex_weight ( vertex, boneIndices = #(), crc = "")
@@ -479,7 +491,6 @@ STRUCT Warcraft_III_Helpers
                         exit
                     )
                 )
-
             )
             
             append vertex_weight_list vw
@@ -575,7 +586,7 @@ STRUCT Warcraft_III_Helpers
             local theMesh = geo.meshRef
             local original_vertices = #()
             local original_normals  = #()
-            local weights  = Warcraft_III_Helpers.GetWeights theMesh
+            local weights  = Warcraft_III_Helpers.GetWeights theMesh mdx
 
             /* because a vertex can have multiple vertex coordinates keep track of them */
             for v=1 to theMesh.numVerts do
@@ -610,7 +621,7 @@ STRUCT Warcraft_III_Helpers
             (
                 local uv = getTvert theMesh i
                 
-                uvs[i] = [uv.x, 1.0 - uv.y]
+                uvs[i] = [uv.x, 1.0 - uv.y] --> TODO: make this configurable, looks like importing FBX files screws this up
                 vertices[i] = original_vertices[tvVertices[i]]
                 normals[i]  = original_normals[tvVertices[i]]
             )
@@ -749,32 +760,43 @@ STRUCT Warcraft_III_Helpers
         struct geoa800 (size, opacity, geoId, color, type, KGAO)
         struct anim800 ( numPts, LineType = 0, glbsId = -1, KG = #() )
         struct kg800   ( Time, Point = 0.0, inTan, outTan, LineType = 0 )
+    
+        local seqs_frames = #()
+        append seqs_frames 0
+        for s in mdx.SEQS do append seqs_frames ( GriffonStudios_Helpers.RoundToFrame s.startframe )
+
+        append frames 0
         
         for g=1 to mdx.geos.count do
         (
-            
-            local geoa = geoa800 size:28 opacity:1.0 color:[1.0,1.0,1.0] type:2 geoId:(g - 1)
-            
+            local geoa = geoa800 size:28 opacity:1.0 color:[1.0,1.0,1.0] type:0 geoId:(g - 1)
             local theMesh = mdx.geos[g].meshRef
             local visController = GetVisController theMesh
-            
-            if (visController != undefined) then 
+            local frames = undefined
+            if (visController != undefined and classof visController == On_Off ) then 
             (
+                frames = #()
                 geoa.size += 16 --> KGAO, nbr of points, linetype, glbsId
-                geoa.KGAO = anim800 numPts:visController.Keys.count
+                
+                for key in visController.keys do append frames ( key.time as integer / TicksPerFrame )
+                
+                for f in seqs_frames do
+                    appendIfUnique frames f
+                
+                frames = sort frames
+                
+                geoa.KGAO = anim800 numPts:frames.count
 
                 geoa.size += geoa.KGAO.numPts * 8
                 
-                for p=1 to geoa.KGAO.numPts do
+                for f in frames do
                 (
                     local kg = kg800()
-                    with animate on 
-                        at time visController.Keys[p].time
-                        (
-                            local t = visController.keys[p].time as integer / TicksPerFrame
-                            kg.Time = t * 1000 / 30
-                            if theMesh.visibility then kg.Point = 1.0
-                        )
+                    at time f
+                    (
+                        kg.Time = f * 1000 / 30
+                        if theMesh.visibility then kg.Point = 1.0
+                    )
                     append geoa.KGAO.KG kg
                 )
             )
@@ -787,7 +809,7 @@ STRUCT Warcraft_III_Helpers
     /* get the bone animations AND helper animations */
     function GetObjects mdx=
     (
-        struct object800 ( TotalSize = 0, HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId = -1, geosetAnimationId = -1 )
+        struct object800 ( TotalSize = 0, ObjectType,  HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId = -1, geosetAnimationId = -1 )
      
         local allobjects = #() 
         local id = 0
@@ -796,7 +818,10 @@ STRUCT Warcraft_III_Helpers
         for obj in objects do 
             if (classof obj == boneGeometry ) then
             (   
-                local o = object800 Id:id Name:obj.name Flags:0x100 objRef:obj TotalSize:96 
+                local o = object800 Id:id Name:obj.name ObjectType:#wc3BONE Flags:0x100 objRef:obj TotalSize:96
+
+                o.flags = Warcraft_III_Helpers.GetFlags o.flags obj
+                
                 id +=1
                 append allObjects o
             )
@@ -805,7 +830,7 @@ STRUCT Warcraft_III_Helpers
         for obj in objects do
             if (classof obj == dummy ) then 
             (
-                local o = object800 Id:id Name:obj.name Flags:0x00 objRef:obj TotalSize:96
+                local o = object800 Id:id Name:obj.name ObjectType:#wc3HELP Flags:0x00 objRef:obj TotalSize:96
                 id +=1
                 append allObjects o
             )
@@ -814,7 +839,7 @@ STRUCT Warcraft_III_Helpers
         for obj in objects do
             if (classof obj == WarcraftIII_Attachment ) then 
             (
-                local o = object800 Id:id Name:obj.name Flags:0x800 objRef:obj TotalSize:364
+                local o = object800 Id:id Name:obj.name ObjectType:#wc3ATCH Flags:0x800 objRef:obj TotalSize:364
                 id +=1
                 append allObjects o
             )
@@ -825,7 +850,7 @@ STRUCT Warcraft_III_Helpers
             (
                 if ( obj.keyList.count > 0 ) then 
                 (
-                    local o = object800 Id:id Name:obj.name Flags:0x400 objRef:obj
+                    local o = object800 Id:id Name:obj.name ObjectType:#wc3EVTS Flags:0x400 objRef:obj
                     id +=1
                     append allObjects o
                 )
@@ -837,7 +862,7 @@ STRUCT Warcraft_III_Helpers
             (
                 if ( classof obj == box or classof obj == sphere or classof obj == plane or classof obj == cylinder ) then
                 (
-                    local o = object800 Id:id Name:obj.name Flags:0x2000 objRef:obj
+                    local o = object800 Id:id Name:obj.name ObjectType:#wc3CLID Flags:0x2000 objRef:obj
                     id +=1
                     append allObjects o
                 )
@@ -1015,6 +1040,7 @@ STRUCT Warcraft_III_Helpers
     ),
     function WriteKGAnim stream kgAnim=
     (
+        if kgAnim == undefined then return undefined
         if ( kgAnim.nbrKeys > 0 ) then 
         (
             Warcraft_III_Helpers.WriteFixedString stream kgAnim.Type 4            
@@ -1041,9 +1067,29 @@ STRUCT Warcraft_III_Helpers
     ),
     function GetBehavior=
     (
+        local ret = undefined
         for obj in objects do 
             if (classof obj == WarcraftIII_Behavior ) then
-                return obj
+                ret = obj
+        
+        return ret
+    ),
+    function ApplyUserProperties flags obj=
+    (
+        if ( bit.and flags 0x0008 > 0 ) then setUserProp obj "BILLBOARD" true
+        if ( bit.and flags 0x0010 > 0 ) then setUserProp obj "BILLBOARD-LOCK-X" true
+        if ( bit.and flags 0x0020 > 0 ) then setUserProp obj "BILLBOARD-LOCK-Y" true
+        if ( bit.and flags 0x0040 > 0 ) then setUserProp obj "BILLBOARD-LOCK-Z" true
+        if ( bit.and flags 0x2000 > 0 ) then setUserProp obj "COLLISION-OBJECT" true
+    ),
+    function GetFlags flags obj=
+    (
+        if ( getUserProp obj "BILLBOARD" == true ) then flags += 0x8
+        if ( getUserProp obj "BILLBOARD-LOCK-X" == true ) then flags += 0x10
+        if ( getUserProp obj "BILLBOARD-LOCK-Y" == true ) then flags += 0x20
+        if ( getUserProp obj "BILLBOARD-LOCK-Z" == true ) then flags += 0x40
+        
+        return flags
     )
 )
 
