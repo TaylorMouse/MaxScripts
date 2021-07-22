@@ -10,7 +10,7 @@
         C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
 
 
-## Optional: How to use the Griffon Studios Icons
+## Optional: How to use the custom Warcraft III Icons for 3D Studio Max
 
 - Get the 24i.bmp and the 16i.bmp images from the [MaxIcons](https://github.com/TaylorMouse/MaxScripts/tree/master/MaxIcons) folder
 
@@ -106,9 +106,6 @@ and find additional scripts in the Utilities pane.
 
 ![utilities menu](images/gsmenu2.png)
 
-## Example
-
-![example](images/infantry_anim.gif)
 
 ## Supported versions
 
