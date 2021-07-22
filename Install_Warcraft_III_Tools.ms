@@ -14,6 +14,7 @@
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Helpers.ms"
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_AnimationWindow.ms"
+fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_UserPropertyEditor.ms"
 
 /* Plugins */
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Plugins_Attachment.ms"

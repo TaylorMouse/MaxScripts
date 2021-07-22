@@ -1,16 +1,39 @@
-# Griffon Studios 3D Studio Max Scripts
+# Warcraft III Tools
+## How to install
 
-## How to install Warcraft III Tools
+- Download the ***GriffonStudios_Warcraft_III_Tools*** folder and the ***Install_Warcraft_III_Tools.ms*** file
 
-- Download the ***GriffonStudios_Warcraft_III_Tools*** folder
-
-- Copy the ***GriffonStudios_Warcraft_III_PLugins_xxx.ms*** and the ***GriffonStudios_Helper.ms*** files in the startup folder of your 3D Studio Max application.
+- Copy the folder ***GriffonStudios_Warcraft_III_Tools*** and the ***Install_Warcraft_III_Tools.ms*** files in the startup folder of your 3D Studio Max application.
 
     Example:
 
         C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
 
-- Start Max
+
+## Optional: How to use the Griffon Studios Icons
+
+- Get the 24i.bmp and the 16i.bmp images from the [MaxIcons](https://github.com/TaylorMouse/MaxScripts/tree/master/MaxIcons) folder
+
+- Place both the "_24i.bmp" and the "_16i.bmp" in the following directory to be able to use them or so that the macro script recognizes it.
+
+      c:\Users\<your user name>\AppData\Local\Autodesk\3dsMax\<version of max>\ENU\usericons\
+
+- NOTE: You need to restart max to take affect.
+
+### The icons
+
+![WCIIIImport](MaxIcons/GriffonStudios_24i.bmp)
+
+|Icon Name| Description|
+|--|--|
+|Animation Window icons| Used for opening the animation window|
+|Import MDX| Used for importing the mdx file you select|
+|Export MDX| Used for exporting to an mdx file you choose|
+|Collision Object Toggle| Used for toggeling all collision objects at the same time|
+|User Properties|Used to display and set specific properties of an object,like collision object &  billboarding|
+
+
+## Start Max
 
 - This will install the following plugins:
 
@@ -19,12 +42,29 @@
   - Warcraft III Attachment *(found in Helpers in the Create tab )*
   - Warcraft III Ribbon *(found in Helpers in the Create tab )*
   - Warcraft III Behavior *(found in Helpers in the Create tab )*
-  
-- Prior to importing the model, convert the .blp files to .TGA, use the BLPconv.exe to do this conversion. Just drag and drop the .blp file onto the exe after you extracted it from the zip file.
 
-- Run the ***GriffonStudios_Warcraft_III_Import.ms*** script.
-- This will install a macro scrip that you can add to a toolbar so you can access it every time
-- This window will ask you to select a .mdx file, *(version 800 !!)*
+- This will install the following tools:
+  
+  - Animation Window
+  - User Property Window
+
+- This will install the following macros:
+  - Import MDX
+  - Export MDX
+  - Toggle Collision Objects
+  - Open Animation Window
+  - Open User Property Window
+
+- See the following video on how to install a macro and create a button for it on a custom toolbar:
+[How to install a macro in 3D Studio Max](https://www.youtube.com/watch?v=kvaAY8TCRdo)
+
+## Import MDX
+
+**IMPORTANT**
+- Prior to importing the model, convert the .blp files to .TGA, use the BLPconv.exe to do this conversion. Just drag and drop the .blp file onto the exe after you extracted it from the zip file.
+- Supprts Version 800 only, for version 1000 ( Reforged ) seen the Reforged tools
+
+- Press the Import button
 
 - After the import is done, you should be able to have the following
 
@@ -32,33 +72,8 @@
 
 - The model I used can be downloaded from [The Hive Workshop - Spartan Warrior](https://www.hiveworkshop.com/threads/spartan-warrior.333698/)
 
-## How to use the Animation Window
-
-- Copy the ***GriffonStudios_AnimationWindow.ms*** files in the startup folder of your 3D Studio Max application
-
-    Example:
-
-        C:\Program Files\Autodesk\3ds Max 2016\scripts\Startup\
-- This will install a macro script in that you can add to any toolbar in Max, it will be listed under Griffon Studios Tools.
-
-- See the following video on how to install a macro and create a button of it:
-[How to install a macro in 3D Studio Max](https://www.youtube.com/watch?v=kvaAY8TCRdo)
-
-## How to use the Griffon Studios Icons
-
-Currently there are 3 icons
-
-![WCIIIImport](MaxIcons/GriffonStudios_24i.bmp)
-
-1. Animation list icons; used for the animation window
-2. MDX import
-3. MDX export ( not used yet )
-
-Place both the "_24i.bmp" and the "_16i.bmp" in the following directory to be able to use them or so that the macro script recognizes it.
-
-    c:\Users\<your user name>\AppData\Local\Autodesk\3dsMax\<version of max>\ENU\usericons\
-
-You need to restart max to take affect.
+**IMPORTANT**
+A more in dept description will follow once all of the tools have been covered together with a tutorial.
 
 ## How to install the Warcraft 3 Reforged Tools
 

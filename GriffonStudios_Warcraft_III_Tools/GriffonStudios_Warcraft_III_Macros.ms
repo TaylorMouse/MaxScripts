@@ -97,7 +97,16 @@ macroScript GriffonStudios_UserPropertyWindow
     icon:#("GriffonStudios",5)
 (
     on execute do (
-        if(GriffonStudios_Warcraft_III_UserPropertyEditor != undefined) then destroydialog GriffonStudios_Warcraft_III_UserPropertyEditor
-            CreateDialog GriffonStudios_Warcraft_III_UserPropertyEditor lockwidth: true  
+        if ( $ == undefined ) then 
+        (
+            messagebox "Please select an object first"
+            return undefined
+        )
+        if ( $ != undefined ) then 
+        (
+        
+            if(GriffonStudios_Warcraft_III_UserPropertyEditor != undefined) then destroydialog GriffonStudios_Warcraft_III_UserPropertyEditor
+                CreateDialog GriffonStudios_Warcraft_III_UserPropertyEditor lockwidth: true  
+        )
     )
 )
