@@ -514,7 +514,7 @@ STRUCT Warcraft_III_Helpers
             append tv_vertex_weight_list vertex_weight_list[tv]
             
         mtgcList = #()
-        for vw in tv_vertex_weight_list do appendIfUnique mtgcList vw.crc
+        for tvw in vertex_weight_list do appendIfUnique mtgcList tvw.crc
 
         -->  GEOS.MATS.matrices
         for m in mtgcList do
