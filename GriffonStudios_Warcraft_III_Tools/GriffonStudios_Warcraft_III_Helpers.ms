@@ -9,6 +9,7 @@
     | Taylor Mouse
 
 */
+GLOBAL WC3_INVERT_UVW = true
 
 STRUCT Warcraft_III_Helpers
 (
@@ -621,7 +622,11 @@ STRUCT Warcraft_III_Helpers
             (
                 local uv = getTvert theMesh i
                 
-                uvs[i] = [uv.x, 1.0 - uv.y] --> TODO: make this configurable, looks like importing FBX files screws this up
+                if WC3_INVERT_UVW then 
+                    uvs[i] = [uv.x, 1.0 - uv.y]
+                else
+                    uvs[i] = [uv.x, uv.y]
+                
                 vertices[i] = original_vertices[tvVertices[i]]
                 normals[i]  = original_normals[tvVertices[i]]
             )
@@ -764,8 +769,6 @@ STRUCT Warcraft_III_Helpers
         local seqs_frames = #()
         append seqs_frames 0
         for s in mdx.SEQS do append seqs_frames ( GriffonStudios_Helpers.RoundToFrame s.startframe )
-
-        append frames 0
         
         for g=1 to mdx.geos.count do
         (
@@ -828,7 +831,7 @@ STRUCT Warcraft_III_Helpers
 
         -- HELP
         for obj in objects do
-            if (classof obj == dummy ) then 
+            if (classof obj == Dummy  ) then -- or classof obj == SplineShape
             (
                 local o = object800 Id:id Name:obj.name ObjectType:#wc3HELP Flags:0x00 objRef:obj TotalSize:96
                 id +=1
@@ -905,14 +908,10 @@ STRUCT Warcraft_III_Helpers
         struct anim800   ( Size = 16, nbrKeys, Type = "KGTR", LineType=1, glbsId = -1, AnimBlock = #() )  
         struct KeyValuePair ( Key, Val )
 
-        obj.assumeSkinPose()
-        local basePos = obj.pos
+        local cntrl = obj.pos.controller
+        local pvt = at time 0f in coordsys parent obj.pos
         
-        if obj.parent != undefined then 
-            in coordsys parent
-                basepos = obj.pos
-        
-        local kgtr =  anim800()
+        local kgtr = anim800()
         
         for behavior in objects do 
         (
@@ -928,22 +927,17 @@ STRUCT Warcraft_III_Helpers
             
         )
             
-        kgtr.nbrKeys = numkeys obj.pos.controller
+        kgtr.nbrKeys = numkeys cntrl
         kgtr.size += kgtr.nbrKeys * 16 --> framenbr, position
         
-        for k=1 to kgtr.nbrKeys do
+        for k in cntrl.keys do
         (
-            local kv = KeyValuePair()
-            kv.key =  ( getKeyTime obj.pos.controller k ) as integer / TicksPerFrame
-                
-            at time kv.key 
-            (
-                kv.val = obj.pos - basepos
-                if ( obj.parent != undefined ) then
-                    in coordsys parent
-                        kv.val= obj.pos - basepos
-            )
-            append kgtr.AnimBlock kv
+            local t = k.time as integer / TicksPerFrame
+            
+            local val = at time k.time in coordsys parent obj.pos
+            val = val - pvt
+            
+            append kgtr.AnimBlock ( KeyValuePair Key:t Val:val )
         )
         return kgtr
     ),
@@ -954,7 +948,14 @@ STRUCT Warcraft_III_Helpers
 
         local kgrt =  anim800()
         
-        kgrt.nbrKeys = numkeys obj.rotation.controller
+        local ctrl = obj.rotation.controller
+        local rot = inverse obj.rotation
+
+        local parentRot = quat 0 0 0 1
+        
+        if obj.parent != undefined then parentRot = inverse obj.parent.rotation
+        
+        kgrt.nbrKeys = numkeys ctrl
         kgrt.size += kgrt.nbrKeys * 20
          
         for behavior in objects do 
@@ -970,19 +971,20 @@ STRUCT Warcraft_III_Helpers
             )
             
         )
-        
-        for k=1 to kgrt.nbrKeys do
+               
+        for key in ctrl.keys do
         (
-            local kv = KeyValuePair()
-            kv.key =  ( getKeyTime obj.rotation.controller k ) as integer / TicksPerFrame
-                
-            at time kv.key 
-            (
-                kv.val = obj.rotation
-                if ( obj.parent != undefined ) then
-                    kv.val = obj.rotation - obj.parent.rotation
-            )
-            append kgrt.AnimBlock kv
+            local t = key.time
+            
+            local val = undefined
+            at time t
+                val = obj.rotation * rot
+
+            if ( obj.parent != undefined ) then
+                at time t 
+                    val = val / ( obj.parent.rotation * parentRot )
+            
+            append kgrt.AnimBlock ( KeyValuePair key:t val:val )
         )
         return kgrt
     ),
@@ -1093,8 +1095,9 @@ STRUCT Warcraft_III_Helpers
     )
 )
 
-
-
-
+-- WC3_INVERT_UVW = true
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\export.mdx"
+-- WC3_INVERT_UVW = false
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
 
 

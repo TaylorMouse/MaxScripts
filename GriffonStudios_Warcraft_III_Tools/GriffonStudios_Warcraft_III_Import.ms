@@ -1050,7 +1050,7 @@ STRUCT WC3_MDX800
             
             b.assumeSkinPose()
 
-            -- Translation
+            -- Rotation
             if ( obj.KGRT != undefined ) then 
             (
 
@@ -1079,7 +1079,7 @@ STRUCT WC3_MDX800
 
             )
             
-            -- Rotation
+            -- Translation
             if ( obj.KGTR != undefined ) then
             (
                 local dp = dummy name:"DummyPositionController" 
