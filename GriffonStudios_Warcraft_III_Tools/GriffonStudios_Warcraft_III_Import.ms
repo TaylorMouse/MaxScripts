@@ -804,6 +804,127 @@ STRUCT WC3_MDX800
         return seqs
         
     ),
+    function ReadLITE800 stream tag=
+    (
+        format "Reading %\n" tag.name
+        local totalSize = tag.Size
+        local lightList = #()
+        
+        struct lite800 ( size, headerSize, name, id, parentId, flags, type, farAttenStart, farAttenEnd, rgbColor, rgbIntensity, ambColor, ambIntensity, KGTR, KGRT, KGSC, KLAV,  lightRef )
+        
+        local currentOffset = tag.Offset
+        while ( totalSize > 0 ) do
+        (
+            fseek stream currentOffset #seek_set
+            local l = lite800()
+            
+            l.size       = readLong stream
+            l.headerSize = readLong stream
+            l.name       = GriffonStudios_Helpers.ReadFixedString stream 80
+            l.Id         = readLong stream + 1
+            l.parentId   = readLong stream + 1
+            l.flags      = readLong stream
+            
+            for i=1 to 3 do
+            (
+                local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+                
+                if ( kg != "KGTR" and kg != "KGRT" and kg != "KGSC" ) then  
+                (
+                    fseek stream -4 #seek_cur
+                    exit
+                )
+                
+                if ( kg == "KGTR" ) then l.KGTR = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Transformation
+                if ( kg == "KGRT" ) then l.KGRT = Warcraft_III_Helpers.ReadQuatAnim stream -- Key Global Rotation
+                if ( kg == "KGSC" ) then l.KGSC = Warcraft_III_Helpers.ReadVector3Anim stream -- Key Global Scale
+            )
+            
+            l.Type         = readLong stream 
+            l.farAttenStart   = readFloat stream
+            l.farAttenEnd     = readFloat stream
+            l.rgbColor     = Warcraft_III_Helpers.readColor stream
+            l.rgbIntensity = readFloat stream
+            l.ambColor     = Warcraft_III_Helpers.readColor stream
+            l.ambIntensity = readFloat stream
+            
+            local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+            
+            if ( kg == "KLAV" ) then l.KLAV = Warcraft_III_Helpers.ReadFloatAnim stream
+            
+            totalSize -= l.size
+            currentOffset = currentOffset + l.Size
+            
+            if WC3_MDX800_DEBUG then print l
+            
+            append lightList l
+            
+        )
+        return lightList
+        
+    ),
+    function BuildLITE800 mdx=
+    (
+        if mdx.LITE == undefined then return undefined
+        
+        format "Building the lights \n"
+        local layer = GriffonStudios_Helpers.CreateLayer "Lights"
+        
+        for lite in mdx.LITE do
+        (
+            /*
+                0x0: Omni
+                0x1: Directional
+                0x2: Ambient
+                0x3: Default
+            */
+            local theLight = undefined
+            local pos = mdx.PIVT[lite.Id].translationPart
+            
+            format "- %\n" lite.name
+            
+            if ( lite.Type == 0 ) then 
+                theLight = Omnilight name:lite.name rgb:lite.rgbColor multiplier:lite.rgbIntensity farAttenStart:lite.FarAttenStart farAttenEnd:lite.FarAttenEnd pos:pos
+            
+            if ( lite.Type == 1 ) then 
+                theLight = DirectionalLight name:lite.name rgb:lite.rgbColor multiplier:lite.rgbIntensity farAttenStart:lite.FarAttenStart farAttenEnd:lite.FarAttenEnd pos:pos
+            
+            if ( lite.Type > 2 ) then --> or other
+                theLight = Omnilight name:lite.name rgb:lite.rgbColor multiplier:lite.rgbIntensity farAttenStart:lite.FarAttenStart farAttenEnd:lite.FarAttenEnd
+            
+            if ( lite.Type == 2 ) then --> note these are Max Settings !!!
+            (
+                ambientcolor = lite.ambColor
+                lightLevel = lite.ambIntensity
+            )
+            lite.lightRef = theLight
+            layer.addNode theLight
+            append mdx.objs theLight
+            
+            theLight.showFarAtten = on
+            theLight.useFarAtten = on
+            
+            if lite.parentID > 0 then theLight.parent = mdx.objs[theLight.parentId]
+            
+            if lite.KLAV == undefined then continue
+                
+            if lite.KLAV.numPts > 0 then
+            (
+                theLight.Visibility = on
+                theLight.Visibility.controller = on_off()
+
+                for anim in lite.KLAV.KG do 
+                    with animate on at time ( anim.Time + 10 )
+                        if (anim.point == 1) then 
+                            theLight.Visibility = on
+                        else
+                            theLight.Visibility = off
+                
+            )
+            
+        )
+        
+    ),
     function BuildGEOS800 mdx=
     (
         if mdx.geos == undefined then return undefined
@@ -1013,7 +1134,7 @@ STRUCT WC3_MDX800
             b.boneRef.pos = mdx.pivt[b.id].translationpart
             boneLayer.AddNode aBone
             
-            append mdx.objs aBone
+            mdx.objs[b.Id] = aBone
         )
         if mdx.help != undefined then
         for h in mdx.help do
@@ -1024,7 +1145,7 @@ STRUCT WC3_MDX800
             helpLayer.addNode d
             d.pos = mdx.pivt[h.id].translationpart
             h.helperRef = d
-            append mdx.objs d
+            mdx.objs[h.id] = d
         )
         
     ),
@@ -1039,13 +1160,12 @@ STRUCT WC3_MDX800
         for b in boneList do
             if ( b.ParentBoneId > 0 ) then b.boneRef.parent = mdx.objs[b.parentBoneId]
 
-        for objX in objects do
-            addNewKey objX.controller 0
-
         for obj in boneList do
         (
             local b = obj.boneRef
-            
+
+            addNewKey b.controller 0
+
             Warcraft_III_Helpers.ApplyUserProperties obj.flags b
             
             b.assumeSkinPose()
@@ -1057,6 +1177,7 @@ STRUCT WC3_MDX800
                 local dr = dummy name:"DummyRotationController"
                 dr.rotation.controller = b.rotation.controller
                 local q0 = dr.transform
+                if b.parent != undefined then q0 = b.parent.transform
                 local prevTime = 0
                 
                 for anim in obj.KGRT.KG do
@@ -1066,7 +1187,7 @@ STRUCT WC3_MDX800
                     
                     local q = anim.Point
                     
-                    if ( prevTime == t ) then continue else prevTime = t
+                    if ( prevTime == t ) then continue else prevTime = t --> prevent from applying multiple times the same rotation
                     with animate on 
                         at time t
                         (
@@ -1085,6 +1206,8 @@ STRUCT WC3_MDX800
                 local dp = dummy name:"DummyPositionController" 
                 dp.position.controller = b.position.controller
                 local p0 = dp.transform
+                
+                --if b.parent != undefined then p0 = b.parent.transform
                 local prevTime = 0
 
                 for anim in obj.KGTR.KG do
@@ -1099,7 +1222,7 @@ STRUCT WC3_MDX800
                     with animate on 
                         at time t
                         (
-                            in coordsys p0 dp.position = p 
+                            in coordsys p0 dp.position = p  
                         )
                 )
                 with animate on b.position.controller = copy dp.position.controller
@@ -1128,7 +1251,8 @@ STRUCT WC3_MDX800
                     with animate on 
                         at time t
                         (
-                            in coordsys p0 ds.scale = p 
+                             in coordsys p0 
+                                ds.scale = p 
                         )
                 )
                 with animate on b.scale.controller = copy ds.scale.controller
@@ -1161,6 +1285,7 @@ STRUCT WC3_MDX800
                 local dr = dummy name:"DummyRotationController"
                 dr.rotation.controller = d.rotation.controller
                 local q0 = dr.transform
+                if d.parent != undefined then q0 = d.parent.transform
                 local prevTime = 0
                 
                 for anim in h.KGRT.KG do
@@ -1182,8 +1307,6 @@ STRUCT WC3_MDX800
             )
             if ( h.KGTR != undefined ) then
             (
-
-                
                     local dp = dummy name:"DummyPositionController" 
                     dp.position.controller = d.position.controller
                     local p0 = dp.transform
@@ -1200,6 +1323,7 @@ STRUCT WC3_MDX800
                             at time t
                             (
                                 in coordsys p0 dp.position = p 
+
                             )
                     )
                     with animate on d.position.controller = copy dp.position.controller
@@ -1225,7 +1349,8 @@ STRUCT WC3_MDX800
                     with animate on 
                         at time t
                         (
-                            in coordsys p0 ds.scale = p 
+                            in coordsys p0 
+                                ds.scale = p 
                         )
                 )
                 with animate on d.scale.controller = copy ds.scale.controller
@@ -1652,7 +1777,7 @@ STRUCT WC3_MDX800
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
         struct mdx800 
-            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, pre2, prem, objs )
+            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, pre2, prem, lite,objs= #() )
         
         local mdx = mdx800()
         mdx.fileName = file
@@ -1674,6 +1799,7 @@ STRUCT WC3_MDX800
             if tag.name == "PIVT" then mdx.pivt = WC3_MDX800.ReadPIVT800 stream tag --> Pivot Points
             if tag.name == "EVTS" then mdx.evts = WC3_MDX800.ReadEVTS800 stream tag --> Events
             if tag.name == "CLID" then mdx.clid = WC3_MDX800.ReadCLID800 stream tag --> Collision Definition
+            if tag.name == "LITE" then mdx.lite = WC3_MDX800.ReadLITE800 stream tag --> Lights
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag --> Cameras
             if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag --> Ribbon Emitters
             if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag --> Particle Emitters
@@ -1696,8 +1822,9 @@ STRUCT WC3_MDX800
         WC3_MDX800.ApplySkinning mdx
         WC3_MDX800.BuildATCH800 mdx
         WC3_MDX800.BuildCAMS800 mdx
-        WC3_MDX800.BuildGEOA800 mdx
+         WC3_MDX800.BuildGEOA800 mdx
         WC3_MDX800.BuildRIBB800 mdx
+        WC3_MDX800.BuildLITE800 mdx
         
 --         WC3_MDX800.BuildPREM800 mdx
 --         WC3_MDX800.BuildPRE2800 mdx
@@ -1710,6 +1837,7 @@ STRUCT WC3_MDX800
     )
 )
 
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Demon\Infernal\Infernal.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\Abomination.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
