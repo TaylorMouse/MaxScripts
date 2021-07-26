@@ -32,8 +32,9 @@ fileIn "GriffonStudios_Warcraft_III_Plugins_Behavior.ms"
 fileIn "GriffonStudios_Warcraft_III_Helpers.ms"
 fileIn "GriffonStudios_Helpers.ms"
 
-GLOBAL WC3_MDX800_DEBUG = true
-GLOBAL WC3_DEBUG = true
+GLOBAL WC3_MDX800_DEBUG = false
+GLOBAL WC3_READONLY = false
+GLOBAL WC3_DEBUG = false
 GLOBAL WC3_MDX = undefined
 
 clearlistener()
@@ -78,8 +79,6 @@ STRUCT WC3_MDX800
                 if( kg == "KPEV" ) then p.KPEV = Warcraft_III_Helpers.ReadFloatAnim stream
                 if( p.KPEV == undefined ) then fseek stream -4 #seek_cur
 
-                
-                
                 totalSize -= p.size
                 currentOffset += p.size
                 append prems p
@@ -1803,32 +1802,37 @@ STRUCT WC3_MDX800
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag --> Cameras
             if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag --> Ribbon Emitters
             if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag --> Particle Emitters
---             if tag.name == "PRE2" then mdx.prem = WC3_MDX800.ReadPRE2800 stream tag --> Particle Emitters v2
+
+            /*
+            TODO:
+              TXAN
+              PREM
+              PRE2
+            */
+
         )
         
         fclose stream
         if WC3_MDX800_DEBUG then WC3_MDX = mdx
-        
-        WC3_MDX800.BuildMODL800 mdx
-        WC3_MDX800.BuildGEOS800 mdx
-        WC3_MDX800.BuildSEQS800 mdx
-        WC3_MDX800.BuildAndAssignMaterials mdx
-        WC3_MDX800.BuildBonesAndHelpers mdx
-        WC3_MDX800.BuildHELP800 mdx
-        WC3_MDX800.BuildBONE800 mdx
-        WC3_MDX800.BuildGLBS800 mdx
-        WC3_MDX800.BuildEVTS800 mdx
-        WC3_MDX800.BuildCLID800 mdx
-        WC3_MDX800.ApplySkinning mdx
-        WC3_MDX800.BuildATCH800 mdx
-        WC3_MDX800.BuildCAMS800 mdx
-         WC3_MDX800.BuildGEOA800 mdx
-        WC3_MDX800.BuildRIBB800 mdx
-        WC3_MDX800.BuildLITE800 mdx
-        
---         WC3_MDX800.BuildPREM800 mdx
---         WC3_MDX800.BuildPRE2800 mdx
-        
+        if WC3_READONLY == false then 
+        (
+            WC3_MDX800.BuildMODL800 mdx
+            WC3_MDX800.BuildGEOS800 mdx
+            WC3_MDX800.BuildSEQS800 mdx
+            WC3_MDX800.BuildAndAssignMaterials mdx
+            WC3_MDX800.BuildBonesAndHelpers mdx
+            WC3_MDX800.BuildHELP800 mdx
+            WC3_MDX800.BuildBONE800 mdx
+            WC3_MDX800.BuildGLBS800 mdx
+            WC3_MDX800.BuildEVTS800 mdx
+            WC3_MDX800.BuildCLID800 mdx
+            WC3_MDX800.ApplySkinning mdx
+            WC3_MDX800.BuildATCH800 mdx
+            WC3_MDX800.BuildCAMS800 mdx
+            WC3_MDX800.BuildGEOA800 mdx
+            WC3_MDX800.BuildRIBB800 mdx
+            WC3_MDX800.BuildLITE800 mdx
+        )
         format "Done!\n"
         gc()
         clearSelection()
