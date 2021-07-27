@@ -9,6 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 0.9 - Added TXAN support
+    | 0.8 - Added LITE support
     | 0.7 - Cleanup based on my understanding during export code
     | 0.6 - Added Global Sequence behavior
     | 0.5 - Added Particle Emitter reading v1
@@ -82,8 +84,9 @@ STRUCT WC3_MDX800
                 totalSize -= p.size
                 currentOffset += p.size
                 append prems p
+                if WC3_MDX800_DEBUG then print p
             )
-            if WC3_MDX800_DEBUG then print prems
+            
             return prems
         )
         catch()
@@ -159,6 +162,7 @@ STRUCT WC3_MDX800
             if( ribb.KRVS == undefined ) then fseek stream -4 #seek_cur
             
             append ribbs ribb
+            if WC3_MDX800_DEBUG then print ribb
         )
         
         if WC3_MDX800_DEBUG then print ribbs
@@ -196,6 +200,7 @@ STRUCT WC3_MDX800
     ),
     function ReadTAGS800 stream streamLen=
     (
+        print ""
         format "Reading CHUNKS\n"
         struct tag800 ( Name, Offset, Size )     
         
@@ -265,7 +270,7 @@ STRUCT WC3_MDX800
                 format "Animation not implemented in ReadEVTS (%)"  evts
             )
             append evts evt
-            
+            if WC3_MDX800_DEBUG then print evt
            
         )
         
@@ -303,6 +308,7 @@ STRUCT WC3_MDX800
             offset += att.Size
             
             append atchs att
+            if WC3_MDX800_DEBUG then print att
         )
         
         
@@ -360,7 +366,7 @@ STRUCT WC3_MDX800
             b.KGTR = kgtr
             b.KGRT = kgrt
             b.KGSC = kgsc
-            
+            if WC3_MDX800_DEBUG then print b
         )
         
         return boneList
@@ -420,7 +426,7 @@ STRUCT WC3_MDX800
             append clidList clid
             local size = currentOffset - startPos
             totalSize -= size
-            
+            if WC3_MDX800_DEBUG then print clid
         )
         --print clidList
         return clidList
@@ -436,6 +442,7 @@ STRUCT WC3_MDX800
             local m  = matrix3 1
             m.row4 = [readfloat stream, readfloat stream, readfloat stream]
             append pivts m
+            if WC3_MDX800_DEBUG then print m
         )
         --print pivts
         return pivts
@@ -471,7 +478,7 @@ STRUCT WC3_MDX800
             
             totalSize -= h.size
             currentOffset = currentOffset + h.Size
-            
+            if WC3_MDX800_DEBUG then print h
             append helperList h
         )
         
@@ -507,7 +514,7 @@ STRUCT WC3_MDX800
                 fseek stream -4 #seek_cur
             
             append geoa g
-            
+            if WC3_MDX800_DEBUG then print g
             totalSize -= g.Size
             currentOffset += g.Size
         )
@@ -542,6 +549,7 @@ STRUCT WC3_MDX800
             t.flags = readLong stream
             
             append texs t
+            if WC3_MDX800_DEBUG then print t
         )
         --print texs
         return texs
@@ -550,7 +558,7 @@ STRUCT WC3_MDX800
     (
         format "Reading %\n" tag.name
         struct layer800 ( name, size, priority, flags, nMaps, maps = #(), materialRef )
-        struct map800 ( size, filterMode, shadingFlags, textureId, parentId, coordId, alpha, kmta, kmte )
+        struct map800 ( size, filterMode, shadingFlags, textureId, txanId, coordId, alpha, kmta, kmte, kmtf )
         
         -- FilterMode (0:none;1:trans;2:blend;3:add)
         -- ShadingFlags (1:unshaded;+16:two sided;+32:unfogged)
@@ -578,21 +586,23 @@ STRUCT WC3_MDX800
                 map.filterMode    = readLong stream 
                 map.shadingFlags  = readLong stream 
                 map.textureId     = readLong stream 
-                map.parentId      = readLong stream 
+                map.txanId        = readLong stream + 1 --> references a TXAN 
                 map.CoordId       = readLong stream
                 map.alpha         = readfloat stream
              
                 if (map.size > 28 ) then
                 (
-                    for x=1 to 2 do
+                    for x=1 to 3 do
                     (
                         local km = GriffonStudios_Helpers.ReadFixedString stream 4
-                        if ( km == "KMTA" ) then map.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream
-                        if ( km == "KMTE" ) then map.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream
+                        if ( km == "KMTA" ) then map.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream --> alpha
+                        if ( km == "KMTE" ) then map.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream --> emissive
+                        if ( km == "KMTF" ) then map.KMTF = Warcraft_III_Helpers.ReadLongAnim stream --> flipbook
                         
                     )
                     if ( map.KMTA == undefined ) then fseek stream -4 #seek_cur
                     if ( map.KMTE == undefined ) then fseek stream -4 #seek_cur
+                    if ( map.KMTF == undefined ) then fseek stream -4 #seek_cur
                 )
                 append layer.maps map
                 
@@ -602,6 +612,7 @@ STRUCT WC3_MDX800
             id +=1
            --print layer
             append mtls layer
+            if WC3_MDX800_DEBUG then print layer
         )
         
         return mtls
@@ -765,6 +776,7 @@ STRUCT WC3_MDX800
             local endFrame = (GriffonStudios_Helpers.RoundToFrame (readLong stream)) + 10
             append glbs endFrame
         )
+        if WC3_MDX800_DEBUG then print glbs
         return glbs
     ),
     function ReadSEQS800 stream tag=
@@ -798,6 +810,8 @@ STRUCT WC3_MDX800
             seq.BBox = #([readfloat stream,readfloat stream,readfloat stream], [readfloat stream,readfloat stream,readfloat stream] )
 
             append seqs seq
+            if WC3_MDX800_DEBUG then print seq
+            
         )
 
         return seqs
@@ -861,6 +875,34 @@ STRUCT WC3_MDX800
         )
         return lightList
         
+    ),
+    function ReadTXAN800 stream tag=
+    (
+        format "Reading %\n" tag.name
+        local totalSize = tag.Size
+        local txanList = #()
+        
+        struct txan800 ( size, ktat )
+        
+        local currentOffset = tag.Offset
+        while ( totalSize > 0 ) do
+        (
+            fseek stream currentOffset #seek_set
+            
+            local t = txan800()
+            t.size = readLong stream
+            
+            local kg = GriffonStudios_Helpers.ReadFixedString stream 4
+            
+            if ( kg == "KTAT" ) then t.KTAT = Warcraft_III_Helpers.ReadVector3Anim stream --> Keys for Texture Animation Track (UVW animation)
+            
+            totalSize -= t.size
+            currentOffset = currentOffset + t.Size
+            
+            if WC3_MDX800_DEBUG then print t
+            
+            append txanList t
+        )
     ),
     function BuildLITE800 mdx=
     (
@@ -1108,6 +1150,33 @@ STRUCT WC3_MDX800
             local fileName = file_path + file_name + ".TGA"
             mat.Diffuse_Map = Bitmaptexture fileName:fileName  
         )
+        
+        -- Apply UVW animation 
+        if mdx.TXAN != undefined then
+        (
+            if ( map.txanId > 0 ) then 
+            (
+                for txan in mdx.TXAN do
+                (
+                    if ( txan.KTAT != undefined and txan.KTAT.glbsId == map.txanId ) then
+                    (
+                        if txan.KTAT.LineType == 1 then 
+                            mat.IsGlobalSequence = true
+                        for kg in txan.KTAT.kg do
+                        (
+                            with animate on
+                                at time kg.time
+                                (
+                                    mat.Diffuse_map.coords.U_Offset = kg.point.X
+                                    mat.Diffuse_map.coords.V_Offset = kg.point.Y
+                                )
+                        )
+                    )
+                )
+                
+            )
+        )
+        
         
         return mat
     ),
@@ -1734,10 +1803,7 @@ STRUCT WC3_MDX800
         if mdx.glbs == undefined or mdx.glbs.count == 0 then return undefined
         format "Building Global Sequence Behavior\n"
         
-        
         local listOfBones = #()
-        
-        
         
         for i=1 to mdx.BONE.count do
         (
@@ -1762,7 +1828,6 @@ STRUCT WC3_MDX800
             local behavior = WarcraftIII_Behavior()
             layer.addNode behavior
             behavior.listOfBones = listOfBones
-
         )
     ),
     function Import file=
@@ -1775,8 +1840,13 @@ STRUCT WC3_MDX800
         if ( doesFileExist file != true or stream == undefined ) then return undefined
         local streamLen = GriffonStudios_Helpers.GetStreamLength stream
         
+        format "Debug mode: %\n" WC3_MDX800_DEBUG
+        format "Read only mode: %\n" WC3_READONLY
+        
         struct mdx800 
-            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, bone, help, atch, pivt, evts, clid, cams, ribb, pre2, prem, lite,objs= #() )
+            ( tags, fileName, vers, modl, seqs, glbs, mtls, texs, geos, geoa, 
+              bone, help, atch, pivt, evts, clid, cams, ribb, pre2, prem, lite, txan,
+              objs= #() )
         
         local mdx = mdx800()
         mdx.fileName = file
@@ -1790,6 +1860,7 @@ STRUCT WC3_MDX800
             if tag.name == "GLBS" then mdx.glbs = WC3_MDX800.ReadGLBS800 stream tag --> Global Sequences
             if tag.name == "MTLS" then mdx.mtls = WC3_MDX800.ReadMTLS800 stream tag --> Materials
             if tag.name == "TEXS" then mdx.texs = WC3_MDX800.ReadTEXS800 stream tag --> Textures
+            if tag.name == "TXAN" then mdx.txan = WC3_MDX800.ReadTXAN800 stream tag --> Texture Animations
             if tag.name == "GEOS" then mdx.geos = WC3_MDX800.ReadGEOS800 stream tag --> Geometry Sets
             if tag.name == "GEOA" then mdx.geoa = WC3_MDX800.ReadGEOA800 stream tag --> Geometry Animatons
             if tag.name == "BONE" then mdx.bone = WC3_MDX800.ReadBONE800 stream tag --> Bone structure
@@ -1802,6 +1873,7 @@ STRUCT WC3_MDX800
             if tag.name == "CAMS" then mdx.cams = WC3_MDX800.ReadCAMS800 stream tag --> Cameras
             if tag.name == "RIBB" then mdx.ribb = WC3_MDX800.ReadRIBB800 stream tag --> Ribbon Emitters
             if tag.name == "PREM" then mdx.prem = WC3_MDX800.ReadPREM800 stream tag --> Particle Emitters
+            
 
             /*
             TODO:
@@ -1819,6 +1891,8 @@ STRUCT WC3_MDX800
             WC3_MDX800.BuildMODL800 mdx
             WC3_MDX800.BuildGEOS800 mdx
             WC3_MDX800.BuildSEQS800 mdx
+            
+            --> MTLS & TEXS & TXAN
             WC3_MDX800.BuildAndAssignMaterials mdx
             WC3_MDX800.BuildBonesAndHelpers mdx
             WC3_MDX800.BuildHELP800 mdx
@@ -1832,6 +1906,7 @@ STRUCT WC3_MDX800
             WC3_MDX800.BuildGEOA800 mdx
             WC3_MDX800.BuildRIBB800 mdx
             WC3_MDX800.BuildLITE800 mdx
+            
         )
         format "Done!\n"
         gc()
@@ -1841,10 +1916,15 @@ STRUCT WC3_MDX800
     )
 )
 
+-- WC3_MDX800_DEBUG = true
+-- WC3_READONLY = false
+-- WC3_DEBUG = true
+-- WC3_MDX = undefined
+
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\LavaSpawn\LavaSpawn.mdx"
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Doodads\Dungeon\Props\SewerVent\SewerVent1.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Demon\Infernal\Infernal.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\Abomination.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Warcraft III - Viewer\Medivh.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
+

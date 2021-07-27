@@ -24,9 +24,10 @@ plugin Material WarcraftIII_Standard
     (
         
         --material_alpha  type:#float      animatable:true   ui:spn_alpha
-        Diffuse_Map     type:#texturemap animatable:false  ui:mb_diffuse
-        Alpha  type:#float     animatable:true   ui:spn_alpha
-
+        Diffuse_Map      type:#texturemap animatable:false  ui:mb_diffuse
+        Alpha            type:#float      animatable:true   ui:spn_alpha
+        IsGlobalSequence type:#boolean    animatable:true   ui:chk_IsglobalSequence
+        
         on Alpha set val do 
         (
             delegate.opacity = val
@@ -35,7 +36,7 @@ plugin Material WarcraftIII_Standard
         on diffuse_map set val do 
 		(
             delegate.diffuseMap = diffuse_map
-            if (diffuse_map != undefined ) then showTextureMap this delegate.diffusemap true
+            if (diffuse_map != undefined ) then showTextureMap this true
 		)
     )
     parameters shader_params rollout:shader_parameters
@@ -57,7 +58,6 @@ plugin Material WarcraftIII_Standard
     parameters extended_params rollout:extended_parameters
     (
         FilterMode type:#integer animatable:false ui:lb_filterMode
-
 
     )        
     
@@ -115,7 +115,7 @@ plugin Material WarcraftIII_Standard
         
         spinner spn_alpha  "Opacity :" range:[0,100.0,100.0] width:60 align:#left  
     
-        
+        checkbox chk_IsglobalSequence "Global Sequence Track" offset:[0,-20]  align:#right
     )
     
 
@@ -123,7 +123,7 @@ plugin Material WarcraftIII_Standard
     on create do
     (
         replaceableTexture = 1
-        material_alpha = 100.0
+        Alpha = 100.0
         diffuse_map = Bitmaptexture fileName:""
     )
     
