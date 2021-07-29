@@ -17,38 +17,57 @@ plugin simpleManipulator WarcraftIII_Behavior
     category:"Warcraft III"
 (
     local selectedItem
-    local selectedBone
+    local selectedObj
     
     parameters main rollout:params 
     ( 
-        listOfBones type:#nodeTab tabSizeVariable:true
+        listOfObjects type:#nodeTab tabSizeVariable:true
     )
     
     rollout params "Behavior Properties"
     (
-        label lbl1 "Press the Add button and pick a bone to add to the list" align:#left offset:[0,20] width:130 height:50
+        label lbl1 "Press the Add button and pick an object to add to the list" align:#left offset:[0,20] width:130 height:50
         
         dotNetControl lvBoneList "System.Windows.Forms.ListView" width:130 height:200 align:#center
         
         button btnAdd  "Add" height:30 width:62 align:#left offset:[2,0]
         button btnRemove "Remove" height:30 width:62 align:#right offset:[-2,-35]
+        
+        button btnSelect "Select Object" height:30 width:130
         button btnInfo "Info" height:30 width:130
         
         groupbox group1 "Common" height:400 width:155 pos:[3,5]
         
         function UpdateList=
         (
-            format "Current bone list\n%\n" listOfBones
+            --format "Current bone list\n%\n" listOfObjects
                 
             try(lvBoneList.Items.clear()) catch()
             
-            if listOfBones.count == 0 then return undefined
+            if listOfObjects.count == 0 then return undefined
+            
+            local objectsToAdd = #()
+            
+            for obj in listOfObjects do
+            (
+                if ( obj != undefined and not (isdeleted obj ) ) then append objectsToAdd obj
+                
+            )
+            listOfObjects = objectsToAdd
             
             local listOfItems = #()
-            for b in ListOfBones do
+            for b in listOfObjects do
             (
                 local item = dotNetObject "System.Windows.Forms.ListViewItem"
-                item.Text = b.Name 
+                
+                local type = ""
+                
+                if ( classof b == Editable_Mesh ) then type = "(Material)"
+                if ( classof b == Dummy ) then type = "(Dummy)"
+                if ( classof b == BoneGeometry ) then type = "(Bone)"
+                
+                item.Text = b.Name + " " + type
+                item.Name = b.Name
                 append listOfItems item
             )
             lvBoneList.Items.AddRange listOfItems
@@ -59,9 +78,11 @@ plugin simpleManipulator WarcraftIII_Behavior
         (
             obj = pickobject()
             
-            if ( classof obj == BoneGeometry ) then appendifunique listOfBones obj
-
-            format "Added Bone\n%\n" listOfBones
+            if ( classof obj == BoneGeometry or classof obj == Dummy ) then appendifunique listOfObjects obj
+            
+            if ( classof obj == Editable_Mesh and obj.material != undefined ) then appendifunique listOfObjects obj
+            
+            format "Added Object\n%\n" listOfObjects
             UpdateList()
         )
         
@@ -70,10 +91,16 @@ plugin simpleManipulator WarcraftIII_Behavior
             if selectedItem == undefined then 
                 return undefined
             
-            for i=1 to listOfBones.count do
-                if selectedItem.Text == listOfBones[i].name then deleteItem listOfBones i
+            for i=1 to listOfObjects.count do
+            (
+                if selectedItem.Name == listOfObjects[i].name then 
+                (
+                    deleteItem listOfObjects i
+                    exit
+                )
+            )
             
-            format "Removed Bone\n%\n" listOfBones
+            format "Removed Object\n%\n" listOfObjects
             UpdateList()
         )
         
@@ -92,7 +119,7 @@ plugin simpleManipulator WarcraftIII_Behavior
             lvBoneList.FullRowSelect = true
             lvBoneList.gridLines = true
             lvBoneList.HideSelection = false
-            lvBoneList.Columns.Add "Bones Global Sequence" -2
+            lvBoneList.Columns.Add "Global Sequence List" -2
             lvBoneList.Sorting = (dotNetClass "System.Windows.Forms.SortOrder").Ascending
             try(lvBoneList.Items.clear()) catch() 
             UpdateList()
@@ -100,16 +127,25 @@ plugin simpleManipulator WarcraftIII_Behavior
         on lvBoneList ItemSelectionChanged arg do
         (
             selectedItem = arg.Item
-            selectedBone = getnodebyname arg.Item.Text
             
-            if selectedBone == undefined then RemoveItem()
+            selectedObj = getnodebyname arg.Item.Name
+            
+            if selectedObj == undefined then RemoveItem()
 
         )
         
         on btnAdd    pressed do ( AddItem() )
         on btnRemove pressed do ( RemoveItem() )
-        on btnInfo   pressed do ( ShowMessageBox "The selected bone(s) will be marked for the Global Sequence (GLBS) Animation " "Warcraft III Global Sequence Animation" )
+        on btnInfo   pressed do ( ShowMessageBox "The selected bone or object material will be marked for the Global Sequence (GLBS) Animation " "Warcraft III Global Sequence Animation" )
         
+        on btnSelect pressed do (
+            
+            if ( selectedObj == undefined ) then return undefined
+            
+            select selectedObj
+            
+        )
+            
     )
     
     tool create
