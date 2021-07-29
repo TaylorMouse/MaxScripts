@@ -9,6 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 1.4 - Export TXAN
+    | 1.3 - Export GLBS with texture support
     | 1.2 - First successfull export!
     | 1.1 - bugfix: vertex weights should be done on tv Vertices
     | 1.0 - bugfix: MTLS incorrect TEXS & incorrect BONE size
@@ -97,7 +99,7 @@ STRUCT WC3_MDX800_EXPORTER
         Warcraft_III_Helpers.GetGLBS mdx
        
         writeLong mdx.stream (mdx.glbs.count * 4)
-        for g in mdx.glbs do writeLong mdx.stream g
+        for g in mdx.glbs do writeLong mdx.stream g.frame
         
     ),
     function WriteMTLS800 mdx=
@@ -116,8 +118,10 @@ STRUCT WC3_MDX800_EXPORTER
         )
         writeLong mdx.stream size
         
-        for mat in mdx.mtls do
+        for i=1 to mdx.mtls.count do
         (
+            local mat = mdx.mtls[i].materialRef
+            
             if classof mat == compositeMaterial then
             (
                 print mat.name
@@ -162,7 +166,7 @@ STRUCT WC3_MDX800_EXPORTER
                         )
                     )
                     writeLong mdx.stream texsID --> matching texture id
-                    writeLong mdx.stream -1 #unsigned --> parentId
+                    writeLong mdx.stream mdx.mtls[i].txanId #unsigned --> TXAN ID
                     writeLong mdx.stream 0 --> uv layer
                     writeFloat mdx.stream ( mat.materialList[1].alpha / 100.0)
                 )
@@ -206,7 +210,7 @@ STRUCT WC3_MDX800_EXPORTER
                     )
                 )
                 writeLong mdx.stream texsID --> matching texture id
-                writeLong mdx.stream -1 #unsigned --> parentId
+                writeLong mdx.stream mdx.mtls[i].txanId #unsigned --> TXAN ID
                 writeLong mdx.stream 0 --> uv layer
                 writeFloat mdx.stream ( mat.alpha / 100.0)
                
@@ -227,6 +231,36 @@ STRUCT WC3_MDX800_EXPORTER
             writeLong mdx.stream tex.flags
         )
 
+    ),
+    function WriteTXAN800 mdx=
+    (
+        if mdx.TXAN == undefined then return undefined
+        if mdx.TXAN.count == 0 then return undefined
+            
+        format "Writing TXAN\n"
+
+        local totalSize = 0
+        for txan in mdx.TXAN do totalSize += txan.size
+        
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "TXAN" 4
+        writeLong mdx.stream totalSize
+        
+        for txan in mdx.TXAN do
+        (
+            writeLong mdx.stream txan.size
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "KTAT" 4
+            writeLong mdx.stream txan.KTAT.numPts
+            writeLong mdx.stream txan.KTAT.lineType
+            writeLong mdx.stream txan.KTAT.glbsId
+            
+            for kg in txan.KTAT.KG do
+            (
+                writeLong mdx.stream ( kg.time * 1000 / 30 )
+                Warcraft_III_Helpers.WriteVector3 mdx.stream kg.Point
+            )
+        )
+        
+        
     ),
     function WriteGEOS800 mdx=
     (
@@ -342,9 +376,9 @@ STRUCT WC3_MDX800_EXPORTER
                 
                 if ( behavior != undefined ) then 
                 (
-                    for b in behavior.listOfBones do 
+                    for b in behavior.listOfObjects do 
                     (
-                        if ( obj.objref.name == b.name ) then 
+                        if ( obj.objref.name == b.name and classof b == boneGeometry ) then 
                         (
                             obj.geosetId = 2
                             obj.geosetAnimationId = 2
@@ -571,7 +605,7 @@ STRUCT WC3_MDX800_EXPORTER
     (
         if ( file == undefined ) then return undefined
         clearlistener()
-        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, allObjects )
+        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, txan, allObjects )
         local mdx = mdx800()
         mdx.file = file
         local export = WC3_MDX800_EXPORTER()
@@ -582,14 +616,15 @@ STRUCT WC3_MDX800_EXPORTER
         animationrange = interval 0 100
         slidertime = 0
 
-        Warcraft_III_Helpers.GetObjects mdx --> contains all animation data for the objects ( bones & helpers )
+        Warcraft_III_Helpers.GetObjects mdx
         
         Warcraft_III_Helpers.GetSEQS mdx
-        Warcraft_III_Helpers.GetGLBS mdx
         Warcraft_III_Helpers.GetMTLS mdx
         Warcraft_III_Helpers.GetTEXS mdx
         Warcraft_III_Helpers.GetGEOS mdx
         Warcraft_III_Helpers.GetGEOA mdx
+        Warcraft_III_Helpers.GetGLBS mdx        
+        Warcraft_III_Helpers.GetTXAN mdx
         
         mdx.stream = fOpen file "wb"
         
@@ -601,6 +636,7 @@ STRUCT WC3_MDX800_EXPORTER
         export.WriteGLBS800 mdx
         export.WriteMTLS800 mdx
         export.WriteTEXS800 mdx
+        export.WriteTXAN800 mdx
         export.WriteGEOS800 mdx
         export.WriteGEOA800 mdx
         export.WriteBONE800 mdx
@@ -617,6 +653,8 @@ STRUCT WC3_MDX800_EXPORTER
         format "Done!\n"
     )
 )
+
+WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Sewers\SewereVent_export.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
