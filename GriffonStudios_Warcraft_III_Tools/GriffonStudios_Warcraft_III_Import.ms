@@ -1158,10 +1158,24 @@ STRUCT WC3_MDX800
             (
                 for txan in mdx.TXAN do
                 (
-                    if ( txan.KTAT != undefined and txan.KTAT.glbsId == map.txanId ) then
+                    if ( txan.KTAT != undefined ) then
                     (
-                        if txan.KTAT.LineType == 1 then 
-                            mat.IsGlobalSequence = true
+                        if txan.KTAT.glbsId > -1 then mat.IsGlobalSequence = true
+
+                        mat.LineType = txan.KTAT.LineType + 1
+                        
+                        if mat.LineType == 2 then 
+                        ( mat.Diffuse_Map.coords.u_offset.controller = Linear_Float()
+                          mat.Diffuse_Map.coords.v_offset.controller = Linear_Float() )
+                        
+                        if mat.LineType == 3 or val == 1 then 
+                        ( mat.Diffuse_Map.coords.u_offset.controller = Bezier_Float()
+                          mat.Diffuse_Map.coords.v_offset.controller = Bezier_Float() )
+                        
+                        if mat.LineType == 4 then 
+                        ( mat.Diffuse_Map.coords.u_offset.controller = TCB_Float()
+                          mat.Diffuse_Map.coords.v_offset.controller = TCB_Float() )
+                        
                         for kg in txan.KTAT.kg do
                         (
                             with animate on
@@ -1592,6 +1606,8 @@ STRUCT WC3_MDX800
             freeze obj2
             obj2.boxmode = true
             obj2.wirecolor = color 150 10 10
+            obj2.castShadows = off
+            obj2.receiveshadows = off
             layer.addNode obj2
         )
         

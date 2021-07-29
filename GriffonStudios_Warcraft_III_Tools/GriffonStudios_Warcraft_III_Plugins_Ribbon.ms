@@ -3,7 +3,7 @@
     | Ribbon Emitter for Warcraft III
     
     .COPYRIGHT
-    | ©2021 Griffon Studios
+    | Â© 2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse

@@ -3,7 +3,7 @@
     | Standard Material for Warcraft III
     
     .COPYRIGHT
-    | ©2021 Griffon Studios
+    | Â© 2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -22,16 +22,7 @@ plugin Material WarcraftIII_Standard
 
     parameters main rollout:maps
     (
-        
-        --material_alpha  type:#float      animatable:true   ui:spn_alpha
         Diffuse_Map      type:#texturemap animatable:false  ui:mb_diffuse
-        Alpha            type:#float      animatable:true   ui:spn_alpha
-        IsGlobalSequence type:#boolean    animatable:true   ui:chk_IsglobalSequence
-        
-        on Alpha set val do 
-        (
-            delegate.opacity = val
-        )
         
         on diffuse_map set val do 
 		(
@@ -55,11 +46,40 @@ plugin Material WarcraftIII_Standard
         )
     )
     
+    parameters basic_params rollout:basic_parameters
+    (
+        UseColor type:#boolean animatable:false ui:cbx_useColor
+        SelfIlluminationColor type:#color animatable:false ui:cp_selfIllumination
+        
+        on UseColor set val do
+        (
+            delegate.useSelfIllumColor = on
+        )
+        
+        on SelfIlluminationColor set val do
+        (
+            delegate.selfIllumColor = val
+        )
+        
+    )
+    
     parameters extended_params rollout:extended_parameters
     (
         FilterMode type:#integer animatable:false ui:lb_filterMode
+        Alpha      type:#float      animatable:true   ui:spn_alpha
+        
+        on Alpha set val do 
+        (
+            delegate.opacity = val
+        )
+    )
 
-    )        
+    parameters animation_params rollout:animation_parameters
+    (
+        IsGlobalSequence    type:#boolean  animatable:false   ui:chk_IsglobalSequence 
+        LineType            type:#integer  animatable:false   ui:ddl_AnimationType
+
+    )
     
     rollout shader_parameters "Shader Basic Parameters"
     (
@@ -106,23 +126,45 @@ plugin Material WarcraftIII_Standard
                                              "The geoset multiplies its RGB values to the frame buffer, making a semi-transparent darkening of the background. Depth set is turned off. Draw order is in the transparent queue. Opacity has no effect. No sort order errors with its own geoset.", \
                                              "The geoset first doubles its initial RGB values, then multiplies them against the frame buffer. This technique causes both brightening and darkening in one pass. Depth set is turned off. Draw order is in the transparent queue. Opacity has no effect. No sort order errors with its own geoset")
         
-        
+        spinner spn_alpha  "Opacity :" range:[0,100.0,100.0] width:60 align:#left  
+                                             
     )
 
     rollout maps "Maps"
     (
         mapbutton mb_diffuse "(drag & drop texture here)" height:25 width:300 
         
-        spinner spn_alpha  "Opacity :" range:[0,100.0,100.0] width:60 align:#left  
-    
-        checkbox chk_IsglobalSequence "Global Sequence Track" offset:[0,-20]  align:#right
     )
     
+    rollout animation_parameters "Animation Parameters"
+    (
+        checkbox chk_IsglobalSequence "Global Sequence Track" tooltip: "Add the animation of this texture to the Global Animation Sequences (animates all the time)" align:#left
+        label lbl_animationType "Type:" align:#left
+        dropdownlist ddl_AnimationType items:#( "None", "Linear", "Hermite", "Bezier" ) align:#left width:100 offset:[50,-20]
+        
+        
+        on ddl_AnimationType selected selectedItem do
+        (
+            if selectedItem == 2 then 
+            ( Diffuse_Map.coords.u_offset.controller = Linear_Float()
+              Diffuse_Map.coords.v_offset.controller = Linear_Float() )
+            
+            if selectedItem == 4 or val == 1 then 
+            ( Diffuse_Map.coords.u_offset.controller = Bezier_Float()
+              Diffuse_Map.coords.v_offset.controller = Bezier_Float() )
+            
+            if selectedItem == 3 then 
+            ( Diffuse_Map.coords.u_offset.controller = TCB_Float()
+              Diffuse_Map.coords.v_offset.controller = TCB_Float() )
 
-    
+        )
+        
+    )
+
     on create do
     (
         replaceableTexture = 1
+        LineType = 1
         Alpha = 100.0
         diffuse_map = Bitmaptexture fileName:""
     )
