@@ -5,7 +5,7 @@
     | since the actual one only had a mere functionality anyways
     
     .COPYRIGHT
-    | (c)2020 Griffon Studios
+    | Â© 2020 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -33,7 +33,7 @@ rollout GriffonStudios_Warcraft_III_UserPropertyEditor "User Property Editor"
         checkbox chkCollisionObject "Collision Box"
        
     )
-    label lblTM "© 2021 Taylor Mouse"
+    label lblTM "ï¿½ 2021 Taylor Mouse"
     button btnClose "Save & Close" height:45 width:190
     
     function UpdateUI=

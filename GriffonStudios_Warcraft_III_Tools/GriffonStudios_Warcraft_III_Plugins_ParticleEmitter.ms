@@ -3,7 +3,7 @@
     | Particle Emitterfor Warcraft III
     
     .COPYRIGHT
-    | ©2021 Griffon Studios
+    | Â© 2021 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
@@ -161,7 +161,7 @@ plugin simpleManipulator WarcraftIII_ParticleEmitter
             spinner spn_sizeMid ""      align:#center range:[0,10000,25.0] offset:[0,-20] width:50
             spinner spn_sizeEnd ""      align:#right  range:[0,10000,25.0] offset:[7,-20] width:50
 
-        label lbl101 "Lifespan Head UV" tooltip:"Starting and ending cell number for animating texture sequence of the first half of the Head particle’s life. Repeat will cause this animating texture to cycle"
+        label lbl101 "Lifespan Head UV" tooltip:"Starting and ending cell number for animating texture sequence of the first half of the Head particleï¿½s life. Repeat will cause this animating texture to cycle"
             label lbl001 "Start"   align:#left   offset:[7,0]
             label lbl002 "Mid"     align:#center offset:[0,-17]
             label lbl003 "End"     align:#right  offset:[-10,-18]
@@ -169,7 +169,7 @@ plugin simpleManipulator WarcraftIII_ParticleEmitter
             spinner spn_midLifespanUVAnim     "" align:#center range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
             spinner spn_endLifespanUVAnim     "" align:#right  range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
         
-        label lbl102 "Decay Head UV" tooltip:"Starting and ending cell number for animating texture sequence of the second half of the Head particle’s life. Repeat will cause this animating texture to cycle"
+        label lbl102 "Decay Head UV" tooltip:"Starting and ending cell number for animating texture sequence of the second half of the Head particleï¿½s life. Repeat will cause this animating texture to cycle"
             label lbl004 "Start" align:#left   offset:[7,0]
             label lbl005 "Mid"     align:#center offset:[0,-17]
             label lbl006 "End"     align:#right  offset:[-10,-18]
@@ -177,7 +177,7 @@ plugin simpleManipulator WarcraftIII_ParticleEmitter
             spinner spn_midDecayUVAnim       "" align:#center range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
             spinner spn_endDecayUVAnim       "" align:#right  range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
 
-        label lbl103 "Lifespan Tail UV" tooltip:"Starting and ending cell number for animating texture sequence of the first half of the Tail particle’s life. Repeat will cause this animating texture to cycle."
+        label lbl103 "Lifespan Tail UV" tooltip:"Starting and ending cell number for animating texture sequence of the first half of the Tail particleï¿½s life. Repeat will cause this animating texture to cycle."
             label lbl007 "Start"   align:#left   offset:[7,0]
             label lbl008 "Mid"     align:#center offset:[0,-17]
             label lbl009 "End"     align:#right  offset:[-10,-18]
@@ -185,7 +185,7 @@ plugin simpleManipulator WarcraftIII_ParticleEmitter
             spinner spn_midTailUVAnim        "" align:#center range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
             spinner spn_endTailUVAnim        "" align:#right  range:[0,1024,0]  offset:[0,-20]  width:40 type:#integer
         
-        label lbl104 "Decay Tail UV" tooltip:"Starting and ending cell number for animating texture sequence of the second half of the Tail particle’s life. Repeat will cause this animating texture to cycle"
+        label lbl104 "Decay Tail UV" tooltip:"Starting and ending cell number for animating texture sequence of the second half of the Tail particleï¿½s life. Repeat will cause this animating texture to cycle"
             label lbl010 "Start" align:#left   offset:[7,0]
             label lbl011 "Mid"     align:#center offset:[0,-17]
             label lbl012 "End"     align:#right  offset:[-10,-18]
