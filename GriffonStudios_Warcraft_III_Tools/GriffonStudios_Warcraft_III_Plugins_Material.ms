@@ -76,7 +76,7 @@ plugin Material WarcraftIII_Standard
 
     parameters animation_params rollout:animation_parameters
     (
-        IsGlobalSequence    type:#boolean  animatable:false   ui:chk_IsglobalSequence 
+        
         LineType            type:#integer  animatable:false   ui:ddl_AnimationType
 
     )
@@ -138,7 +138,7 @@ plugin Material WarcraftIII_Standard
     
     rollout animation_parameters "Animation Parameters"
     (
-        checkbox chk_IsglobalSequence "Global Sequence Track" tooltip: "Add the animation of this texture to the Global Animation Sequences (animates all the time)" align:#left
+        
         label lbl_animationType "Type:" align:#left
         dropdownlist ddl_AnimationType items:#( "None", "Linear", "Hermite", "Bezier" ) align:#left width:100 offset:[50,-20]
         
