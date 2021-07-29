@@ -1156,37 +1156,36 @@ STRUCT WC3_MDX800
         (
             if ( map.txanId > 0 ) then 
             (
-                for txan in mdx.TXAN do
-                (
-                    if ( txan.KTAT != undefined ) then
-                    (
-                        if txan.KTAT.glbsId > -1 then mat.IsGlobalSequence = true
 
-                        mat.LineType = txan.KTAT.LineType + 1
-                        
-                        if mat.LineType == 2 then 
-                        ( mat.Diffuse_Map.coords.u_offset.controller = Linear_Float()
-                          mat.Diffuse_Map.coords.v_offset.controller = Linear_Float() )
-                        
-                        if mat.LineType == 3 or val == 1 then 
-                        ( mat.Diffuse_Map.coords.u_offset.controller = Bezier_Float()
-                          mat.Diffuse_Map.coords.v_offset.controller = Bezier_Float() )
-                        
-                        if mat.LineType == 4 then 
-                        ( mat.Diffuse_Map.coords.u_offset.controller = TCB_Float()
-                          mat.Diffuse_Map.coords.v_offset.controller = TCB_Float() )
-                        
-                        for kg in txan.KTAT.kg do
-                        (
-                            with animate on
-                                at time kg.time
-                                (
-                                    mat.Diffuse_map.coords.U_Offset = kg.point.X
-                                    mat.Diffuse_map.coords.V_Offset = kg.point.Y
-                                )
-                        )
+                txan = mdx.TXAN[map.txanId]
+                
+                if ( txan.KTAT != undefined ) then
+                (
+                    mat.LineType = txan.KTAT.LineType + 1
+                    
+                    if mat.LineType == 2 then 
+                    ( mat.Diffuse_Map.coords.u_offset.controller = Linear_Float()
+                      mat.Diffuse_Map.coords.v_offset.controller = Linear_Float() )
+                    
+                    if mat.LineType == 3 or val == 1 then 
+                    ( mat.Diffuse_Map.coords.u_offset.controller = Bezier_Float()
+                      mat.Diffuse_Map.coords.v_offset.controller = Bezier_Float() )
+                    
+                    if mat.LineType == 4 then 
+                    ( mat.Diffuse_Map.coords.u_offset.controller = TCB_Float()
+                      mat.Diffuse_Map.coords.v_offset.controller = TCB_Float() )
+                    
+                    for kg in txan.KTAT.kg do
+                    (
+                        with animate on
+                            at time kg.time
+                            (
+                                mat.Diffuse_map.coords.U_Offset = kg.point.X
+                                mat.Diffuse_map.coords.V_Offset = kg.point.Y
+                            )
                     )
                 )
+                
                 
             )
         )
@@ -1817,33 +1816,52 @@ STRUCT WC3_MDX800
     function BuildGLBS800 mdx=
     (
         if mdx.glbs == undefined or mdx.glbs.count == 0 then return undefined
-        format "Building Global Sequence Behavior\n"
+        format "Building Global Sequence Behaviors\n"
         
-        local listOfBones = #()
+        /*
+            The actual frame from the mdx is NOT used
+            The global animation always starts at frame 0 and the last frame on the trackbar is used for export
+        */
+        local listOfObjects = #()
         
         for i=1 to mdx.BONE.count do
         (
             if (mdx.BONE[i].KGSC != undefined ) then
                 if (mdx.BONE[i].KGSC.glbsId  > 0 ) then 
-                    appendifUnique listOfBones mdx.BONE[i].boneRef
+                    appendifUnique listOfObjects mdx.BONE[i].boneRef
             
             if (mdx.BONE[i].KGRT != undefined ) then
                 if (mdx.BONE[i].KGRT.glbsId  > 0 ) then 
-                    appendifUnique listOfBones mdx.BONE[i].boneRef
+                    appendifUnique listOfObjects mdx.BONE[i].boneRef
             
             if (mdx.BONE[i].KGTR != undefined ) then
                 if (mdx.BONE[i].KGTR.glbsId  > 0 ) then 
-                    appendifUnique listOfBones mdx.BONE[i].boneRef
+                    appendifUnique listOfObjects mdx.BONE[i].boneRef
             
         )
-        if WC3_MDX800_DEBUG then print listOfBones
         
-        if listOfBones.count > 0 then
+        for i=1 to mdx.MTLS.count do
+        (
+            for map in mdx.MTLS[i].maps do
+            (
+                if map.txanId > 0 then 
+                (
+                    for obj in objects do
+                        if obj.material == mdx.MTLS[i].materialRef then appendifUnique listOfObjects obj
+                    
+                    
+                )
+            )
+
+        )
+        if WC3_MDX800_DEBUG then print listOfObjects
+        
+        if listOfObjects.count > 0 then
         (
             local layer = GriffonStudios_Helpers.CreateLayer "Global Sequence"  
             local behavior = WarcraftIII_Behavior()
             layer.addNode behavior
-            behavior.listOfBones = listOfBones
+            behavior.listOfObjects = listOfObjects
         )
     ),
     function Import file=
@@ -1893,8 +1911,6 @@ STRUCT WC3_MDX800
 
             /*
             TODO:
-              TXAN
-              PREM
               PRE2
             */
 
@@ -1907,13 +1923,10 @@ STRUCT WC3_MDX800
             WC3_MDX800.BuildMODL800 mdx
             WC3_MDX800.BuildGEOS800 mdx
             WC3_MDX800.BuildSEQS800 mdx
-            
-            --> MTLS & TEXS & TXAN
-            WC3_MDX800.BuildAndAssignMaterials mdx
+            WC3_MDX800.BuildAndAssignMaterials mdx --> Builds/uses MTLS & TEXS & TXAN
             WC3_MDX800.BuildBonesAndHelpers mdx
             WC3_MDX800.BuildHELP800 mdx
             WC3_MDX800.BuildBONE800 mdx
-            WC3_MDX800.BuildGLBS800 mdx
             WC3_MDX800.BuildEVTS800 mdx
             WC3_MDX800.BuildCLID800 mdx
             WC3_MDX800.ApplySkinning mdx
@@ -1922,6 +1935,12 @@ STRUCT WC3_MDX800
             WC3_MDX800.BuildGEOA800 mdx
             WC3_MDX800.BuildRIBB800 mdx
             WC3_MDX800.BuildLITE800 mdx
+            WC3_MDX800.BuildGLBS800 mdx
+            /*
+            TODO:
+              PREM
+              PRE2
+            */
             
         )
         format "Done!\n"
@@ -1933,7 +1952,7 @@ STRUCT WC3_MDX800
 )
 
 -- WC3_MDX800_DEBUG = true
--- WC3_READONLY = false
+-- WC3_READONLY = true
 -- WC3_DEBUG = true
 -- WC3_MDX = undefined
 
