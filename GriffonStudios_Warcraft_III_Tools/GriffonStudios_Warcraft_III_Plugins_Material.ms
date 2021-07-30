@@ -48,7 +48,7 @@ plugin Material WarcraftIII_Standard
     
     parameters basic_params rollout:basic_parameters
     (
-        UseColor type:#boolean animatable:false ui:cbx_useColor
+        UseColor              type:#boolean animatable:false ui:cbx_useColor
         SelfIlluminationColor type:#color animatable:false ui:cp_selfIllumination
         
         on UseColor set val do
@@ -77,7 +77,7 @@ plugin Material WarcraftIII_Standard
     parameters animation_params rollout:animation_parameters
     (
         
-        LineType            type:#integer  animatable:false   ui:ddl_AnimationType
+        LineType  type:#integer  animatable:false   ui:ddl_AnimationType
 
     )
     

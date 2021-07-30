@@ -9,6 +9,7 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 1.5 - Export support for face static object creation
     | 1.4 - Export TXAN
     | 1.3 - Export GLBS with texture support
     | 1.2 - First successfull export!
@@ -32,6 +33,8 @@ fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL MDX_EXPORT = undefined
+GLOBAL WC3_INVERT_UVW = false
+
 
 STRUCT WC3_MDX800_EXPORTER
 (
@@ -93,6 +96,7 @@ STRUCT WC3_MDX800_EXPORTER
     ),
     function WriteGLBS800 mdx=
     (
+        if mdx.glbs == undefined then return undefined
         format "Writing GLBS\n"
         Warcraft_III_Helpers.WriteFixedString mdx.stream "GLBS" 4
         
@@ -495,7 +499,7 @@ STRUCT WC3_MDX800_EXPORTER
     function WriteEVTS800 mdx=
     (
         format "Writing EVTS\n"
-        Warcraft_III_Helpers.WriteFixedString mdx.stream "EVTS" 4
+        
         
         local totalSize = 0
         for obj in mdx.allObjects do
@@ -508,6 +512,8 @@ STRUCT WC3_MDX800_EXPORTER
                 totalSize += obj.objRef.keyList.count * 4
             )
         )
+        if totalSize == 0 then return undefined
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "EVTS" 4
         writeLong mdx.stream totalSize
         
         for obj in mdx.allObjects do
@@ -532,7 +538,7 @@ STRUCT WC3_MDX800_EXPORTER
     function WriteCLID800 mdx=
     (
         format "Writing CLID\n"
-        Warcraft_III_Helpers.WriteFixedString mdx.stream "CLID" 4  
+         
         
         local totalSize = 0
         for obj in mdx.allobjects do
@@ -546,6 +552,8 @@ STRUCT WC3_MDX800_EXPORTER
                 if ( classof obj.objRef == cylinder ) then totalSize += 32
             )
         )
+        if totalSize == 0 then return undefined
+        Warcraft_III_Helpers.WriteFixedString mdx.stream "CLID" 4 
         writeLong mdx.stream totalSize
 
         for obj in mdx.allobjects do
@@ -605,12 +613,14 @@ STRUCT WC3_MDX800_EXPORTER
     (
         if ( file == undefined ) then return undefined
         clearlistener()
-        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, txan, allObjects )
+        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, txan, allObjects, autoCreatedObjectsForExport = #() )
         local mdx = mdx800()
         mdx.file = file
         local export = WC3_MDX800_EXPORTER()
         
         -- set the T-pose of the object to export correctly
+        clearselection()
+        Warcraft_III_Helpers.ValidateMeshesForExport mdx
         
         local animationInterval = animationrange
         animationrange = interval 0 100
@@ -648,13 +658,16 @@ STRUCT WC3_MDX800_EXPORTER
         
         fFlush mdx.stream
         fClose mdx.stream
+        
+        Warcraft_III_Helpers.CleanUpAfterExport mdx
+        
         animationrange = interval animationInterval.start animationInterval.end
         gc() 
         format "Done!\n"
     )
 )
 
-WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Sewers\SewereVent_export.mdx"
+-- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\TM Tutorials\tm_sphere.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
 -- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"

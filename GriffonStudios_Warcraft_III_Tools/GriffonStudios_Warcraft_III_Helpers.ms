@@ -9,7 +9,6 @@
     | Taylor Mouse
 
 */
-GLOBAL WC3_INVERT_UVW = true
 
 STRUCT Warcraft_III_Helpers
 (
@@ -523,9 +522,9 @@ STRUCT Warcraft_III_Helpers
         
         select theMesh
         max modify mode
-        skinMod = modPanel.getCurrentObject()
+        local skinMod = modPanel.getCurrentObject()
 
-        vertex_weight_list = #()
+        local vertex_weight_list = #()
         for v=1 to skinOps.getnumbervertices skinMod do
         (
             local vw = vertex_weight vertex:v
@@ -551,7 +550,7 @@ STRUCT Warcraft_III_Helpers
             
         )
         -- > annoyingly necessary to apply the correct weights to the correct vertices
-        tvVertices = #()
+        local tvVertices = #()
         for i=1 to theMesh.numFaces do
         (
             local f = getFace theMesh i
@@ -563,11 +562,11 @@ STRUCT Warcraft_III_Helpers
         --> necessary as well as some models have isolated vertices...
         for i=1 to tvVertices.count do if (tvVertices[i] == undefined ) then tvVertices[i] = i as integer
 
-        tv_vertex_weight_list = #()
+        local tv_vertex_weight_list = #()
         for tv in tvVertices do
             append tv_vertex_weight_list vertex_weight_list[tv]
             
-        mtgcList = #()
+        local mtgcList = #()
         for tvw in vertex_weight_list do appendIfUnique mtgcList tvw.crc
 
         -->  GEOS.MATS.matrices
@@ -588,6 +587,7 @@ STRUCT Warcraft_III_Helpers
         )
 
         --> GEOS.GNDX
+        format "GNDX\n"
         for vw in tv_vertex_weight_list do
         (
             for m=1 to mtgcList.count do 
@@ -871,11 +871,13 @@ STRUCT Warcraft_III_Helpers
         
         mdx.txan = #()
 
+        local txanbIndex = 0
         for mtl in mdx.mtls do
         (
             local mat = mtl.materialRef
             local uniqueFrames = #()
             local txan = txan800()
+            local foundTXAN = false
             
             if ( classof mat == WarcraftIII_Standard ) then
             (
@@ -886,9 +888,11 @@ STRUCT Warcraft_III_Helpers
 
                 if ( mat.diffuse_map.coords.v_offset.IsAnimated ) then 
                     for key in mat.diffuse_map.coords.v_offset.controller.keys do appendifunique uniqueFrames key.time
-                        
+                    
+                foundTXAN = true
                 uniqueFrames = sort uniqueFrames
-
+                mtl.txanId = txanbIndex
+                txanbIndex += 1
                 local ktat = anim800 numPts:uniqueFrames.count LineType:( mat.LineType - 1 )
                 
                 for m=1 to mdx.GLBS.Count do
@@ -920,9 +924,11 @@ STRUCT Warcraft_III_Helpers
 
                     if ( subMat.diffuse_map.coords.v_offset.IsAnimated ) then 
                         for key in subMat.diffuse_map.coords.v_offset.controller.keys do appendifunique uniqueFrames key.time
-                            
+                      
+                    foundTXAN = true
                     uniqueFrames = sort uniqueFrames
-
+                    mtl.txanId = txanbIndex
+                    txanbIndex += 1
                     local ktat = anim800 numPts:uniqueFrames.count LineType:subMat.LineType
                     
                     for m=1 to mdx.GLBS.Count do
@@ -942,10 +948,10 @@ STRUCT Warcraft_III_Helpers
                     txan.KTAT = ktat
                 )
             )
-            
-            txan.size += txan.KTAT.KG.count * 16 
-            
-            append mdx.txan txan
+            if foundTXAN then (
+                txan.size += txan.KTAT.KG.count * 16 
+                append mdx.txan txan
+            )
         )
         if ( WC3_MDX800_DEBUG ) then print mdx.txan
         
@@ -1056,6 +1062,7 @@ STRUCT Warcraft_III_Helpers
         
         local behaviorObj = Warcraft_III_Helpers.GetBehavior()
         
+        if behaviorObj != undefined then 
         for b = 1 to behaviorObj.listOfObjects.count do
             if behaviorObj.listOfObjects[b].name == obj.name then 
             ( 
@@ -1097,6 +1104,7 @@ STRUCT Warcraft_III_Helpers
          
         local behaviorObj = Warcraft_III_Helpers.GetBehavior()
         
+        if behaviorObj != undefined then
         for b = 1 to behaviorObj.listOfObjects.count do
             if behaviorObj.listOfObjects[b].name == obj.name then 
             ( 
@@ -1132,6 +1140,7 @@ STRUCT Warcraft_III_Helpers
            
         local behaviorObj = Warcraft_III_Helpers.GetBehavior()
         
+        if behaviorObj != undefined then
         for b = 1 to behaviorObj.listOfObjects.count do
             if behaviorObj.listOfObjects[b].name == obj.name then 
             ( 
@@ -1221,12 +1230,101 @@ STRUCT Warcraft_III_Helpers
         if ( getUserProp obj "BILLBOARD-LOCK-Z" == true ) then flags += 0x40
         
         return flags
+    ),
+    function ValidateMeshesForExport mdx=
+    (
+        local index = 0
+        for obj in objects do
+        (
+            
+            if classof obj != editable_mesh then continue
+            format "Validating object %\n" obj.name
+            
+            index += 1
+            -- unselect all selected sub object to prevent errors
+            select obj
+            max modify mode
+            modPanel.setCurrentObject obj.baseObject
+            subobjectLevel = 1
+            deselect obj.selectedVertices
+            subobjectLevel = 2
+            deselect obj.selectedEdges
+            subobjectLevel = 3
+            deselect obj.selectedFaces
+            subobjectLevel = 4
+            deselect obj.selectedFaces
+            subobjectLevel = 5
+            deselect obj.selectedFaces
+            subobjectLevel = 0
+
+            -- primites without decent unwrapping tend to provide errors on unwrap modifiers
+            select obj
+            max modify mode
+            local mshSkin = modPanel.getCurrentObject()
+            local createDummyBone = false
+            local addSkinMod = false
+            
+            -- this happens when there is a obj that you want exported but does not have any bones or skin modifier
+            if ( classof mshSkin != skin ) then 
+            (
+                createDummyBone = true
+                addSkinMod = true
+            )
+            
+            -- this happens when there is a obj that you want exported but does not have any bones and has already a skin modifier
+            if ( classof mshSkin == skin and skinOps.GetNumberBones mshSkin == 0 ) then 
+                createDummyBone = true
+            
+            if ( createDummyBone ) then
+            (
+                local aBone = BoneSys.CreateBone [0,0,0] [0,0,0]  [0,0,1]
+                aBone.Name = "TOBEDELETED_" + (index as string)
+                aBone.Pos = obj.pos
+                aBone.parent = obj.parent
+                
+                append mdx.autoCreatedObjectsForExport aBone
+                
+                select obj
+                max modify mode
+                    
+                if addSkinMod then
+                (
+                    mshSkin = skin()
+                    addmodifier obj mshSkin
+                    
+                    append mdx.autoCreatedObjectsForExport obj
+                )
+
+                modPanel.setCurrentObject mshSkin
+                skinOps.addBone mshSkin aBone 0
+                
+                update obj
+                
+                for v=1 to obj.verts.count do
+                    skinOps.ReplaceVertexWeights mshSkin v #(1) #(1.0)
+                
+                update obj
+                
+            )
+            select obj
+            modPanel.setCurrentObject obj.baseObject
+            modPanel.addModToSelection (Unwrap_UVW ())
+            obj.modifiers[#unwrap_uvw].unwrap.move ()
+            maxOps.CollapseNodeTo obj 2 off
+            
+            clearSelection()
+
+        )
+    ),
+    function CleanUpAfterExport mdx=
+    (
+        for obj in mdx.autoCreatedObjectsForExport do
+        (
+            
+            if classof obj == editable_mesh then deleteModifier obj 1
+            if classof obj == bonegeometry  then delete obj 
+            
+        )
+        
     )
 )
-
--- WC3_INVERT_UVW = true
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\export.mdx"
--- WC3_INVERT_UVW = false
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
-
-
