@@ -446,7 +446,7 @@ STRUCT Warcraft_III_Helpers
                             local tex = texs800()
                             tex.replacableId = subMat.ReplaceableTexture - 1
                             if( tex.replacableId == 0 ) then 
-                                tex.path = ( getfilenamefile subMat.Diffuse_map.filename ) + ".blp" 
+                                tex.path = ( getfilenamefile subMat.Diffuse_map.filename ) + WC3_TEXTURE_EXPORT_EXTENSION
                             if ( tex.replacableId == 2 ) then tex.flags = 0
                             tex.check = tex.replacableId as string + tex.path + tex.flags as string
                             append texs tex
@@ -458,7 +458,7 @@ STRUCT Warcraft_III_Helpers
                     local tex = texs800()
                     tex.replacableId = obj.material.ReplaceableTexture - 1
                     if( tex.replacableId == 0 ) then 
-                        tex.path = ( getfilenamefile obj.material.Diffuse_map.filename ) + ".blp" 
+                        tex.path = ( getfilenamefile obj.material.Diffuse_map.filename ) + WC3_TEXTURE_EXPORT_EXTENSION
                     if ( tex.replacableId == 2 ) then tex.flags = 0
                     tex.check = tex.replacableId as string + tex.path + tex.flags as string
                     append texs tex
@@ -496,19 +496,23 @@ STRUCT Warcraft_III_Helpers
     function GetMTLS mdx= 
     (
         struct mtls800 ( materialRef, txanId ) 
-        local matList = #()
+        local uniqueMatList = #()
         for obj in objects do
         (
             if ( obj.material != undefined ) then 
             (
                 if ( classof obj.material == compositeMaterial ) then
                 (
-                    if( classof obj.material.materialList[1] == WarcraftIII_Standard ) then appendIfUnique matList obj.material
+                    if( classof obj.material.materialList[1] == WarcraftIII_Standard ) then appendIfUnique uniqueMatList obj.material
                 )
-                if ( classof obj.material == WarcraftIII_Standard ) then
-                    appendIfUnique matList ( mtls800 materialRef:obj.material txanId:-1 )
+                if ( classof obj.material == WarcraftIII_Standard ) then appendIfUnique uniqueMatList obj.material
             )
         )
+        
+        local matList = #()
+        for um in uniqueMatList do
+            append matList ( mtls800 materialRef:um txanId:-1 )
+        
         if WC3_MDX800_DEBUG then for m in matList do print m
         mdx.mtls = matList
     ),

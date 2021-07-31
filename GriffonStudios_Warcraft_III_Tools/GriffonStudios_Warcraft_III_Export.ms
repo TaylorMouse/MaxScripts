@@ -33,8 +33,9 @@ fileIn "GriffonStudios_Helpers.ms"
 
 GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL MDX_EXPORT = undefined
-GLOBAL WC3_INVERT_UVW = false
-
+GLOBAL WC3_INVERT_UVW = true
+GLOBAL WC3_TEXTURE_EXPORT_EXTENSION = ".blp" --> .blp, .dds, .tga have been tested
+GLOBAL WC3_VALIDATE_MESHES = false
 
 STRUCT WC3_MDX800_EXPORTER
 (
@@ -97,14 +98,18 @@ STRUCT WC3_MDX800_EXPORTER
     function WriteGLBS800 mdx=
     (
         if mdx.glbs == undefined then return undefined
-        format "Writing GLBS\n"
-        Warcraft_III_Helpers.WriteFixedString mdx.stream "GLBS" 4
+
         
         Warcraft_III_Helpers.GetGLBS mdx
        
-        writeLong mdx.stream (mdx.glbs.count * 4)
-        for g in mdx.glbs do writeLong mdx.stream g.frame
+        if mdx.glbs.count > 0 then (
         
+            format "Writing GLBS\n"
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "GLBS" 4
+            
+            writeLong mdx.stream (mdx.glbs.count * 4)
+            for g in mdx.glbs do writeLong mdx.stream g.frame
+        )
     ),
     function WriteMTLS800 mdx=
     (
@@ -115,7 +120,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         for mat in mdx.mtls do --> no animation support yet
         (
-            if classof mat == compositeMaterial then 
+            if classof mat.materialRef == compositeMaterial then 
                 size += 76
             else
                 size += 48
@@ -132,7 +137,7 @@ STRUCT WC3_MDX800_EXPORTER
                 
                 writeLong mdx.stream 76 --> size --> currently only supports 2 sub materials
                 writeLong mdx.stream 0 --> priority
-                writeLong mdx.stream 0 --> flags
+                writeLong mdx.stream 0 --> flags --> TODO rework this, check the lava elemental for more info
                 Warcraft_III_Helpers.WriteFixedString mdx.stream "LAYS" 4 
                 writeLong mdx.stream 2 --> nMaps
                 
@@ -156,7 +161,7 @@ STRUCT WC3_MDX800_EXPORTER
                     local path = mat.materialList[i].diffuse_map.fileName
                     
                     if ( path == undefined ) then path = "" --> no textures selected
-                    if ( path.count > 0 ) then path = (getfilenamefile path) + ".blp" --> extension only
+                    if ( path.count > 0 ) then path = (getfilenamefile path) + WC3_TEXTURE_EXPORT_EXTENSION --> extension only
                     
                     if replacableId == 2 then path = ""
                     
@@ -620,7 +625,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         -- set the T-pose of the object to export correctly
         clearselection()
-        Warcraft_III_Helpers.ValidateMeshesForExport mdx
+        if WC3_VALIDATE_MESHES then Warcraft_III_Helpers.ValidateMeshesForExport mdx
         
         local animationInterval = animationrange
         animationrange = interval 0 100
@@ -659,7 +664,7 @@ STRUCT WC3_MDX800_EXPORTER
         fFlush mdx.stream
         fClose mdx.stream
         
-        Warcraft_III_Helpers.CleanUpAfterExport mdx
+        if WC3_VALIDATE_MESHES then Warcraft_III_Helpers.CleanUpAfterExport mdx
         
         animationrange = interval animationInterval.start animationInterval.end
         gc() 
