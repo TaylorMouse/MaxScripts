@@ -4,16 +4,16 @@
     | Compatible with Warcraft III, Warcraft III Reforged and StarCraft II
     
     .COPYRIGHT
-    | �2020 Griffon Studios
+    | © 2020 Griffon Studios
     
     .AUTHOR
     | Taylor Mouse
 
 */
 
-rollout GriffonStudios_AnimationWindow "Animation Window" 
+rollout GriffonStudios_AnimationWindow "Animation Window 2" 
     width:250 
-    height:720
+    height:750
 (
 
     dropdownlist ddlTracks "" height:20
@@ -29,7 +29,7 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
     group "Properties"
     (
         edittext txt_newName "" width:120 
-        button btn_rename "Rename" width:80 height:20 offset:[70,-25]        
+        button btn_rename "Update" width:80 height:20 offset:[70,-25] tooltip:"Update the name or the properties of this animation sequence"
         
         label lblStartFrame "Start "    align:#left
         spinner txt_StartFrame ""       width:50 offset:[leftPos,-20] type:#integer range:[0,100000,0]
@@ -56,6 +56,7 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
     (
         edittext txt_newAnimName "" width:120 
         button btn_add "Add" width:80 height:20 offset:[70,-25]
+        checkbox chk_useTrackBar "Use start and end frame from the track bar"
     )
     
     group "Remove selected Animation"
@@ -68,7 +69,7 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
         button btn_removeNoteTrack "Remove all animations (note track)" width:180 height:30
     )
     
-    label lblTM "�2021 Taylor Mouse"
+    label lblTM "© 2021 Taylor Mouse"
     
     function SetAnimationNoteTrack anim=
     (
@@ -238,9 +239,14 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
         
         local anim = animStruct()
         anim.name = txt_newAnimName.Text
-        
         anim.start_frame    = txt_StartFrame.value
         anim.end_frame      = txt_EndFrame.value
+        
+        if ( chk_useTrackBar.checked ) then 
+        (
+            anim.start_frame    = animationrange.start as integer / ticksperframe
+            anim.end_frame      = animationrange.end as integer / ticksperframe
+        )   
         anim.rarity         = spinRarity.value as string
         anim.movement_speed = spinMovementSpeed.value as string
         anim.priority       = spinPriority.value as string
@@ -256,13 +262,27 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
     on btn_rename pressed do
     (
         
-        if( selectedAnimation == undefined or txt_newName.text == "" or txt_newName.text == selectedAnimation.Text ) then return undefined
+        if( selectedAnimation == undefined or txt_newName.text == "") then return undefined
         if selectedAnimationTrack == undefined or selectedAnimationTrack == 0 then selectedAnimationTrack = 1
         
         local newName = txt_newName.text
         local track = getNoteTrack rootNode selectedAnimationTrack
         local keys = track.Keys
 
+        
+        struct animStruct ( name, start_frame, end_frame, rarity, movement_speed, priority, non_looping )
+        
+        local anim = animStruct()
+        anim.name           = txt_newName.text
+        anim.start_frame    = txt_StartFrame.value
+        anim.end_frame      = txt_EndFrame.value
+        anim.rarity         = spinRarity.value as string
+        anim.movement_speed = spinMovementSpeed.value as string
+        anim.priority       = spinPriority.value as string
+        anim.non_looping    = chkNonLooping.checked as string
+        
+        format "%\n" anim
+        
         for i=1 to keys.count by 2 do
         (
             local note = keys[i].value
@@ -272,11 +292,14 @@ rollout GriffonStudios_AnimationWindow "Animation Window"
             (
                 try 
                 (
-                    note = newName + (substring note (pos+1) -1)
+                    deleteNoteKey keys (i+1)
+                    deleteNoteKey keys i
+--                     note = newName + (substring note (pos+1) -1)
+--                     
+--                     keys[i].value = note
+--                     keys[i+1].value = note
+                    SetAnimationNoteTrack anim
                     
-                    keys[i].value = note
-                    keys[i+1].value = note
-
                     exit
                 )
                 catch 
