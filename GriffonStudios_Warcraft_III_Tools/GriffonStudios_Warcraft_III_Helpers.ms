@@ -7,6 +7,7 @@
     
     .AUTHOR
     | Taylor Mouse
+    | IK Solver initial code by NeoDex
 
 */
 
@@ -963,6 +964,9 @@ STRUCT Warcraft_III_Helpers
     /* get the bone animations AND helper animations */
     function GetObjects mdx=
     (
+
+        mdx.IKCollection = Warcraft_III_Helpers.GatherIKChains()
+
         struct object800 ( TotalSize = 0, ObjectType,  HeaderSize = 96, Id, parentId = -1, Name,  Flags, objRef, KGTR, KGRT, KGSC, geosetId = -1, geosetAnimationId = -1 )
      
         local allobjects = #() 
@@ -982,7 +986,7 @@ STRUCT Warcraft_III_Helpers
 
         -- HELP
         for obj in objects do
-            if (classof obj == Dummy  ) then -- or classof obj == SplineShape
+            if (classof obj == Dummy or classof obj == SplineShape ) then
             (
                 local o = object800 Id:id Name:obj.name ObjectType:#wc3HELP Flags:0x00 objRef:obj TotalSize:96
                 id +=1
@@ -1042,9 +1046,14 @@ STRUCT Warcraft_III_Helpers
         /* get the animations of these objects */
         for obj in allObjects do
         (
-            obj.KGTR = Warcraft_III_Helpers.GetKGTR obj.objRef
-            obj.KGRT = Warcraft_III_Helpers.GetKGRT obj.objRef
-            obj.KGSC = Warcraft_III_Helpers.GetKGSC obj.objRef
+            obj.KGTR = Warcraft_III_Helpers.GetKGTR obj.objRef --> translation
+
+            if ( (classOf obj.objRef.transform.controller == IKControl) or ( Warcraft_III_Helpers.isObjectConstrained obj.objRef ) ) then
+                obj.KGRT = Warcraft_III_Helpers.GetIKKGRT mdx obj.objref 
+            else
+                obj.KGRT = Warcraft_III_Helpers.GetKGRT obj.objRef --> rotation
+            
+            obj.KGSC = Warcraft_III_Helpers.GetKGSC obj.objRef --> scale
             
             if obj.KGTR.nbrKeys > 0 then obj.TotalSize += obj.KGTR.Size
             if obj.KGRT.nbrKeys > 0 then obj.TotalSize += obj.KGRT.Size
@@ -1088,6 +1097,32 @@ STRUCT Warcraft_III_Helpers
             append kgtr.AnimBlock ( KeyValuePair Key:t Val:val )
         )
         return kgtr
+    ),
+    function GetIKKGRT mdx obj =
+    (
+        /* get the rotation animation based on IK solver --> this was initially not supported by the origina Warcraft 3 Art Tools */
+        struct anim800   ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, glbsId = -1, AnimBlock = #() )  
+        struct KeyValuePair ( Key, Val )
+
+        local kgrt =  anim800()
+        local behaviorObj = Warcraft_III_Helpers.GetBehavior()
+        
+        -- check if the object is part of a global sequence
+        if behaviorObj != undefined then
+        for b = 1 to behaviorObj.listOfObjects.count do
+        if behaviorObj.listOfObjects[b].name == obj.name then 
+        ( 
+            kgrt.glbsId = b - 1
+            exit
+        )
+
+        kgrt.AnimBlock = Warcraft_III_Helpers.GetRotationIKKeys mdx obj
+        kgrt.nbrKeys = kgrt.AnimBlock.count
+        if WC3_MDX800_DEBUG then 
+            for kvp in kgrt.animblock do format "%\n" kvp
+            
+        return kgrt
+
     ),
     function GetKGRT obj =
     (
@@ -1330,5 +1365,377 @@ STRUCT Warcraft_III_Helpers
             
         )
         
+    ),
+    /* 
+        IK Solver to normal rotation stuff 
+        Initial code by NEODEX    
+    */
+    fn isIKAffected o =(
+        return classOf o.transform.controller == IKControl
+    ),
+    function GetRotIK t o r pr hp =
+    (
+        at time t local v = (inverse o.transform.rotationPart)*r -- 
+        if hp then at time t  v = (v/((inverse o.parent.transform.rotationPart)*pr))
+        v
+    ),
+    function getIKId mdx o =
+    (
+        result = #()
+        for i = 1 to mdx.IKCollection.IKChains.count do
+            if (findItem mdx.IKCollection.IKChainsBones[i] o) != 0 then
+                append result i
+        result
+    ),
+    function _getParentsEx obj &tmp=
+	(
+		if obj.parent != undefined then
+		(
+			append tmp obj.parent
+			Warcraft_III_Helpers._getParentsEx obj.parent tmp
+		)
+	),
+
+	function GetParents obj =
+	(
+		result = #()
+		Warcraft_III_Helpers._getParentsEx obj result
+		result
+	),
+    function ArrayMakeUnique array =
+	(
+		local result = #()
+		for elem in array do
+			if (findItem result elem) == 0 then append result elem
+		result
+	),
+    function getGoalDistance o t =
+    (
+        local p1,p2
+        at time t p1 = o.pos
+        at time t p2 = o.controller.startjoint.pos
+        distance p1 p2
+    ),
+
+    function getAngleofGoalChange o t1 t2 =
+    (
+        local v1, v2
+        at time t1 v1 = o.controller.startjoint.pos - o.pos
+        at time t2 v2 = o.controller.startjoint.pos - o.pos
+        acos ((dot v1 v2)/((sqrt (dot v1 v1)) * (sqrt (dot v2 v2))))
+    ),
+    function IKRefineKeys o &arr t1 t2 =
+    (
+        local d1 = (Warcraft_III_Helpers.getGoalDistance o t1)
+        local d2 = (Warcraft_III_Helpers.getGoalDistance o t2)
+        local maxDist = if d1 > d2 then d1 else d2
+        local d = (abs (d2 - d1))/maxDist
+        if (d > 0.25) or (Warcraft_III_Helpers.getAngleofGoalChange o t1 t2) > 30.0 then
+        (
+            local th = t1 + (t2-t1)*0.5
+            append arr th
+            Warcraft_III_Helpers.IKRefineKeys o arr t1 th
+            Warcraft_III_Helpers.IKRefineKeys o arr th t2
+        )
+    ),
+    function getKeysFromObject o pos:true rot:true sca:true =
+    (
+        local result = #()
+--         local keys
+--         local count = 0
+        
+        if pos then
+            for key in o.pos.controller.keys do appendifunique result key.time
+        
+        if rot then
+            for key in o.rotation.controller.keys do appendifunique result key.time
+                
+        if sca then 
+            for key in o.scale.controller.keys do appendifunique result key.time
+--         if pos then
+--         (
+--             keys = o.pos.controller.keys
+--             count = keys.count
+--             if count > 0 then result[count] = undefined
+--             for i = 1 to count do result[i] = keys[i].time
+--         )
+--         if rot then
+--         (
+--             keys = o.rotation.controller.keys
+--             local count2 = keys.count
+--             if count2 > 0 then result[count + count2] = undefined
+--             for i = 1 to count2 do result[count + i] = keys[i].time
+--             count += count2
+--         )
+--         if sca then
+--         (
+--             keys = o.scale.controller.keys
+--             local count2 = keys.count
+--             if count2 > 0 then result[count + count2] = undefined
+--             for i = 1 to count2 do result[count + i] = keys[i].time
+--             count += count2
+--         )
+--         return Warcraft_III_Helpers.ArrayMakeUnique result
+    
+        result = sort result
+
+        return result
+    ),
+    function GatherIKChains =
+    (
+        struct IK800 (IKChains = #(), IKChainsKeys = #(), IKChainsBones = #()) 
+
+        local IKCollection = IK800()
+        function getBoneChains start end =
+        (
+            result = #(end)
+            end = end.parent
+            while (end != undefined and end != start) do
+            (
+                append result end
+                end = end.parent
+            )
+            append result start
+            result
+        )
+        
+        function checkHILimb o = (classof o == IK_Chain_Object) and (classof o.controller == IKChainControl)
+        function checkSpline o = (classof o == IK_Chain_Object) and (classof o.controller == SplineIKChain)
+        for o in Helpers where checkHILimb o do
+        (
+            append IKCollection.IKChains o
+            local target = o.controller.VHTarget
+            local tmp = #(o)
+            join tmp (Warcraft_III_Helpers.GetParents o)
+            local topBone = o.controller.startjoint.parent
+            if topBone != undefined then
+            (
+                local cycle = #(topBone)
+                join cycle (Warcraft_III_Helpers.GetParents topBone)
+                local out = true
+                local i = 1
+                while (i <= cycle.count and out) do
+                (
+                    local index = findItem tmp cycle[i]
+                    if index == 0 then
+                        append tmp cycle[i]
+                    else
+                    (
+                        deleteItem tmp index
+                        out = false
+                    )
+                    i += 1
+                )
+            )
+            if target != undefined and o.controller.useVHTarget then
+            (
+                append tmp target
+                join tmp ( Warcraft_III_Helpers.GetParents target)
+            )
+            tmp = Warcraft_III_Helpers.ArrayMakeUnique tmp
+            local keys = #()
+            for s in tmp where s != undefined do
+                join keys (Warcraft_III_Helpers.getKeysFromObject s)
+            keys = Warcraft_III_Helpers.ArrayMakeUnique keys
+            sort keys
+            local extraKeys = #()
+            for i = 2 to keys.count do
+                Warcraft_III_Helpers.IKRefineKeys o &extraKeys  keys[i-1] keys[i]
+            join keys extraKeys
+            sort keys
+            IKCollection.IKChainsKeys[IKCollection.IKChains.count] = keys
+            IKCollection.IKChainsBones[IKCollection.IKChains.count] = getBoneChains o.controller.startjoint o.controller.endjoint
+        )
+        
+        
+        
+        for o in helpers where checkSpline o  do
+        (
+            append IKCollection.IKChains o
+            local tmp = #(o)
+            local cpoints = o.controller.pickShape.modifiers[#Spline_IK_Control].helper_list
+            join tmp cpoints
+            local topBone = if cpoints.count > 0 then cpoints[1].parent else undefined
+            if topBone != undefined then
+            (
+                local cycle = #(topBone)
+                join cycle (Warcraft_III_Helpers.getParents topBone)
+                local out = true
+                local i = 1
+                while (i <= cycle.count and out) do
+                (
+                    local index = findItem tmp cycle[i]
+                    if index == 0 then
+                        append tmp cycle[i]
+                    else
+                    (
+                        deleteItem tmp index
+                        out = false
+                    )
+                    i += 1
+                )
+            )
+            tmp = Warcraft_III_Helpers.ArrayMakeUnique tmp
+            local keys = #()
+            for s in tmp where s != undefined do
+                join keys (Warcraft_III_Helpers.getKeysFromObject s)
+            keys = Warcraft_III_Helpers.ArrayMakeUnique keys
+            sort keys
+            local extraKeys = #()
+            for i = 2 to keys.count do
+                IKRefineKeys o &extraKeys  keys[i-1] keys[i]
+            join keys extraKeys
+            sort keys
+            IKCollection.IKChainsKeys[IKCollection.IKChains.count] = keys
+            IKCollection.IKChainsBones[IKCollection.IKChains.count] = getBoneChains o.controller.startjoint o.controller.endjoint
+
+            
+
+        )
+        
+        return IKCollection
+    ),
+    function getSubControl c i =
+    (
+        if (isProperty c #getSubCtrl) then c.getSubCtrl i
+        else (
+            getPropertyController c (c.GetName i)
+        )
+    ),
+    function getObjectConstraintKeys obj =
+    (
+        local c = obj.rotation.controller
+        local n = c.count
+        local objChain = #(obj)
+        join objChain (Warcraft_III_Helpers.GetParents obj)
+        local orChain = #()
+        local laChain = #()
+        for i = 1 to n do
+        (
+            local c2 = Warcraft_III_Helpers.getSubControl c i
+            if (classof c2 == Orientation_Constraint) then
+            (
+                local n2 = c2.getNumTargets()
+                for j = 1 to n2 do
+                (
+                    local o = c2.getNode j
+                    local tmp = #(o)
+                    join tmp (Warcraft_III_Helpers.GetParents o)
+                    join orChain tmp
+                )
+            )
+            else 	if (classof c2 == LookAt_Constraint) then
+            (
+                local n2 = c2.getNumTargets()
+                for j = 1 to n2 do
+                (
+                    local o = c2.getNode j
+                    local tmp = #(o)
+                    join tmp (GetParents o)
+                    join laChain tmp
+                )
+            )
+        )
+        orChain = Warcraft_III_Helpers.ArrayMakeUnique orChain
+        laChain = Warcraft_III_Helpers.ArrayMakeUnique laChain
+        local needPos = laChain.count != 0
+        local keys = #()
+        for s in orChain where s != undefined do
+            join keys (Warcraft_III_Helpers.getKeysFromObject s pos:false sca:false)
+        for s in laChain where s != undefined do
+            join keys (Warcraft_III_Helpers.getKeysFromObject s sca:false)
+        for s in objChain where s != undefined do
+            join keys (Warcraft_III_Helpers.getKeysFromObject s sca:false)
+        keys = Warcraft_III_Helpers.ArrayMakeUnique keys
+        sort keys
+        keys
+    ),
+    function isObjectConstrained o =
+    (
+        local c = o.rotation.controller
+        if classof c == rotation_list then
+        (
+            local n = c.count
+            local result = false
+            for i = 1 to n do
+            (
+                local tmp = classOf (Warcraft_III_Helpers.getSubControl c i) 
+                result = result or (tmp == Orientation_Constraint) or (tmp == LookAt_Constraint)
+            )
+            result
+        )
+        else false
+    ),
+	function getKeysOnSequences2 keys sequences inclusive:false =
+	(
+		local func1, func2
+		if inclusive then
+		(
+			func1 = fn tmp1 a b = a <= b
+			func2 = fn tmp2 a b = a >= b
+		) else (
+			func1 = fn tmp1 a b = a < b
+			func2 = fn tmp2 a b = a > b
+		)
+		result = #()
+		result[sequences.count] = undefined
+		for j = 1 to sequences.count do result[j] = #()
+		local i = 1
+		local count = keys.count
+		for j = 1 to sequences.count do
+		(
+			local s = sequences[j]
+			while (i <= count and (func1 keys[i] s.endFrame)) do
+			(
+				if (func2 keys[i] s.startFrame) then
+					append result[j] keys[i]
+				i += 1
+			)
+		)
+		result
+	),
+
+    function GetRotationIKKeys mdx obj =
+    (
+        struct KeyValuePair (key, val )
+
+        local tmp = #()
+        local hasParent = obj.parent != undefined 
+        local r = at time 0f obj.transform.rotationPart
+        local pr = (quat 0 0 0 1)
+        if hasParent then pr = at time 0f obj.parent.transform.rotationPart
+
+        if (classOf obj.transform.controller == IKControl) then
+        (
+            local chains = Warcraft_III_Helpers.getIKId mdx obj
+            for i in chains do
+                join tmp mdx.IKCollection.IKChainsKeys[i]
+        )
+        if (Warcraft_III_Helpers.isObjectConstrained obj) then join tmp (Warcraft_III_Helpers.getObjectConstraintKeys obj)
+        tmp = Warcraft_III_Helpers.ArrayMakeUnique tmp
+        sort tmp
+        local keys = #()
+        tmp = Warcraft_III_Helpers.getKeysOnSequences2 tmp mdx.SEQS inclusive:false
+        local j = 1
+        for i = 1 to tmp.count do
+        (
+            if tmp[i].count != 0 then
+            (
+                local s = mdx.SEQS[i]
+                local v =  Warcraft_III_Helpers.GetRotIK s.startFrame obj r pr hasParent
+                keys[j] = (KeyValuePair s.startFrame v)
+                j += 1
+                for k in tmp[i] do
+                (
+                    v = GetRotIK k obj r pr hasParent
+                    keys[j] = (KeyValuePair k v)
+                    j += 1
+                )
+                v = GetRotIK s.end obj r pr hasParent
+                keys[j] = (KeyValuePair s.end v)
+                j += 1
+            )
+        )
+        return keys --> returns a list of keys and values
     )
 )

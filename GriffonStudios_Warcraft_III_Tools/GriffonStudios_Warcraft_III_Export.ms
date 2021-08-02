@@ -34,7 +34,7 @@ fileIn "GriffonStudios_Helpers.ms"
 GLOBAL WC3_MDX800_DEBUG = true
 GLOBAL MDX_EXPORT = undefined
 GLOBAL WC3_INVERT_UVW = true
-GLOBAL WC3_TEXTURE_EXPORT_EXTENSION = ".blp" --> .blp, .dds, .tga have been tested
+GLOBAL WC3_TEXTURE_EXPORT_EXTENSION = ".tga" --> .blp, .dds, .tga have been tested
 GLOBAL WC3_VALIDATE_MESHES = false
 
 STRUCT WC3_MDX800_EXPORTER
@@ -618,7 +618,11 @@ STRUCT WC3_MDX800_EXPORTER
     (
         if ( file == undefined ) then return undefined
         clearlistener()
-        struct mdx800 ( file, stream, seqs, glbs, mtls, texs, geos, geoa, txan, allObjects, autoCreatedObjectsForExport = #() )
+        struct mdx800 
+            ( file, stream, 
+              seqs, glbs, mtls, texs, geos, geoa, txan, 
+              allObjects, autoCreatedObjectsForExport = #(), IKCollection
+            )
         local mdx = mdx800()
         mdx.file = file
         local export = WC3_MDX800_EXPORTER()
@@ -631,9 +635,8 @@ STRUCT WC3_MDX800_EXPORTER
         animationrange = interval 0 100
         slidertime = 0
 
-        Warcraft_III_Helpers.GetObjects mdx
-        
         Warcraft_III_Helpers.GetSEQS mdx
+        Warcraft_III_Helpers.GetObjects mdx
         Warcraft_III_Helpers.GetMTLS mdx
         Warcraft_III_Helpers.GetTEXS mdx
         Warcraft_III_Helpers.GetGEOS mdx
