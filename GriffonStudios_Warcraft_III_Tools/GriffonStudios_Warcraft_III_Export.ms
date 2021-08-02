@@ -621,7 +621,7 @@ STRUCT WC3_MDX800_EXPORTER
         struct mdx800 
             ( file, stream, 
               seqs, glbs, mtls, texs, geos, geoa, txan, 
-              allObjects, autoCreatedObjectsForExport = #(), IKCollection
+              allObjects, autoCreatedObjectsForExport = #()
             )
         local mdx = mdx800()
         mdx.file = file
@@ -635,8 +635,9 @@ STRUCT WC3_MDX800_EXPORTER
         animationrange = interval 0 100
         slidertime = 0
 
-        Warcraft_III_Helpers.GetSEQS mdx
         Warcraft_III_Helpers.GetObjects mdx
+
+        Warcraft_III_Helpers.GetSEQS mdx
         Warcraft_III_Helpers.GetMTLS mdx
         Warcraft_III_Helpers.GetTEXS mdx
         Warcraft_III_Helpers.GetGEOS mdx
