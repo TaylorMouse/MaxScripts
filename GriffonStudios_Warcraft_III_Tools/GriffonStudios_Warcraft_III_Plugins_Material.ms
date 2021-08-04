@@ -167,6 +167,7 @@ plugin Material WarcraftIII_Standard
         LineType = 1
         Alpha = 100.0
         diffuse_map = Bitmaptexture fileName:""
+        FilterMode = 1
     )
     
     

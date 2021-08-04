@@ -33,7 +33,7 @@ rollout GriffonStudios_Warcraft_III_UserPropertyEditor "User Property Editor"
         checkbox chkCollisionObject "Collision Box"
        
     )
-    label lblTM "� 2021 Taylor Mouse"
+    label lblTM "\xa9 2021 Taylor Mouse"
     button btnClose "Save & Close" height:45 width:190
     
     function UpdateUI=
