@@ -430,7 +430,7 @@ STRUCT Warcraft_III_Helpers
     /* get the unique list of TEXS */
     function GetTEXS mdx=
     (
-        struct texs800 ( replacableId, path= "", flags = 3, check )
+        struct texs800 ( replacableId, path= "", flags = 3, check, original_path = "" )
         local texs = #()
         
         for obj in objects do
@@ -446,7 +446,10 @@ STRUCT Warcraft_III_Helpers
                             local tex = texs800()
                             tex.replacableId = subMat.ReplaceableTexture - 1
                             if( tex.replacableId == 0 ) then 
+                            (
                                 tex.path = ( getfilenamefile subMat.Diffuse_map.filename ) + WC3_TEXTURE_EXPORT_EXTENSION
+                                tex.original_path = subMat.Diffuse_map.filename
+                            )
                             if ( tex.replacableId == 2 ) then tex.flags = 0
                             tex.check = tex.replacableId as string + tex.path + tex.flags as string
                             append texs tex
@@ -458,7 +461,10 @@ STRUCT Warcraft_III_Helpers
                     local tex = texs800()
                     tex.replacableId = obj.material.ReplaceableTexture - 1
                     if( tex.replacableId == 0 ) then 
+                    (
                         tex.path = ( getfilenamefile obj.material.Diffuse_map.filename ) + WC3_TEXTURE_EXPORT_EXTENSION
+                        tex.original_path = obj.material.Diffuse_map.filename
+                    )
                     if ( tex.replacableId == 2 ) then tex.flags = 0
                     tex.check = tex.replacableId as string + tex.path + tex.flags as string
                     append texs tex
@@ -1088,7 +1094,7 @@ STRUCT Warcraft_III_Helpers
             append kgtr.AnimBlock ( KeyValuePair Key:t Val:val )
         )
         return kgtr
-    )
+    ),
     function GetKGRT obj =
     (
         struct anim800   ( Size = 16, nbrKeys, Type = "KGRT", LineType=1, glbsId = -1, AnimBlock = #() )  

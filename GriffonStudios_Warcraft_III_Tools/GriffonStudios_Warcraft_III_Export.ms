@@ -629,8 +629,7 @@ STRUCT WC3_MDX800_EXPORTER
         
         -- set the T-pose of the object to export correctly
         clearselection()
-        if WC3_VALIDATE_MESHES then Warcraft_III_Helpers.ValidateMeshesForExport mdx
-        
+
         local animationInterval = animationrange
         animationrange = interval 0 100
         slidertime = 0
@@ -668,16 +667,8 @@ STRUCT WC3_MDX800_EXPORTER
         fFlush mdx.stream
         fClose mdx.stream
         
-        if WC3_VALIDATE_MESHES then Warcraft_III_Helpers.CleanUpAfterExport mdx
-        
         animationrange = interval animationInterval.start animationInterval.end
         gc() 
-        format "Done!\n"
+        return mdx
     )
 )
-
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\TM Tutorials\tm_sphere.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Android 19\android_19.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\Medivh_export.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior_Exported.mdx"
--- WC3_MDX800_EXPORTER.Export @"F:\Blizzard\Warcraft III\Warcraft III Models\Paladin (Sword)\Paladin (Sword)\paladin_export.mdx"
