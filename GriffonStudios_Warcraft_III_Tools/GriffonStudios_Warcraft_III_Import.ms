@@ -1267,7 +1267,13 @@ STRUCT WC3_MDX800
         (
             local b = obj.boneRef
 
+            -- lock the animation
             addNewKey b.controller 0
+            for seq in mdx.seqs do
+            (
+                addnewkey b.controller seq.startFrame
+                addnewkey b.controller seq.endFrame 
+            )
 
             Warcraft_III_Helpers.ApplyUserProperties obj.flags b
             
@@ -1321,7 +1327,6 @@ STRUCT WC3_MDX800
                     local p = anim.Point
 
                     if ( prevTime == t ) then continue else prevTime = t
-                    
                     with animate on 
                         at time t
                         (
@@ -1350,7 +1355,6 @@ STRUCT WC3_MDX800
                     local p = anim.Point
                         
                     if ( prevTime == t ) then continue else prevTime = t
-                    
                     with animate on 
                         at time t
                         (
@@ -1378,7 +1382,13 @@ STRUCT WC3_MDX800
             if( h.parentId > 0 ) then 
                 d.parent = mdx.objs[h.parentId]
             
+            -- lock the animation
             addNewKey d.controller 0
+            for seq in mdx.seqs do
+            (
+                addnewkey d.controller seq.startFrame
+                addnewkey d.controller seq.endFrame 
+            )
             
             d.assumeSkinPose()
 
@@ -1421,7 +1431,6 @@ STRUCT WC3_MDX800
                         local p = anim.Point
 
                         if ( prevTime == t ) then continue else prevTime = t
-                        
                         with animate on 
                             at time t
                             (
@@ -1448,7 +1457,7 @@ STRUCT WC3_MDX800
                     local p = anim.Point
                         
                     if ( prevTime == t ) then continue else prevTime = t
-                    
+
                     with animate on 
                         at time t
                         (
@@ -1890,7 +1899,7 @@ STRUCT WC3_MDX800
     (
         clearlistener()
         SetWaitCursor()
-        animationrange = interval 0 150
+        animationrange = interval 0 600
         slidertime = 0
         local stream = fOpen file "rb"
         if ( doesFileExist file != true or stream == undefined ) then return undefined
@@ -1973,16 +1982,24 @@ STRUCT WC3_MDX800
     )
 )
 
--- Example KMTA : 
---WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
+
 
 -- Example RIBB : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Shade\Shade.mdx
 
--- WC3_MDX800_DEBUG = true
--- WC3_READONLY = true
--- WC3_DEBUG = true
+-- WC3_MDX800_DEBUG = false
+-- WC3_READONLY = false
+-- WC3_DEBUG = false
 -- WC3_MDX = undefined
 
+-- KMTA : 
+--WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
+
+-- KMTF :
+-- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\SeaElemental\SeaElemental.mdx"
+
+
+
+-- Tests --
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\LavaSpawn\LavaSpawn.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Doodads\Dungeon\Props\SewerVent\SewerVent1.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Demon\Infernal\Infernal.mdx"
