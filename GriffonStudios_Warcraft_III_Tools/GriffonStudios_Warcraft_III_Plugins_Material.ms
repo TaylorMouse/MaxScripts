@@ -113,7 +113,11 @@ plugin Material WarcraftIII_Standard
         (
             cp_selfIllumination.visible = theState
         )
-
+        
+        on basic_parameters open do
+        (
+            if cbx_useColor.checked then cp_selfIllumination.visible = true
+        )
     )
     
     rollout extended_parameters "Advanced Transparency"
