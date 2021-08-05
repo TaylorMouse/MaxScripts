@@ -1,9 +1,10 @@
 
 Warcraft 3 Reforged/GriffonStudios/griffonstudios.config
-Research/uvmapping.ms
+Research/*.ms
 Research/Wacraft III Reforged Tools Documentation by TM.pptx
 Research/~$Wacraft III Reforged Tools Documentation by TM.pptx
 MaxIcons/TM_24i.psd
+MaxIcons/TM_24i.png
 GriffonStudios_Warcraft_III_Tools/Previewer/jpeg62.dll
 GriffonStudios_Warcraft_III_Tools/Previewer/War3ModelPreviewer.exe
 GriffonStudios_Warcraft_III_Tools/Previewer/Data/Filters.txt
@@ -16,3 +17,4 @@ GriffonStudios_Warcraft_III_Tools/Previewer/Data/SpawnObjectData.txt
 GriffonStudios_Warcraft_III_Tools/Previewer/Data/SplatData.txt
 GriffonStudios_Warcraft_III_Tools/Previewer/Data/UberSplatData.txt
 GriffonStudios_Warcraft_III_Tools/Previewer/Data/VertexShader.vsh
+MaxIcons/TM_24i.png

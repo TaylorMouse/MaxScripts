@@ -29,3 +29,4 @@ fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Plugins_R
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Import.ms"
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Export.ms"
 fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Macros.ms"
+fileIn "GriffonStudios_Warcraft_III_Tools\\GriffonStudios_Warcraft_III_Tools_Dialog.ms"

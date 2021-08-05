@@ -110,3 +110,18 @@ macroScript GriffonStudios_UserPropertyWindow
         )
     )
 )
+
+/* opens the User Tools window */
+macroScript GriffonStudios_WC3ToolsWindow
+    category:"Warcraft III Tools"
+    internalcategory:"Griffon Studios Tools"
+    buttonText:"Show Warcraft III Tools Window"
+    toolTip:"Show Warcraft III Tools Window"
+    icon:#("GriffonStudios",6)
+(
+    on execute do (
+        if(Warcraft_III_Tools_Dialog != undefined) then 
+            Destroydialog Warcraft_III_Tools_Dialog
+        CreateDialog Warcraft_III_Tools_Dialog lockwidth: true  
+    )
+)
