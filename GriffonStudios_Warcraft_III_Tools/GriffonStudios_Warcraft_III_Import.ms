@@ -1151,6 +1151,23 @@ STRUCT WC3_MDX800
             mat.Diffuse_Map = Bitmaptexture fileName:fileName  
         )
         
+        -- Apply KMTA or Alpha Animation
+        if ( map.KMTA != undefined ) then
+        (
+            local isGlobalSequence = false
+            if (map.KMTA.glbsId > 0 ) then isGlobalSequence = true
+            local startFrame = 10
+            if isGlobalSequence then startFrame = 0
+            
+            at time 0 mat.Alpha = 100.0
+            for kg in map.KMTA.KG do
+            (
+                with animate on 
+                    at time ( kg.Time + startFrame ) 
+                        mat.Alpha = (kg.Point * 100.0 )
+            )
+        )
+        
         -- Apply UVW animation 
         if mdx.TXAN != undefined then
         (
@@ -1175,10 +1192,15 @@ STRUCT WC3_MDX800
                     ( mat.Diffuse_Map.coords.u_offset.controller = TCB_Float()
                       mat.Diffuse_Map.coords.v_offset.controller = TCB_Float() )
                     
+                    local isGlobalSequence = false
+                    if (txan.KTAT.glbsId > 0 ) then isGlobalSequence = true
+                    local startFrame = 10
+                    if isGlobalSequence then startFrame = 0
+                      
                     for kg in txan.KTAT.kg do
                     (
                         with animate on
-                            at time kg.time
+                            at time ( kg.time + startFrame )
                             (
                                 mat.Diffuse_map.coords.U_Offset = kg.point.X
                                 mat.Diffuse_map.coords.V_Offset = kg.point.Y
@@ -1951,7 +1973,9 @@ STRUCT WC3_MDX800
     )
 )
 
--- Example KMTA : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx
+-- Example KMTA : 
+--WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
+
 -- Example RIBB : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Shade\Shade.mdx
 
 -- WC3_MDX800_DEBUG = true

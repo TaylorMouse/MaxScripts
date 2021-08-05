@@ -66,7 +66,7 @@ plugin Material WarcraftIII_Standard
     parameters extended_params rollout:extended_parameters
     (
         FilterMode type:#integer animatable:false ui:lb_filterMode
-        Alpha      type:#float      animatable:true   ui:spn_alpha
+        Alpha      type:#float   animatable:true  ui:spn_alpha
         
         on Alpha set val do 
         (
