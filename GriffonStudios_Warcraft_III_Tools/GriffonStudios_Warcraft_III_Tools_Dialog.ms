@@ -267,6 +267,4 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
         
     )
 )
-clearlistener()
-gc()
-CreateDialog Warcraft_III_Tools_Dialog
+--CreateDialog Warcraft_III_Tools_Dialog

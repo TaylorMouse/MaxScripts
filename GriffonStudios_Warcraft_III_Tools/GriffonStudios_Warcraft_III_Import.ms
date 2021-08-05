@@ -1951,6 +1951,9 @@ STRUCT WC3_MDX800
     )
 )
 
+-- Example KMTA : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx
+-- Example RIBB : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Shade\Shade.mdx
+
 -- WC3_MDX800_DEBUG = true
 -- WC3_READONLY = true
 -- WC3_DEBUG = true
