@@ -10,7 +10,7 @@
 
 */
 
-rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
+rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:500
 (
     /*
         GLOBAL WC3_VALIDATE_MESHES = false
@@ -18,6 +18,7 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
     */
 
     local workingDir = getdir #temp
+    local configFile = (getdir #temp) + "\\wc3tools.config"
     local rotation_keys_to_keep = #()
     local position_keys_to_keep = #()
     local scale_keys_to_keep = #()
@@ -25,6 +26,10 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
     group "Settings"
     (
         checkBox     cbx_Debugmode   "Debug mode"        tooltip:"This may slow the process but prints out all debug stuff"
+        
+        label        lbl_sharedTextureFolder "Shared texture folder" align:#left
+        edittext     txt_sharedTextureFolder "" width:210 height:25 align:#left offset:[-5,0]
+        button       btn_browseSharedTextures "..." width:20 height:25 align:#right offset:[5,-30]
     )
     
     group "Import"
@@ -59,6 +64,8 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
     
     label info "\xa9 2021 Warcraft III Tools by Taylor Mouse" align:#center
     
+    
+    
     on Warcraft_III_Tools_Dialog open do
     (
 
@@ -83,8 +90,22 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:450
         WC3_DEBUG = false
         WC3_INVERT_UVW = false
         ddl_Extension.selection = 1
+        
+        local sharedFolder = getinisetting configFile "WarcraftIII" "SharedTextureFolder"
+        if sharedFolder == undefined then txt_sharedTextureFolder.text = "" else txt_sharedTextureFolder.text = sharedFolder
+        
     )
 
+    on btn_browseSharedTextures pressed do
+    (
+        local sharedFolder = getSavePath caption:"Select Shared Teture Folder" initialDir:(txt_sharedTextureFolder.text)
+        if ( sharedFolder != undefined) then 
+        (
+            sharedFolder = sharedFolder  + "\\"   
+            txt_sharedTextureFolder.text = sharedFolder 
+            setIniSetting configFile "WarcraftIII" "SharedTextureFolder" sharedFolder
+        )
+    )
     on btn_clean_material_editor pressed do
     (
         for i=1 to 24 do meditmaterials[i] = Standard()

@@ -1128,6 +1128,10 @@ STRUCT WC3_MDX800
     ),
     function CreateWC3Material mdx map index=
     (
+        -- get shared texture folder
+        local configFile = (getdir #temp) + "\\wc3tools.config"
+        local sharedFolder = getinisetting configFile "WarcraftIII" "SharedTextureFolder"
+        
         local mat = WarcraftIII_Standard()
         mat.name = mdx.modl.name + "_MATERIAL_" + ( index as string )
         local tex = mdx.texs[map.textureId + 1]
@@ -1148,7 +1152,20 @@ STRUCT WC3_MDX800
             local file_path = getFileNamePath mdx.fileName
             local file_name = getFileNameFile tex.path
             local fileName = file_path + file_name + ".TGA"
+            
+            if( doesfileexist fileName != true ) then
+                if ( sharedFolder != undefined ) then fileName = sharedFolder + file_name + ".TGA"
+
             mat.Diffuse_Map = Bitmaptexture fileName:fileName  
+        )
+
+        if ( tex.path == "" and tex.ReplacableId == 2 ) then --> team glow
+        (
+            if ( sharedFolder != undefined ) then 
+            (
+                fileName = sharedFolder + "TeamGlow00.TGA"
+                mat.Diffuse_Map = Bitmaptexture fileName:fileName
+            )
         )
         
         -- Apply KMTA or Alpha Animation
@@ -1986,13 +2003,13 @@ STRUCT WC3_MDX800
 
 -- Example RIBB : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Shade\Shade.mdx
 
---  WC3_MDX800_DEBUG = true
+-- WC3_MDX800_DEBUG = false
 -- WC3_READONLY = false
 -- WC3_DEBUG = false
 -- WC3_MDX = undefined
 
 -- KMTA : 
---WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
+ WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
 
 -- KMTF :
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\SeaElemental\SeaElemental.mdx"
@@ -2004,6 +2021,6 @@ STRUCT WC3_MDX800
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Doodads\Dungeon\Props\SewerVent\SewerVent1.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Demon\Infernal\Infernal.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\Abomination.mdx"
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
 
