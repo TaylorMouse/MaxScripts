@@ -1986,7 +1986,7 @@ STRUCT WC3_MDX800
 
 -- Example RIBB : F:\Blizzard\Warcraft III\Extracted\Units\Undead\Shade\Shade.mdx
 
--- WC3_MDX800_DEBUG = false
+ WC3_MDX800_DEBUG = true
 -- WC3_READONLY = false
 -- WC3_DEBUG = false
 -- WC3_MDX = undefined
@@ -1995,7 +1995,7 @@ STRUCT WC3_MDX800
 --WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
 
 -- KMTF :
--- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\SeaElemental\SeaElemental.mdx"
+WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\SeaElemental\SeaElemental.mdx"
 
 
 
