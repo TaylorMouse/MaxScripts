@@ -137,6 +137,10 @@ rollout Warcraft_III_Tools_Dialog "Warcraft 3 Tools" width:250 height:500
         )
         if cbx_InvertUVW.checked then WC3_INVERT_UVW = true
         
+        WC3_TEXTURE_EXPORT_EXTENSION = ddl_Extension.text
+        
+        format "Extension is set to%\n" ddl_Extension.text
+        
         local startedAt = timestamp()
         local exporter = WC3_MDX800_EXPORTER()
         

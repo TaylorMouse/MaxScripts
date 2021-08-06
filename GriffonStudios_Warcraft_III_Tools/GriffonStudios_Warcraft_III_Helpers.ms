@@ -1154,7 +1154,7 @@ STRUCT Warcraft_III_Helpers
         for b = 1 to behaviorObj.listOfObjects.count do
             if behaviorObj.listOfObjects[b].name == obj.name then 
             ( 
-                kgtr.glbsId = b - 1
+                kgsc.glbsId = b - 1
                 exit
             )
         

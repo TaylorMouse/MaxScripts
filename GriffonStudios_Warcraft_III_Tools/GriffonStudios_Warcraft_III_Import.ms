@@ -9,6 +9,8 @@
     | Taylor Mouse
 
     .CHANGELOG
+    | 1.1 - Added Shared Folder selection and usage support, for team glow, gutz, ...
+    | 1.0 - Added KMTA support
     | 0.9 - Added TXAN support
     | 0.8 - Added LITE support
     | 0.7 - Cleanup based on my understanding during export code
@@ -200,8 +202,7 @@ STRUCT WC3_MDX800
     ),
     function ReadTAGS800 stream streamLen=
     (
-        print ""
-        format "Reading CHUNKS\n"
+        format "\nReading CHUNKS\n"
         struct tag800 ( Name, Offset, Size )     
         
         local tags = #() 
@@ -226,7 +227,7 @@ STRUCT WC3_MDX800
             currentStreamPos = ftell stream
             
             append tags tag
-            if WC3_MDX800_DEBUG then print tag
+            if WC3_MDX800_DEBUG then Format " - %\n" tag
         )
         return tags
     ),
@@ -597,7 +598,7 @@ STRUCT WC3_MDX800
                         local km = GriffonStudios_Helpers.ReadFixedString stream 4
                         if ( km == "KMTA" ) then map.KMTA = Warcraft_III_Helpers.ReadFloatAnim stream --> alpha
                         if ( km == "KMTE" ) then map.KMTE = Warcraft_III_Helpers.ReadFloatAnim stream --> emissive
-                        if ( km == "KMTF" ) then map.KMTF = Warcraft_III_Helpers.ReadLongAnim stream --> flipbook
+                        if ( km == "KMTF" ) then map.KMTF = Warcraft_III_Helpers.ReadLongAnim stream --> .FLI 
                         
                     )
                     if ( map.KMTA == undefined ) then fseek stream -4 #seek_cur
@@ -1176,6 +1177,13 @@ STRUCT WC3_MDX800
             local startFrame = 10
             if isGlobalSequence then startFrame = 0
             
+            local controller = Bezier_Float()
+            if map.KMTA.LineType == 1 then controller = Linear_Float()
+            if map.KMTA.LineType == 2 then controller = TCB_Float()
+            if map.KMTA.LineType == 2 then controller = Bezier_Float()            
+            
+            mat.Alpha.controller = controller
+            
             at time 0 mat.Alpha = 100.0
             for kg in map.KMTA.KG do
             (
@@ -1288,8 +1296,8 @@ STRUCT WC3_MDX800
             addNewKey b.controller 0
             for seq in mdx.seqs do
             (
-                addnewkey b.controller seq.startFrame
-                addnewkey b.controller seq.endFrame 
+                addnewkey b.scale.controller seq.startFrame
+                addnewkey b.scale.controller seq.endFrame 
             )
 
             Warcraft_III_Helpers.ApplyUserProperties obj.flags b
@@ -1403,8 +1411,8 @@ STRUCT WC3_MDX800
             addNewKey d.controller 0
             for seq in mdx.seqs do
             (
-                addnewkey d.controller seq.startFrame
-                addnewkey d.controller seq.endFrame 
+                addnewkey d.scale.controller seq.startFrame
+                addnewkey d.scale.controller seq.endFrame 
             )
             
             d.assumeSkinPose()
@@ -2009,7 +2017,7 @@ STRUCT WC3_MDX800
 -- WC3_MDX = undefined
 
 -- KMTA : 
- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
+--  WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Undead\Necromancer\Necromancer.mdx"
 
 -- KMTF :
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Creeps\SeaElemental\SeaElemental.mdx"
@@ -2021,6 +2029,6 @@ STRUCT WC3_MDX800
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Doodads\Dungeon\Props\SewerVent\SewerVent1.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Extracted\Units\Demon\Infernal\Infernal.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft III\Warcraft III Models\Abomination\Abomination.mdx"
-WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
+--WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Spartan Warrior\Spartan Warrior\SpartanWarrior.mdx"
 -- WC3_MDX800.Import @"F:\Blizzard\Warcraft - Reforged\Warcraft III\Paladin (Sword)\Paladin (Sword)\PaladinSword.mdx"
 

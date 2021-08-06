@@ -9,7 +9,7 @@
     | Taylor Mouse
 
     .CHANGELOG
-    | 1.5 - Export support for face static object creation
+    | 1.5 - Export KMTA
     | 1.4 - Export TXAN
     | 1.3 - Export GLBS with texture support
     | 1.2 - First successfull export!
@@ -117,23 +117,37 @@ STRUCT WC3_MDX800_EXPORTER
         Warcraft_III_Helpers.WriteFixedString mdx.stream "MTLS" 4
 
         local size = 0
-        
-        for mat in mdx.mtls do --> no animation support yet
+        for mat in mdx.mtls do
         (
-            if classof mat.materialRef == compositeMaterial then 
-                size += 76
-            else
+            if classof mat.materialRef == compositeMaterial then
+            (
+                if ( classof mat.materialRef.materialList[1] == WarcraftIII_Standard and 
+                     classof mat.materialRef.materialList[1] == WarcraftIII_Standard ) then 
+                (
+                    size += 76
+                    for i=1 to 2 do
+                    (
+                        if ( mat.materialRef.materialList[i].Alpha.controller != undefined ) then 
+                            size += 16 + ( 8 * mat.materialRef.materialList[i].Alpha.controller.keys.count)
+                    )
+                    
+                )
+            )
+            if ( classof mat.materialRef == WarcraftIII_Standard ) then
+            (
                 size += 48
+                if ( mat.materialRef.Alpha.controller != undefined ) then size += 16 + ( 8 * mat.materialRef.Alpha.controller.keys.count)
+            )
         )
+        
         writeLong mdx.stream size
         
         for i=1 to mdx.mtls.count do
         (
             local mat = mdx.mtls[i].materialRef
             
-            if classof mat == compositeMaterial then
+            if classof mat == compositeMaterial then --> Team color or .fli
             (
-                print mat.name
                 
                 writeLong mdx.stream 76 --> size --> currently only supports 2 sub materials
                 writeLong mdx.stream 0 --> priority
@@ -141,90 +155,106 @@ STRUCT WC3_MDX800_EXPORTER
                 Warcraft_III_Helpers.WriteFixedString mdx.stream "LAYS" 4 
                 writeLong mdx.stream 2 --> nMaps
                 
-                for i=1 to 2 do
+                for j=1 to 2 do
                 (
-                    writeLong mdx.stream 28 --> size
-                    writeLong mdx.stream (mat.materialList[i].FilterMode - 1) --> filtermode
-                    
-                    local shadingFlags = 0
-                   
-                    if mat.materialList[i].unshaded then shadingFlags += 0x01
-                    if mat.materialList[i].twosided then shadingFlags += 0x10
-                    if mat.materialList[i].unfogged then shadingFlags += 0x20
-                    if mat.materialList[i].nodepthset then shadingFlags += 0x40
-                    if mat.materialList[i].nodepthtest then shadingFlags += 0x80
-                    if mat.materialList[i].unselectable then shadingFlags += 0x100
-                    
-                    writeLong mdx.stream shadingFlags
-                    
-                    local replacableId = mat.materialList[i].ReplaceableTexture - 1
-                    local path = mat.materialList[i].diffuse_map.fileName
-                    
-                    if ( path == undefined ) then path = "" --> no textures selected
-                    if ( path.count > 0 ) then path = (getfilenamefile path) + WC3_TEXTURE_EXPORT_EXTENSION --> extension only
-                    
-                    if replacableId == 2 then path = ""
-                    
-                    local texsID = 0
-                    for t=1 to mdx.texs.count do 
-                    (
-                        if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
-                        (
-                            texsID = t - 1
-                            exit
-                        )
-                    )
-                    writeLong mdx.stream texsID --> matching texture id
-                    writeLong mdx.stream mdx.mtls[i].txanId #unsigned --> TXAN ID
-                    writeLong mdx.stream 0 --> uv layer
-                    writeFloat mdx.stream ( mat.materialList[1].alpha / 100.0)
+                    local path = mat.materialList[j].diffuse_map.fileName
+                    WC3_MDX800_EXPORTER.WriteLAYS800 mdx path mat.materialList[j] mdx.mtls[i].txanId
                 )
             )
-            else
+            if ( classof mat == WarcraftIII_Standard ) then
             (
-                writeLong mdx.stream 48 --> size 
+                local laySize = 48
+                if ( mat.Alpha.controller != undefined ) then 
+                (
+                    laySize = laySize + 16 + ( mat.Alpha.controller.keys.count * 8 )
+                )
+                
+                writeLong mdx.stream laySize --> size 
                 writeLong mdx.stream 0 --> priority
                 writeLong mdx.stream 0 --> flags
                 Warcraft_III_Helpers.WriteFixedString mdx.stream "LAYS" 4 
                 writeLong mdx.stream 1 --> nMaps
-                writeLong mdx.stream 28 --> size
-                writeLong mdx.stream (mat.FilterMode - 1) --> filtermode
-                
-                local shadingFlags = 0
-               
-                if mat.unshaded then shadingFlags += 0x01
-                if mat.twosided then shadingFlags += 0x10
-                if mat.unfogged then shadingFlags += 0x20
-                if mat.nodepthset then shadingFlags += 0x40
-                if mat.nodepthtest then shadingFlags += 0x80
-                if mat.unselectable then shadingFlags += 0x100
-                
-                writeLong mdx.stream shadingFlags
-                
-                local replacableId = mat.ReplaceableTexture - 1
                 local path = mat.diffuse_map.fileName
-                
-                if ( path == undefined ) then path = "" --> no textures selected
-                if ( path.count > 0 ) then path = (getfilenamefile path) + ".blp" --> extension only
-                
-                if replacableId == 2 then path = ""
-
-                local texsID = 0
-                for t=1 to mdx.texs.count do 
-                (
-                    if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
-                    (
-                        texsID = t - 1
-                        exit
-                    )
-                )
-                writeLong mdx.stream texsID --> matching texture id
-                writeLong mdx.stream mdx.mtls[i].txanId #unsigned --> TXAN ID
-                writeLong mdx.stream 0 --> uv layer
-                writeFloat mdx.stream ( mat.alpha / 100.0)
+                WC3_MDX800_EXPORTER.WriteLAYS800 mdx path mat mdx.mtls[i].txanId
                
             )
         )
+    ),
+    function WriteLAYS800 mdx path mat txanId=
+    (
+        local miniSize = 28
+        local hasKMTA = false
+        local lineType = 0
+        if ( mat.Alpha.controller != undefined ) then 
+        (
+            hasKMTA = true
+            if (  classof mat.Alpha.controller == Linear_Float ) then lineType = 1
+            if (  classof mat.Alpha.controller == TCB_Float ) then lineType = 2
+            if (  classof mat.Alpha.controller == Bezier_Float ) then lineType = 3
+            miniSize = miniSize + 16 + ( mat.Alpha.controller.keys.count * 8 )
+            
+            format "KMTA % \n" miniSize
+        )
+
+        writeLong mdx.stream miniSize --> size
+        writeLong mdx.stream (mat.FilterMode - 1) --> filtermode
+        
+        local shadingFlags = 0
+       
+        if mat.unshaded then shadingFlags += 0x01
+        if mat.twosided then shadingFlags += 0x10
+        if mat.unfogged then shadingFlags += 0x20
+        if mat.nodepthset then shadingFlags += 0x40
+        if mat.nodepthtest then shadingFlags += 0x80
+        if mat.unselectable then shadingFlags += 0x100
+        
+        writeLong mdx.stream shadingFlags
+        
+        local replacableId = mat.ReplaceableTexture - 1
+
+        if ( path == undefined ) then path = "" --> no textures selected
+        if ( path.count > 0 ) then path = (getfilenamefile path) + WC3_TEXTURE_EXPORT_EXTENSION --> extension only
+        
+        if replacableId == 2 then path = ""
+
+        local texsID = 0
+        for t=1 to mdx.texs.count do 
+        (
+            if mdx.texs[t].replacableId == replacableId and mdx.texs[t].path == path then 
+            (
+                texsID = t - 1
+                exit
+            )
+        )
+        writeLong mdx.stream texsID --> matching texture id
+        writeLong mdx.stream txanId #unsigned --> TXAN ID
+        writeLong mdx.stream 0 --> uv layer
+        writeFloat mdx.stream ( mat.alpha / 100.0)
+        
+        -- is this part of a glbs ?
+        local glbsId = -1
+        for m=1 to mdx.GLBS.Count do
+            if mdx.GLBS[m].objRef.name == mat.name and mdx.GLBS[m].type == #MATERIAL then glbsId = m - 1
+               
+        
+        
+        -- Write KMTA
+        if (hasKMTA) then
+        (
+            Warcraft_III_Helpers.WriteFixedString mdx.stream "KMTA" 4
+            writeLong mdx.stream mat.Alpha.controller.keys.count
+            writeLong mdx.stream linetype
+            writeLong mdx.stream glbsId #unsigned
+            
+            for key in mat.Alpha.controller.keys do
+                at time key.time 
+                (
+                    local frame = ( key.time as integer / ticksperframe ) * 1000 / 30 as integer
+                    writeLong mdx.stream frame
+                    writeFloat mdx.stream ( mat.Alpha / 100.0 )
+                )
+        )
+        
     ),
     function WriteTEXS800 mdx=
     (
