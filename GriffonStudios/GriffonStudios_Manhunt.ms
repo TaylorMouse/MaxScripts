@@ -9,6 +9,7 @@
         Read Rockstar's Manhunt BSP files
 
     .UPDATES
+    | - Refine the texture find algorithm
     | - Added support for alpha layers in the materials
     | - Fixed a bug assigning the correct material index to the correct face
     | - Added finding the texture files from a specific location
@@ -65,17 +66,27 @@ clearListener()
                 )
                 if ( theFile != undefined ) then exit
             )
-            
+                
             if theFile == undefined then 
-            (
-                wildCard = "*" +  ( substring textureName 1 (textureName.Count - 1) ) + "*.*"    
-                theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
-                if theFile == undefined then 
-                (   
-                    --format "Unable to find the following texture: % \n\n" textureName
+            (   
+                -- refine the algoritm
+                isAlpha = true
+                for c=textureName.count to 1 by -1 do
+                (
+                    local rifinedName = substring textureName 1 c
+                    wildCard = "*" + rifinedName + "*.*"
+                    theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+                    if theFile != undefined then exit
+                    
+                )
+                
+                if theFile == undefined then (
+                    format "Unable to find the following texture: % \n\n" textureName
                     theFile = textureName
+                    isAlpha = false
                 )
             )
+
         )
         manhunt_texture theFile:theFile isAlpha:isAlpha
     )
@@ -109,7 +120,7 @@ clearListener()
         
     )
     
-    function readBspMaterial stream=
+    function ReadBspMaterial stream=
     (
         struct bsp_material ( Type, Size, ManhuntTexture, MaterialRef = Standard() )
         
@@ -333,8 +344,8 @@ clearListener()
     )
     
     file = getOpenFileName \
-			caption:"Darksburg" \
-			types:"Supported Files|*.bsp*|Manhunt(*.bspX)|*.bsp*|All Files|*.*" \
+			caption:"Manhunt" \
+			types:"Supported Files|*.bsp*|Manhunt Map Files(*.bspX)|*.bsp*|All Files|*.*" \
 			historyCategory:"ManhuntPresets"
 
     if (file != undefined ) then ReadBsp file
