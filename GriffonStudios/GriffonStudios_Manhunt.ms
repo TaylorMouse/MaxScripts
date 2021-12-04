@@ -356,5 +356,7 @@
     if (file != undefined ) then ReadBsp file
     
     
-    gc()
+    GC()
+    FreeSceneBitmaps()
+    ClearUndoBuffer()
 )
