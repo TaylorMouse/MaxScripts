@@ -1,7 +1,10 @@
 /*
     .AUTHOR
         Taylor Mouse
-
+    
+    .DATE
+        3 Sept 2021
+        
     .COPYRIGHT
         (c)2010-2021 Griffon Studios   
         
@@ -18,8 +21,10 @@
     | - Initial import
 
 */
-clearListener()
+
 (
+    clearListener()
+    
     local texturePath = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Textures\"
     
     function CreateLayer layerName =
