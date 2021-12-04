@@ -1,7 +1,7 @@
 /*
     Blizzard Overwatch Animation Importer (.006)
     
-    © 2017~2018 Script by Taylor Mouse
+    ï¿½ 2017~2018 Script by Taylor Mouse
     
     Special thanks to id-daemon for reviewing and correcting the animation
     Special thanks to dynaomi for the awesome overtool.exe
@@ -356,7 +356,7 @@
         FixYup()
     )
 
-file = @"E:\Blizzard\Overwatch\Extracted\Extracted 00C\Heroes\Tracer\HighlightIntro\Serious Business\Animations\160\000000002410.006"
+--file = @"E:\Blizzard\Overwatch\Extracted\Extracted 00C\Heroes\Tracer\HighlightIntro\Serious Business\Animations\160\000000002410.006"
 
 --   
- ImportOverwatchAnimation_v18 file 700 undefined
+ -- ImportOverwatchAnimation_v18 file 700 undefined
