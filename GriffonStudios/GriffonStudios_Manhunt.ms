@@ -8,6 +8,14 @@
     .DESCRIPTION
         Read Rockstar's Manhunt BSP files
 
+    .UPDATES
+    | - Added support for alpha layers in the materials
+    | - Fixed a bug assigning the correct material index to the correct face
+    | - Added finding the texture files from a specific location
+    | - Added material support
+    | - Fixed a buf on the different types of tris setup
+    | - Initial import
+
 */
 clearListener()
 (
@@ -35,12 +43,14 @@ clearListener()
     
     function FindTexture textureName=
     (
+        struct manhunt_texture ( theFile, isAlpha )
         local searchOptions = dotnetClass "System.IO.SearchOption"
         local directory = dotnetClass "System.IO.Directory"
         local wildCard = "*" + textureName + "*.*"
         local theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
         
         local shitList = #("alpha", "ALPHA", "_A", "Alph", "_ALPHA", "der_" )
+        local isAlpha = false
         
         if ( theFile == undefined ) then 
         (
@@ -51,6 +61,7 @@ clearListener()
                 (
                     wildCard = "*" +  ( ReplaceString textureName shit "" ) + "*.*"    
                     theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+                    isAlpha = true
                 )
                 if ( theFile != undefined ) then exit
             )
@@ -66,7 +77,7 @@ clearListener()
                 )
             )
         )
-        theFile
+        manhunt_texture theFile:theFile isAlpha:isAlpha
     )
     
     function ReadFixedString stream val =
@@ -100,7 +111,7 @@ clearListener()
     
     function readBspMaterial stream=
     (
-        struct bsp_material ( Type, Size, TextureName = "", MaterialRef = Standard() )
+        struct bsp_material ( Type, Size, ManhuntTexture, MaterialRef = Standard() )
         
         local mat = bsp_material()
 
@@ -114,7 +125,7 @@ clearListener()
         local textureHeader = ReadBspHeader stream -- 6
         
         local calcSize = textureHeader.Size
-        
+        local TextureName = ""
         while( calcSize> 0 ) do
         (
             local tmp = ReadBspHeader stream
@@ -123,14 +134,21 @@ clearListener()
             if ( tmp.Id == 1 ) then SkipBytes stream tmp.Size
             if ( tmp.Id == 2 ) then tmpName = ReadFixedString stream tmp.Size
             
-            if ( tmpName != "" ) then mat.TextureName = tmpName
+            if ( tmpName != "" ) then TextureName = tmpName
             
             calcSize -= tmp.Size
         )
         
-        mat.TextureName = FindTexture mat.TextureName
-        mat.MaterialRef.DiffuseMap = BitmapTexture fileName:mat.TextureName
+        mat.ManhuntTexture = FindTexture TextureName
+        mat.MaterialRef.DiffuseMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
         showTextureMap mat.MaterialRef mat.MaterialRef.diffuseMap true
+        if mat.ManhuntTexture.isAlpha then 
+        (
+            mat.MaterialRef.opacityMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
+            mat.MaterialRef.opacityMap.monooutput = 1
+            showTextureMap mat.MaterialRef true
+        )
+        
         
         return mat
     )
@@ -254,15 +272,18 @@ clearListener()
                 
                 if ( verts.count > 0 and faces.count > 0 and texCoords.count > 0 ) then 
                 (
+                    local meshName = "Obj_" + ( indexName as string )
+                    indexName +=1
+                    
                     try (
-                        local meshName = "Obj_" + ( indexName as string )
+                        
                        -- format "Building - %\n" meshName
                         local theMesh = mesh vertices:verts name:meshName faces:faces tverts:texCoords 
                         theMesh.WireColor = wireColor
                         buildTVFaces theMesh false
                         for i = 1 to faces.count do setTVFace theMesh i faces[i]
                         update theMesh
-                        indexName +=1
+                        
                         
                         layer.AddNode theMesh
                     
@@ -270,7 +291,7 @@ clearListener()
                     catch( local error = getCurrentException() 
                         format "ERROR % \n" error
                     )
-                   /* 
+                   
                     -- apply the multi material
                     local uniqueMatIds = #()
                     for i=1 to matIds.Count do appendIfUnique uniqueMatIds matIds[i]
@@ -283,16 +304,27 @@ clearListener()
                         mm[i] = materials[uniqueMatIds[i]].MaterialRef
                     )
                     theMesh.Material = mm
-                    
-                    -- apply the multimaterials to the faces
-                    for i=1 to matIds.count do
+                    update theMesh
+                -- apply the multimaterials to the faces
+
+                    --format "Material Ids %\n" matIds
+                    for i=1 to nFaces do
                     (
-                        setFaceMatID theMesh i matIds[i]
+                        
+                        local faceMatId = 1
+                        for j=1 to uniqueMatIds.Count do
+                        (
+                            if ( uniqueMatIds[j] == matIds[i] ) then 
+                            (
+                                faceMatId = j
+                                
+                                exit
+                            )
+                        )
+                        setFaceMatID theMesh i faceMatId
                     )
                     update theMesh
-                    */
                 )
-                
             )
             
         )
@@ -300,29 +332,13 @@ clearListener()
         fClose stream
     )
     
-    function ReadManhuntScene scenePath =
-    (
-        local searchOptions = dotnetClass "System.IO.SearchOption"
-        local directory = dotnetClass "System.IO.Directory"
-        local wildCard = (getfilenamefile scenePath ) + ".*"
-        local thePath = getfilenamepath scenePath
-        local sceneFiles = (directory.GetFiles  thePath wildCard searchOptions.AllDirectories)
-        
-        for file in sceneFiles do
-        (
-            print file
-            try(
-                ReadBsp file
-            )
-            catch()
+    file = getOpenFileName \
+			caption:"Darksburg" \
+			types:"Supported Files|*.bsp*|Manhunt(*.bspX)|*.bsp*|All Files|*.*" \
+			historyCategory:"ManhuntPresets"
 
-        )
-        
-    )
-    file = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Manhunt\scene1.bsp2"
+    if (file != undefined ) then ReadBsp file
     
-    ReadManhuntScene @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Manhunt\scene1"
     
---    ReadBsp file
     gc()
 )
