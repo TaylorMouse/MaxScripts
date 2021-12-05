@@ -38,6 +38,24 @@
         )
         return layer
     )
+    function CleanUpLayers=
+    (
+    
+        local nLayers = LayerManager.Count
+        local defaultLayer = LayerManager.GetLayer(0)
+        defaultLayer.current = true
+    
+        local layers = #()
+        for i= 1 to nLayers do append layers (LayerManager.GetLayer(i-1))
+    
+        for layer in layers do
+        (
+            layer.nodes &nodes
+            
+            if ( layer.name != "0" and nodes.count == 0 ) then 
+                LayerManager.deleteLayerByName layer.name 
+        )  
+    )
     function ReplaceString str oldStr newStr=
     (
         local foundAt = findstring str oldStr
@@ -59,7 +77,7 @@
             local wildCard = "*" + textureName + "*.*"
             local theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
             
-            local shitList = #("alpha", "ALPHA", "_A", "Alph", "_ALPHA", "der_" )
+            local shitList = #("_ALPHA", "ALPHA", "_A", "ALPH",  "der_" )
             local isAlpha = false
             
             if ( theFile == undefined ) then 
@@ -585,8 +603,9 @@
                 if gridPos.X > 5000 then 
                 (
                     gridPos.X = 0
-                    gridPos.Y += 500
+                    gridPos.Y += 200
                 )
+                delete controller
             )
         )
     )
@@ -627,6 +646,7 @@
             
         )
         fClose stream
+        CleanUpLayers()
         GC()
         FreeSceneBitmaps()
         ClearUndoBuffer()
