@@ -1,1 +1,0 @@
-No contribution allowed
