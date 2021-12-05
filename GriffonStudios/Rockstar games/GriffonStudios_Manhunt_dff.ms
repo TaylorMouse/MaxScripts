@@ -12,12 +12,12 @@
         Read Rockstar's Manhunt DFF files
 
     .UPDATES
+    | - fixed a bug when the texture path did not exist
     | - fixed a bug with the mesh type
     | - parsing the dff files that conctain multiple models
     | - Initial import
 
     .NOTES
-    | drawBbox: draw the bounding box
     | myScale: the initial model is so tiny I added a scale factor
     | texturePath: directory on the hard drive where all the textures can be found, independant of the extension, however, the txd files must be extracted
 
@@ -26,7 +26,6 @@
     clearListener()
     local myScale = 100.0
     local texturePath = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Textures\"
-    local debug = true
     local gridPos = [0,0,0]
     
     function CreateLayer layerName =
@@ -42,6 +41,9 @@
     function FindTexture textureName=
     (
         struct manhunt_texture ( theFile, isAlpha )
+        
+        if ( doesFileExist texturePath == false ) then return ( manhunt_texture theFile:textureName isAlpha:false )
+        
         local searchOptions = dotnetClass "System.IO.SearchOption"
         local directory = dotnetClass "System.IO.Directory"
         local wildCard = "*" + textureName + "*.*"
@@ -260,13 +262,13 @@
             if ( m.id == 7 ) then ( --> material layer
                 local layers = ReadChunks stream m
                 local mat = dff_material()
+                append materials mat
                 
                 for l in layers do
                 (
                     if ( l.id == 6 ) then  --> texture data
                     (
                         local textureData = ReadChunks stream l
-                        
                         for t in textureData do
                         (
                             if ( t.id == 2 ) then  --> texture names
@@ -274,7 +276,8 @@
                                 fSeek stream (t.offSet + 12 ) #seek_set
 
                                 local textureName = ReadFixedString stream t.Size
-                                if ( textureName !="" ) then 
+                                
+                                if ( textureName != "" ) then 
                                 (
                                     mat.name = textureName
                                     mat.ManhuntTexture = FindTexture textureName
@@ -287,7 +290,7 @@
                                         mat.MaterialRef.opacityMap.monooutput = 1
                                         showTextureMap mat.MaterialRef true
                                     )
-                                    append materials mat
+                                    
                                     
                                 )
                             )
@@ -299,8 +302,7 @@
             
         )
 
-        return materials
-
+        materials
     )
     function ReadMesh stream chunk=
     (
@@ -386,8 +388,8 @@
                 local geo = dff_geo()
                 for c in geoSubChunks do
                 (
-                    if ( c.id == 1 ) then geo.meshObj = ReadMesh stream c
-                    if ( c.id == 8 ) then geo.materials = ReadMaterials stream c
+                    if ( c.id == 1 ) then try ( geo.meshObj = ReadMesh stream c ) catch ( Format "Error occured in Read Materials\n" )
+                    if ( c.id == 8 ) then try ( geo.materials = ReadMaterials stream c ) catch ( Format "Error occured in Read Materials\n")
                     --// TODO : if ( c.id == 3 ) then geo.materials = ReadSkin stream c 
                 )
                 append geometry_list geo
@@ -590,8 +592,8 @@
             local geometry_list = undefined
             for chunk in chunks do
             (
-              if ( chunk.Id == 14 ) then try( bone_list = ReadBones stream chunk ) catch()
-              if ( chunk.Id == 26 ) then try( geometry_list = ReadGeometry stream chunk ) catch()
+              if ( chunk.Id == 14 ) then try( bone_list = ReadBones stream chunk ) catch( format "Error occured in readbones\n" )
+              if ( chunk.Id == 26 ) then try( geometry_list = ReadGeometry stream chunk ) catch( format "Error occured in readGeometry\n" )
             )
 
             if ( bone_list != undefined ) then BuildBones bone_list
