@@ -38,56 +38,71 @@
         )
         return layer
     )
+    function ReplaceString str oldStr newStr=
+    (
+        local foundAt = findstring str oldStr
+        local left    = substring str 1 (foundAt - 1)
+        local right   = substring str (foundAt + oldStr.count) -1
+        
+        (left + newStr + right )
+    )
     function FindTexture textureName=
     (
         struct manhunt_texture ( theFile, isAlpha )
+        local fallBackMaterial = manhunt_texture theFile:textureName isAlpha:false
         
-        if ( doesFileExist texturePath == false ) then return ( manhunt_texture theFile:textureName isAlpha:false )
+        if ( doesFileExist texturePath == false ) then return fallBackMaterial
         
-        local searchOptions = dotnetClass "System.IO.SearchOption"
-        local directory = dotnetClass "System.IO.Directory"
-        local wildCard = "*" + textureName + "*.*"
-        local theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
-        
-        local shitList = #("alpha", "ALPHA", "_A", "Alph", "_ALPHA", "der_" )
-        local isAlpha = false
-        
-        if ( theFile == undefined ) then 
-        (
-            for shit in shitList do 
+        try( 
+            local searchOptions = dotnetClass "System.IO.SearchOption"
+            local directory = dotnetClass "System.IO.Directory"
+            local wildCard = "*" + textureName + "*.*"
+            local theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+            
+            local shitList = #("alpha", "ALPHA", "_A", "Alph", "_ALPHA", "der_" )
+            local isAlpha = false
+            
+            if ( theFile == undefined ) then 
             (
-                wildCard = ""
-                if ( findstring textureName shit ) != undefined then 
+                for shit in shitList do 
                 (
-                    wildCard = "*" +  ( ReplaceString textureName shit "" ) + "*.*"    
-                    theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
-                    isAlpha = true
+                    wildCard = ""
+                    if ( findstring textureName shit ) != undefined then 
+                    (
+                        wildCard = "*" +  ( ReplaceString textureName shit "" ) + "*.*"    
+                        theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+                        isAlpha = true
+                    )
+                    if ( theFile != undefined ) then exit
                 )
-                if ( theFile != undefined ) then exit
-            )
-                
-            if theFile == undefined then 
-            (   
-                -- refine the algoritm
-                isAlpha = true
-                for c=textureName.count to 1 by -1 do
-                (
-                    local rifinedName = substring textureName 1 c
-                    wildCard = "*" + rifinedName + "*.*"
-                    theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
-                    if theFile != undefined then exit
                     
+                if theFile == undefined then 
+                (   
+                    -- refine the algoritm
+                    isAlpha = true
+                    for c=textureName.count to 1 by -1 do
+                    (
+                        local rifinedName = substring textureName 1 c
+                        wildCard = "*" + rifinedName + "*.*"
+                        theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+                        if theFile != undefined then exit
+                        
+                    )
+                    
+                    if theFile == undefined then (
+                        format "Unable to find the following texture: % \n\n" textureName 
+                        theFile = textureName
+                        isAlpha = false
+                    )
                 )
-                
-                if theFile == undefined then (
-                    format "Unable to find the following texture: % \n\n" textureName
-                    theFile = textureName
-                    isAlpha = false
-                )
-            )
 
+            )
+            manhunt_texture theFile:theFile isAlpha:isAlpha
         )
-        manhunt_texture theFile:theFile isAlpha:isAlpha
+        catch(
+            format "[ERROR]\n Error occured in FindTexture '%' in \nfolder: '%'\n" textureName texturePath
+            return fallBackMaterial
+        )
     )
     function CreateLayer layerName =
     (
@@ -257,51 +272,59 @@
         
         fSeek stream (chunk.offSet + 12 ) #seek_set
         
-        for m in materialChunks do
-        (
-            if ( m.id == 7 ) then ( --> material layer
-                local layers = ReadChunks stream m
-                local mat = dff_material()
-                append materials mat
-                
-                for l in layers do
-                (
-                    if ( l.id == 6 ) then  --> texture data
+        --try(
+            for m in materialChunks do
+            (
+                if ( m.id == 7 ) then ( --> material layer
+                    local layers = ReadChunks stream m
+                    local mat = dff_material()
+                    append materials mat
+                    
+                    for l in layers do
                     (
-                        local textureData = ReadChunks stream l
-                        for t in textureData do
+                        if ( l.id == 6 ) then  --> texture data
                         (
-                            if ( t.id == 2 ) then  --> texture names
+                            local textureData = ReadChunks stream l
+                            for t in textureData do
                             (
-                                fSeek stream (t.offSet + 12 ) #seek_set
-
-                                local textureName = ReadFixedString stream t.Size
-                                
-                                if ( textureName != "" ) then 
+                                if ( t.id == 2 ) then  --> texture names
                                 (
-                                    mat.name = textureName
-                                    mat.ManhuntTexture = FindTexture textureName
-                                
-                                    mat.MaterialRef.DiffuseMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
-                                    showTextureMap mat.MaterialRef mat.MaterialRef.diffuseMap true
-                                    if mat.ManhuntTexture.isAlpha then 
+                                    fSeek stream (t.offSet + 12 ) #seek_set
+
+                                    local textureName = ReadFixedString stream t.Size
+                                    
+                                    if ( textureName != "" ) then 
                                     (
-                                        mat.MaterialRef.opacityMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
-                                        mat.MaterialRef.opacityMap.monooutput = 1
-                                        showTextureMap mat.MaterialRef true
+                                        mat.name = textureName
+                                        mat.ManhuntTexture = FindTexture textureName
+                                    
+                                        mat.MaterialRef.DiffuseMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
+                                        showTextureMap mat.MaterialRef mat.MaterialRef.diffuseMap true
+                                        if mat.ManhuntTexture.isAlpha then 
+                                        (
+                                            mat.MaterialRef.opacityMap = BitmapTexture fileName:mat.ManhuntTexture.theFile
+                                            mat.MaterialRef.opacityMap.monooutput = 1
+                                            showTextureMap mat.MaterialRef true
+                                        )
+                                        
+                                        
                                     )
-                                    
-                                    
                                 )
                             )
                         )
                     )
+                    
                 )
                 
             )
-            
-        )
-
+--         )
+--         catch
+--         (
+--             local dummyTexture = FindTexture "asymfloor01"
+--             if materials.count == 0 then append materials ( dff_material name:"Error Material" ManhuntTexture:dummyTexture)
+--             format "[ERROR]\n An error occured when parsing the material for \n%\n\n" chunk
+--         )
+        
         materials
     )
     function ReadMesh stream chunk=
@@ -388,7 +411,7 @@
                 local geo = dff_geo()
                 for c in geoSubChunks do
                 (
-                    if ( c.id == 1 ) then try ( geo.meshObj = ReadMesh stream c ) catch ( Format "Error occured in Read Materials\n" )
+                    if ( c.id == 1 ) then try ( geo.meshObj = ReadMesh stream c ) catch ( Format "Error occured in Read Mesh\n" )
                     if ( c.id == 8 ) then try ( geo.materials = ReadMaterials stream c ) catch ( Format "Error occured in Read Materials\n")
                     --// TODO : if ( c.id == 3 ) then geo.materials = ReadSkin stream c 
                 )
