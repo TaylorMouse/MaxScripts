@@ -12,9 +12,12 @@
         Read Rockstar's Manhunt DFF files
 
     .UPDATES
+    | - fixed a bug with the mesh type
+    | - parsing the dff files that conctain multiple models
     | - Initial import
 
     .NOTES
+    | drawBbox: draw the bounding box
     | myScale: the initial model is so tiny I added a scale factor
     | texturePath: directory on the hard drive where all the textures can be found, independant of the extension, however, the txd files must be extracted
 
@@ -23,6 +26,8 @@
     clearListener()
     local myScale = 100.0
     local texturePath = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Textures\"
+    local debug = true
+    local gridPos = [0,0,0]
     
     function CreateLayer layerName =
     (
@@ -127,8 +132,9 @@
                 10: "MODEL DATA"
                 11: "BSP FILE"
                 15: "MESH DATA"
-                16: "DFF FILE"
+                16: "MANHUNT MODEL"
                 14: "BONES"
+                20: "UNKNOWN ..."
                 26: "SKINNED MESH"
                 286: "BONE DATA"
                 39056126: "BONE NAME"
@@ -153,28 +159,36 @@
     (
         matrix3 [readFloat s, readFloat s,readFloat s] [readFloat s, readFloat s,readFloat s] [readFloat s, readFloat s,readFloat s] [readFloat s * myScale, readFloat s * myScale,readFloat s * myScale]
     )
+    function ReadChunks stream chunk=
+    (
+        
+        local subchunks = #()
+        fSeek stream ( chunk.offset + 12 ) #seek_set
+        try(
+            while ( ftell stream < ( chunk.offset + chunk.size + 12 ) ) do
+            (
+                local c = ReadChunkHeader stream
+                SkipBytes stream c.Size
+                append subchunks c
+            )
+        )
+        catch(
+            format "Error reading chunk %\n" chunk
+            )
+        subchunks
+    )
     function ReadBones stream chunk=
     (
-        struct dff_bone ( type= 256, frameBoneId= 0, bone_count= 0, parentId, unk1, unk2, name, bone_anim = #(), transform_matrix, bone_ref, bonesys_ref )
+        struct dff_bone ( type= 256, frameBoneId= 0, bone_count= 0, parentId, unk1, IsMeshName, name, bone_anim = #(), transform_matrix, bone_ref, bonesys_ref )
         struct dff_bone_anim ( id, index, frameBoneId )
         
-        --format "- Reading %\n" chunk.Type
         if ( chunk.Id != 14 ) then return undefined
         
-        local totalOffset = chunk.Offset + 12 + chunk.Size
-        
-        fseek stream (chunk.Offset + 12) #seek_set
-        
-        local boneChunks = #()
-        while ( ftell stream < totalOffset ) do
-        (
-            local c = ReadChunkHeader stream
-            SkipBytes stream c.Size
-            append boneChunks c
-        )
+        local boneChunks = ReadChunks stream chunk
         
         local bone_list = #()
         local boneIndex = 0
+
         for bChunk in boneChunks do
         (
             fSeek stream (bChunk.offset + 12) #seek_set
@@ -182,14 +196,15 @@
             if ( bChunk.Id == 1 ) then --> contains the bind transforms and parent hierarchy
             (
                 local nbrBones = readLong stream
-                local miniSize = ( bChunk.Size - 4 ) / nbrBones
+                local validation = ( bChunk.Size == ( nbrBones * 12 * 4 + nbrBones * 8 + 4  )  )
+                if validation then
                 for i=1 to nbrBones do
                 (
                     local binding = dff_bone()
                     binding.transform_matrix = ReadTransformationMatrix stream
                     binding.parentId = ( readLong stream #signed ) + 1
                     binding.unk1 = readShort stream
-                    binding.unk2 = readShort stream
+                    binding.IsMeshName = readShort stream
                     append bone_list binding
                 )
             )
@@ -197,47 +212,37 @@
                 
             if ( bChunk.Id == 3 and bChunk.Size > 0 ) then 
             (
-                local bone_chunk = ReadChunkHeader stream
-                bone_list[boneIndex].type = readLong stream
-                bone_list[boneIndex].frameBoneId = readLong stream
-                bone_list[boneIndex].bone_count = readLong stream
+                local subChunks = ReadChunks stream bChunk
                 
-                if ( bone_list[boneIndex].bone_count > 0 ) then SkipBytes stream 8
-                
-                for i=1 to bone_list[boneIndex].bone_count do 
+                for bone_chunk in subChunks do
                 (
-                    local ba = dff_bone_anim()
-                    ba.id = readLong stream
-                    ba.index = readLong stream
-                    ba.frameBoneId = readLong stream
-                    append bone_list[boneIndex].bone_anim ba
                     
+                    fSeek stream ( bone_chunk.offset + 12 ) #seek_set
+                    if( bone_chunk.Id == 256 ) then --> contains the framebone id's
+                    (
+                        bone_list[boneIndex].type = readLong stream
+                        bone_list[boneIndex].frameBoneId = readLong stream
+                        bone_list[boneIndex].bone_count = readLong stream
+                    
+                        if ( bone_list[boneIndex].bone_count > 0 ) then SkipBytes stream 8
+                    
+                        for i=1 to bone_list[boneIndex].bone_count do 
+                        (
+                            local ba = dff_bone_anim()
+                            ba.id = readLong stream
+                            ba.index = readLong stream
+                            ba.frameBoneId = readLong stream
+                            append bone_list[boneIndex].bone_anim ba
+                            
+                        )
+                    )
+                    if ( bone_chunk.Id =  0x0253F2FE ) then --> contains the bone name
+                        bone_list[boneIndex].name = ReadFixedString stream bone_chunk.Size
                 )
-                --print bone_list[boneIndex].bone_anim
-                
-                fSeek stream (bChunk.offset + 24 + bone_chunk.size) #seek_set
-                local chunkName = ReadChunkHeader stream
-                if ( chunkName.Id =  0x0253F2FE ) then 
-                    bone_list[boneIndex].name = ReadFixedString stream chunkName.Size
             )
             boneIndex += 1
         )
-        
         bone_list
-        
-    )
-    function ReadChunks stream chunk=
-    (
-        local subchunks = #()
-        fSeek stream ( chunk.offset + 12 ) #seek_set
-        
-        while ( ftell stream < ( chunk.offset + chunk.size + 12 ) ) do
-        (
-            local c = ReadChunkHeader stream
-            SkipBytes stream c.Size
-            append subchunks c
-        )
-        subchunks
     )
     function ReadMaterials stream chunk=
     (
@@ -299,8 +304,7 @@
     )
     function ReadMesh stream chunk=
     (
-        struct dff_mesh ( faces = #(), verts = #(), norms = #(), uvs = #(), matIds = #() )
-        
+        struct dff_mesh ( faces = #(), verts = #(), norms = #(), uvs = #(), matIds = #())
         
         /* geometry flags
         1   use Tri-Strip
@@ -326,7 +330,6 @@
         if ( chunk.Flags[4] != 0x10 and chunk.Flags[4] != 0x18 ) then SkipBytes stream 12 -- self lighting?
         if ( mod geometryFlag 16 >=8 ) then SkipBytes stream ( 4 * nVerts ) -- vertex colors?
         
-        
         if ( mod geometryFlag 8 >=4 or nUvSets > 0 ) then
             for v=1 to nVerts do append meshObj.uvs [readFloat stream, 1 - (readFloat stream), 0]
 
@@ -344,7 +347,7 @@
             
         )
 
-        SkipBytes stream 24 --> bounding box stuff
+        SkipBytes stream 24
         
         for v=1 to nVerts do
         (
@@ -373,6 +376,7 @@
         
         for g in geoChunks do 
         (
+            
             fSeek stream (g.offset + 12) #seek_set
             if ( g.id == 1 ) then SkipBytes stream g.Size
             
@@ -382,8 +386,9 @@
                 local geo = dff_geo()
                 for c in geoSubChunks do
                 (
-                    if ( c.id == 1 ) then geo.meshObj = ReadMesh stream c 
-                    if ( c.id == 8 ) then geo.materials = ReadMaterials stream c 
+                    if ( c.id == 1 ) then geo.meshObj = ReadMesh stream c
+                    if ( c.id == 8 ) then geo.materials = ReadMaterials stream c
+                    --// TODO : if ( c.id == 3 ) then geo.materials = ReadSkin stream c 
                 )
                 append geometry_list geo
             )
@@ -467,37 +472,51 @@
             b.bone_ref = undefined
         )
     )
-    function BuildMeshes geometry_list file=
+    function BuildMeshes geometry_list bone_list multiDff=
     (
-        local name = getFileNameFile file
-        local layer = createLayer name
+        local idName = "Object"
+        if ( bone_list != undefined ) then
+        (
+            for b in bone_list do 
+                if b.IsMeshName == 2 then idName = b.name
+            
+            if idName == "Root" then 
+                idName = bone_list[2].name
+        )
+        format "Building object '%'\n" idName
+        local layer = createLayer idName
         local index = 0
         
         for geo in geometry_list do
         (
-            
             local WireColor = Color (random 0 128) (random 0 255) (random 0 128)
             local m = geo.meshObj
             
             /* build the material */
             local uniqueMatIds = #()
             for i=1 to m.matIds.Count do appendIfUnique uniqueMatIds m.matIds[i]
+
+            local mm = MultiMaterial numsubs:geo.materials.Count
             
-            local mm = MultiMaterial numsubs:uniqueMatIds.Count
-            
-            for i=1 to uniqueMatIds.Count do
-            (
-                if ( geo.materials[uniqueMatIds[i]].MaterialRef != undefined ) then 
-                mm[i] = geo.materials[uniqueMatIds[i]].MaterialRef
-            )
+            for i=1 to geo.materials.Count do
+                mm[i] = geo.materials[i].MaterialRef
             
             /* build the mesh */
-            local meshName = name + "_" + (index as string )
-            local theMesh = mesh vertices:m.verts vnorms:m.norms name:meshName faces:m.faces tverts:m.uvs
+            local meshName = idName + "_" + (index as string )
+            local theMesh = undefined
+            
+            if ( m.uvs.count > 0 ) then 
+                theMesh = mesh vertices:m.verts vnorms:m.norms name:meshName faces:m.faces tverts:m.uvs
+            else
+                theMesh = mesh vertices:m.verts vnorms:m.norms name:meshName faces:m.faces
+            
             theMesh.WireColor = wireColor
-            buildTVFaces theMesh false
-            for i = 1 to m.faces.count do setTVFace theMesh i m.faces[i]
-            update theMesh
+            
+            if ( m.uvs.count > 0 ) then (
+                buildTVFaces theMesh false
+                for i = 1 to m.faces.count do setTVFace theMesh i m.faces[i]
+                update theMesh
+            )
             
             layer.AddNode theMesh
             
@@ -522,52 +541,78 @@
             )
             update theMesh
             index += 1
+            
+            if multiDff > 1 then 
+            (
+                gridPos.X += abs(theMesh.min.x)
+                
+                local extraWidth = abs(theMesh.max.x)
+                
+                local cntrlName = "Pivot_" + meshName
+                local controller = point pos:[0,0,0] name:cntrlName
+                theMesh.parent = controller
+                layer.addNode controller
+                rotate controller (angleaxis 90 [1,0,0])
+
+                controller.pos = gridPos
+                hide controller
+                gridPos.X += extraWidth + 500
+                if gridPos.X > 5000 then 
+                (
+                    gridPos.X = 0
+                    gridPos.Y += 500
+                )
+            )
         )
     )
     function ImportDFF file=
     (
         local stream = fOpen file "rb"
-        
         local streamSize = GetStreamSize stream
-        local header = ReadChunkHeader stream
         
-        if ( header.Size + 12 != streamSize ) then throw ("Incorrect fileformat. Chunks not recognized")
-
-        local currentPos = 12
-        local chunks = #()
-        
-        
-        while ( currentPos < streamSize ) do
+        local dff_chunks = #()
+        while ( ftell stream < streamSize ) do
         (
             local chunk = ReadChunkHeader stream
             SkipBytes stream chunk.Size
-            currentPos += ftell stream
-            append chunks chunk
+            append dff_chunks chunk
         )
-        
-        local bone_list = undefined
-        local geometry_list = undefined
-        
-        for chunk in chunks do
-        (
-            if ( chunk.Id == 14 ) then bone_list = ReadBones stream chunk
-            if ( chunk.Id == 26 ) then geometry_list = ReadGeometry stream chunk
-        )
-                
-        fClose stream
 
-        if ( bone_list != undefined ) then BuildBones bone_list
-        if ( geometry_list != undefined ) then BuildMeshes geometry_list file
-        
-        
+        if ( dff_chunks.count > 1 ) then 
+            format "Multiple dff models found: %\n" dff_chunks.count
+
+        local failsafe = dff_chunks.count
+        for dff in dff_chunks do
+        (
+            try( local chunks = ReadChunks stream dff ) catch()
+
+            local bone_list = undefined
+            local geometry_list = undefined
+            for chunk in chunks do
+            (
+              if ( chunk.Id == 14 ) then try( bone_list = ReadBones stream chunk ) catch()
+              if ( chunk.Id == 26 ) then try( geometry_list = ReadGeometry stream chunk ) catch()
+            )
+
+            if ( bone_list != undefined ) then BuildBones bone_list
+            if ( geometry_list != undefined ) then BuildMeshes geometry_list bone_list dff_chunks.count
+            
+            failSafe -= 1
+            if (failSafe <= 0) then exit
+            
+        )
+        fClose stream
         GC()
         FreeSceneBitmaps()
         ClearUndoBuffer()
     )
     
-    --local file = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\DFF\bun_pc.dff"
-    local file = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\DFF\cash_pc.dff"
+    file = getOpenFileName \
+			caption:"Manhunt" \
+			types:"Supported Files|*.dff*|Manhunt Models(*.dff)|*.dff*|All Files|*.*" \
+			historyCategory:"ManhuntPresets"
+
+    if (file != undefined ) then ImportDFF file
     
-    
-    ImportDFF file
+
 )

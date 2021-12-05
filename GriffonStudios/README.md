@@ -12,9 +12,5 @@
 |[Overwatch](https://playoverwatch.com/en-us/)|See Overwatch folder|*.006 & *.007 *.00C|Note that this is about the RAW files, not the ones extracted and converted by the overtool!|
 |[Darksburg](https://darksburg.com/) & [Northgard](https://northgard.net/)|See the Darksburg folder|.fbx|This fbx is nothing like Autodesks fbx format.
 
-## Examples
 
-### Manhunt bsp import with material support
-
-![Manhunt](../images/import_bsp_001.jpg)
 
