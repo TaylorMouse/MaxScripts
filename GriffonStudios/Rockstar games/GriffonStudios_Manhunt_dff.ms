@@ -27,6 +27,7 @@
     local myScale = 100.0
     local texturePath = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\Textures\"
     local gridPos = [0,0,0]
+    local debug = true
     
     function CreateLayer layerName =
     (
@@ -171,7 +172,9 @@
                 14: "BONES"
                 20: "UNKNOWN ..."
                 26: "SKINNED MESH"
+                278: "SKIN DATA"
                 286: "BONE DATA"
+                1294: "SPLIT DATA"
                 39056126: "BONE NAME"
             )
         
@@ -408,11 +411,97 @@
         
         meshObj
     )
+    function ReadSkin stream chunk nVertices=
+    (
+        local skinChunks = ReadChunks stream chunk
+
+        struct dff_skin ( bone_weights, bone_indices )
+        local ddfSkin = dff_skin()
+        
+        for skinChunk in skinChunks do
+        (    
+            -- if ( skinChunk.Id == 1294 ) then Format "Not sure why I need this ..."
+            if ( skinChunk.Id == 278 ) then
+            (
+                fSeek stream ( skinChunk.Offset + 12 ) #seek_set
+                
+                local nTotalBones    = readByte stream #unsigned
+                local nAnimatedBones = readByte stream #unsigned
+                local nWeights       = readbyte stream #unsigned
+                local nPrecision     = readbyte stream #unsigned
+                
+                local animatedBones = #()
+                for i=1 to nAnimatedBones do append animatedBones (readByte stream + 1)
+                
+                local boneIndices = #()
+                for v=1 to nVertices do 
+                (
+                    local boneIds = #()
+                    for w=1 to nWeights do 
+                    (
+                        local id = readByte stream
+                        if id > 0 then id += 1
+                        append boneIds id
+                    )
+                    append boneIndices boneIds
+                )
+                
+                local boneWeights = #()
+                for v=1 to nVertices do 
+                (
+                    local weights = #()
+                    for w=1 to nWeights do 
+                    (
+                        local weight = readFloat stream
+                        append weights weight
+                    )
+                    -- fix the total weight !!
+                    local totalWeight = 1.0
+                    for w=1 to nWeights do
+                        totalWeight -= weights[w]
+                    
+                    if totalWeight > 0.000000 then weights[1] += totalWeight
+                    
+                    append boneWeights weights
+                )
+                
+                -- reduce the arrays when boneIndex = 0 or weight = 0.0
+                for v=1 to nVertices do
+                (
+                    local newIndices = #()
+                    local newWeights = #()
+                    
+                    local nNonZeroBones = 0
+                    local nNonZeroWeights = 0
+                    for w=1 to nWeights do (
+                        if boneIndices[v][w] > 0 then nNonZeroBones += 1
+                        if boneWeights[v][w] > 0 then nNonZeroWeights += 1
+                    )
+                    
+                    local nActual = nNonZeroBones
+                    if nNonZeroWeights < nActual then nActual = nNonZeroWeights
+                    
+                    for n=1 to nActual do
+                    (
+                        newIndices[n] = boneIndices[v][n]
+                        newWeights[n] = boneWeights[v][n]
+                    )
+                    boneIndices[v] = newIndices
+                    boneWeights[v] = newWeights
+                )
+                
+                ddfSkin.bone_weights = boneWeights
+                ddfSkin.bone_indices = boneIndices
+            )
+        )
+        
+        dffSkin
+    )
     function ReadGeometry stream chunk =
     (
         if ( chunk.Id != 26 ) then return undefined
 
-        struct dff_geo ( materials, meshObj )
+        struct dff_geo ( materials, meshObj, meshSkin )
         
         local geoChunks = ReadChunks stream chunk
         local geometry_list = #()
@@ -431,7 +520,7 @@
                 (
                     if ( c.id == 1 ) then try ( geo.meshObj = ReadMesh stream c ) catch ( Format "Error occured in Read Mesh\n" )
                     if ( c.id == 8 ) then try ( geo.materials = ReadMaterials stream c ) catch ( Format "Error occured in Read Materials\n")
-                    --// TODO : if ( c.id == 3 ) then geo.materials = ReadSkin stream c 
+                    if ( c.id == 3 ) then try ( geo.meshSkin = ReadSkin stream c geo.meshObj.verts.count ) catch ( Format "Error occured in Read Skin\n")
                 )
                 append geometry_list geo
             )
@@ -473,6 +562,15 @@
         (
             local theBone = b.bone_ref
             
+            -- keep the root bone as is, since it is not taken into account for the bone weights
+            if ( theBone.name == "Root" ) then (
+                theBone.size = boneSize * 4
+                theBone.wirecolor = color 255 255 0
+                b.bonesys_ref = b.bone_ref
+                boneLayer.addNode theBone
+                continue
+            )
+            
             if ( theBone.children.count >= 1 ) then 
             (
                 local theChild = theBone.children[1]
@@ -507,10 +605,11 @@
         -- rebuild the hiearchy
         for b in bone_list do
         (
+            if ( b.bone_ref.Name == "Root" ) then continue
             boneLayer.AddNode b.bonesys_ref
             if b.parentId > 0 then
-                b.bonesys_ref.parent = bone_list[b.parentId].bonesys_ref
-            
+                    b.bonesys_ref.parent = bone_list[b.parentId].bonesys_ref
+
             delete b.bone_ref
             b.bone_ref = undefined
         )
@@ -625,7 +724,6 @@
         if ( dff_chunks.count > 1 ) then 
             format "Multiple dff models found: %\n" dff_chunks.count
 
-        local failsafe = dff_chunks.count
         for dff in dff_chunks do
         (
             try( local chunks = ReadChunks stream dff ) catch()
@@ -639,10 +737,7 @@
             )
 
             if ( bone_list != undefined ) then BuildBones bone_list
-            if ( geometry_list != undefined ) then BuildMeshes geometry_list bone_list dff_chunks.count
-            
-            failSafe -= 1
-            if (failSafe <= 0) then exit
+--             if ( geometry_list != undefined ) then BuildMeshes geometry_list bone_list dff_chunks.count
             
         )
         fClose stream
@@ -651,13 +746,14 @@
         FreeSceneBitmaps()
         ClearUndoBuffer()
     )
-    
-    file = getOpenFileName \
+        
+    if debug then 
+        file = @"G:\Game Dev\3D Models\Game Models\Rockstar Games\Manhunt\DFF\bun_pc.dff"
+    else
+        file = getOpenFileName \
 			caption:"Manhunt" \
 			types:"Supported Files|*.dff*|Manhunt Models(*.dff)|*.dff*|All Files|*.*" \
 			historyCategory:"ManhuntPresets"
 
     if (file != undefined ) then ImportDFF file
-    
-
 )
