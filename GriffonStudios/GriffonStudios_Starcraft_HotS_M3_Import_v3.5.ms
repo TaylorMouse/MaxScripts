@@ -1,58 +1,55 @@
 /*
-	.SYNOPSIS
-	| Starcraft II & Heroes of the Storm model import (.m3 & .m3a)
+    ©2014 ~ 2021 Script by Taylor Mouse
+	Starcraft II & Heroes of the Storm model import (.m3 & .m3a)
 	Starcraft and Heroes of the Storm are reigistered trademarks of Blizzard Entertainment
 
-	.COPYRIGHT
-	| (c)2014 ~ 2019 Griffon Studios
+*/
 
-	.AUTHOR
-    | Script by Taylor Mouse
-	
+/*	Release notes
+    v3.3.5 Fixed a scale factor for the UV and the positioning of hit test fuzzy and vol targets
+    v3.3.4 Added a global scale factor since the initial * 100 was too much for some objects
+    v3.3.3 Added FixGLsequences function
+    v3.3.2 Fixed a bug in the naming conventions for animations
+    v3.3.1 Fixed the uv coordination corrections, it no longer uses the basic 2048 conversion (works for 90%)
 
-	.RELEASE NOTES
-	| v3.3.5 Fixed a scale factor for the UV and the positioning of hit test fuzzy and vol targets
-	| v3.3.4 Added a global scale factor since the initial * 100 was too much for some objects
-	| v3.3.3 Added FixGLsequences function
-	| v3.3.2 Fixed a bug in the naming conventions for animations
-	| v3.3.1 Fixed the uv coordination corrections, it no longer uses the basic 2048 conversion (works for 90%)
-	| 
-	| v3.3 Release to community
-	| v3.2.7 added support for the latest release (HotS v2.33)
-	| 	   fixed issues with the hittesttight types, it now supports all 8 types
-	| 	   support for non SC2 art tools has been reviewed
-	| 	   displaying materials in viewport has been beautified
-	| v3.2.6 Clean up the scene has been extended to prevent .net error
-	| v3.2.5 Bug Fix, Particle effects were incorrectly parented and positioned
-	| v3.2.4 Added & removed dropdown for UV corrections 1, 4, 8, 16, 32,64, 128 (still unknown how to fix this correctly )
-	| v3.2.3 Added support for Decals and second uv map layer
-	| v3.2.2 Added support for Hit Test Tight
-	| v3.2 Bugfixes, camera creation does no longer require Art Tools
-	| v3.1 Bugfixes, update to Nova Missions 1,2 and 3
-	| 
-	| v3.0 Release to community
-	| v2.3 Support for EX3
-	| v2.2 Added particle effects - no animation yet
-	| v2.1 Bug Fix, memory leak and material support for MAX 2012 and up
-	| 
-	| v2.0 Release to community
-	| v1.9 Support for latest release
-	| v1.8 Corrected Material setting for emissive and spcular multiplier
-	| v1.7 Extented Material Support
-	| v1.6 Added Camera import
-	| 
-	| v1.5 Release to Community
-	| v1.4 merged SC2 Art Tools stuff and No SC2 Art Stuff together
-	| v1.3 Fixed the weird animations
-	| v1.2 NO Art Tools required ( is a different script )
-	| v1.1 Bug Fixing added ReadBytes ( renamed it to SkipBytes)
-	| 
-	| v1.0 Released to Community
-	| v0.4 Added STC as animations
-	| v0.3 Corrected skinning
-	| v0.2 Making it usable and adding comments
-	| v0.1 Covering the basics
 
+v3.3 Release to community
+    
+    v3.2.7 added support for the latest release (HotS v2.33)
+           fixed issues with the hittesttight types, it now supports all 8 types
+           support for non SC2 art tools has been reviewed
+           displaying materials in viewport has been beautified
+    v3.2.6 Clean up the scene has been extended to prevent .net error
+    v3.2.5 Bug Fix, Particle effects were incorrectly parented and positioned
+    v3.2.4 Added & removed dropdown for UV corrections 1, 4, 8, 16, 32,64, 128 (still unknown how to fix this correctly )
+    v3.2.3 Added support for Decals and second uv map layer
+    v3.2.2 Added support for Hit Test Tight
+
+v3.2 Bugfixes, camera creation does no longer require Art Tools
+v3.1 Bugfixes, update to Nova Missions 1,2 and 3
+
+v3.0 Release to community
+    v2.3 Support for EX3
+    v2.2 Added particle effects - no animation yet
+    v2.1 Bug Fix, memory leak and material support for MAX 2012 and up
+
+v2.0 Release to community
+    v1.9 Support for latest release
+    v1.8 Corrected Material setting for emissive and spcular multiplier
+    v1.7 Extented Material Support
+    v1.6 Added Camera import
+
+v1.5 Release to Community
+    v1.4 merged SC2 Art Tools stuff and No SC2 Art Stuff together
+    v1.3 Fixed the weird animations
+    v1.2 NO Art Tools required ( is a different script )
+    v1.1 Bug Fixing added ReadBytes ( renamed it to SkipBytes)
+
+v1.0 Released to Community
+    v0.4 Added STC as animations
+    v0.3 Corrected skinning
+    v0.2 Making it usable and adding comments
+    v0.1 Covering the basics
 
 */
 
@@ -131,11 +128,15 @@ struct HEROES_CAMERA    ( CamRef, BoneRefId )
 struct MAX_ANIMATION ( FrameList, KeyList )
 
 struct HEROES_NONSC2_MAT ( Name, Diff_Map, Norm_Map, Height_Map, Decal_Map, Spec_Map, Emis_Map, Emis2_Map, Env_Map, Envio_Map, Alpha_Map, Alpha2_Map, Light_Map, MaterialRef )
+
 struct HEROES_Particles ( parentBoneIndex, particleSystem )
+
 struct HEROES_HitTestTight ( parentBoneId, hitTestModel )
 
 /*********************************************************************************************************************
+
 	HELPER FUNCTIONS
+
 *********************************************************************************************************************/
 fn ResetGlobals=
 (
@@ -202,6 +203,22 @@ fn CreateAttachmentPt aName=
     return ss
 )
 
+--unRegisterRedrawViewsCallback ShowAttachmentPtLabels
+fn ShowAttachmentPtLabels=
+(
+--     gw.setTransform(Matrix3 1)
+--     for o in objects where not o.isHidden and (classof o == SplineShape )  do
+--     (
+--         gw.text o.pos ("N: " + o.name) color:yellow
+
+--     )
+--     gw.enlargeUpdateRect #whole
+--     gw.updateScreen()
+
+)
+--registerRedrawViewsCallback ShowAttachmentPtLabels
+
+
 fn ReadFourCC stream =
 (
 	/* Read 4 bytes (chars) backwards -> this is the way Blizzards stores their TAGS */
@@ -234,6 +251,7 @@ fn ReadFixedString stream val =
 fn CreateLayer layerName =
 (
 	/* Create layer in MAX, if it exists, just return a reference to that layer */
+
 	layer = LayerManager.GetLayerFromName layerName
 	if(layer == undefined) then
 	(
@@ -3612,7 +3630,7 @@ UTILITY HeroesOfTheStormImport "M3 Import (v3.5)"
 (
 	Group "Model Import"
 	(
-        Label lbl30 "�2015~2019 by \n Taylor Mouse" height:32 align:#center offset:[30,0]
+        Label lbl30 "©2015~2019 by \n Taylor Mouse" height:32 align:#center offset:[30,0]
 
 		CheckBox cbUseSC2ArtTools "Use SC2 Art Tools"
 

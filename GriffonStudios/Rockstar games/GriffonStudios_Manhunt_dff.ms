@@ -75,8 +75,15 @@
         try( 
             local searchOptions = dotnetClass "System.IO.SearchOption"
             local directory = dotnetClass "System.IO.Directory"
-            local wildCard = "*" + textureName + "*.*"
-            local theFile = (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories)[1]
+            local wildCard = "*" + textureName + ".*"
+            local theFile = ""
+
+            for f in (directory.GetFiles  texturePath  wildCard searchOptions.AllDirectories) do (
+                if( findString f "frontend" <= 0 ) (
+                    theFile = f
+                    exit
+                )
+            )
             
             local shitList = #("_ALPHA", "ALPHA", "_A", "ALPH",  "der_" )
             local isAlpha = false
@@ -395,7 +402,7 @@
             local y = readFloat stream * myScale
             local z = readFloat stream * myScale
             append meshObj.verts [x, -y, -z]
-            if v==1 then print [x,-y,-z]
+            
         )
     
         if ( mod geometryFlag 32 >=16 ) then
@@ -711,8 +718,8 @@
             update theMesh
 
             --ApplySkinning theMesh bone_list geo.skinData 
-            
-            rotate (getNodeByname "Root") (angleaxis -90 [1,0,0])
+            if( getNodeByName "Root" != undefined ) then 
+                rotate (getNodeByname "Root") (angleaxis -90 [1,0,0])
             
 
         )
