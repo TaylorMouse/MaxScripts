@@ -2,10 +2,11 @@
 
 Version History
 ---------------
+3.5 - Dec 16th 2021 (Taylor Mouse)
+- Bugfixes
 
-3.2 - July 4th 2019 (Taylor Mouse)
-- Materials have been removed, a Material Manager was added to apply the materials
-    It is based on the materials in the same folder as the m2 model
+3.2 - Dec 12th 2021 (Taylor Mouse)
+- Added base importing of attachmentpoints
 
 3.1 - Sept 11th 2017 (Taylor Mouse)
 - Removed error on texture lookup for new model format
@@ -55,7 +56,6 @@ Special thanks to:
 -- GLOBALS AND STRUCTURES
 --
 global WOW2_DBCPath	= "Locate DBC Path"
-global nConvertExe = "Locate nConvert File"
 global AnimDataDBC = "AnimationData.dbc"
 global m2impini = ((GetDir #plugcfg)+"\\m2import.ini")
 global WOW2_Dialog
@@ -78,7 +78,8 @@ global m2bones
 global mstream
 global sknstream
 global step
-global tstsubmeshes
+global ref_index = 0
+
 -- LOOKUP TABLE INFORMATION
 -- Attachment String Table
 global WOW2_attachid = #("Left wrist (shield) / Mount", "Right Palm", "Left Palm", "Right Elbow", "Left Elbow", -- 0 - 4
@@ -137,168 +138,25 @@ global meshTypes = 	#(
 								)
 
 
-STRUCT HelperFunctions
+
+                                
+if ( DisplayWoWAttachments != undefined ) then 
+	UnregisterRedrawViewsCallback DisplayWoWAttachments
+	
+function DisplayWoWAttachments=
 (
-    function Convert_blp_to_png textureFileName=
+    gw.setTransform ( matrix3 1 )
+    for obj in objects where 
+        ( classof obj == Point and obj.ishidden == false and obj.isfrozen == false and (filterstring obj.name " ")[(filterstring obj.name " ").count] == "Ref") 
+    do
     (
-        /* 
-            NOTE : nConvert must be installed to convert blp to png
-            Download here : http://www.xnview.com/en/nconvert/
-        */
-        
-        if(DoesFileExist nConvertExe == false ) then
-        (
-            print ("nConvert must be installed to convert blp to png ")
-            print "Download here : http://www.xnview.com/en/nconvert/"
-            return textureFileName
-        )
-        
-        
-        if(DoesFileExist textureFileName == false ) then
-        (
-            /* switch to alternate mode */
-            alternateFile = replace textureFileName 1 (WoWRootFolder.count) WoWAlternateTextureFolder
-            
-            if(  DoesFileExist alternateFile == true ) then 
-            (
-                textureFileName = alternateFile
-            )
-            else
-            (
-                append logMessages ("BLP Does not exist: " + textureFileName )
-                --print ("[WARNING] - Texture not found - " + textureFileName )
-                return textureFileName
-            )
-        )
-        
-        if ( DoesFileExist nConvertExe ) then
-        (
-            /*
-                interlaced and compression level 5 seems to be the closest to the original blp
-            */
-            param = " -npcd 2 -org_depth -ctype rgba -corder inter -clevel 5 -out png "
-            blpFile = textureFileName
-            pngFile = substring blpFile 1 (blpFile.Count - 4) + ".png"
-            
-            -- check if the file already exists
-            if ( DoesFileExist pngFile) then 
-                return pngFile
-            
-            --print (nConvertExe + param + "\"" + blpFile + "\"")
-            
-            HiddenDosCommand (nConvertExe + param + "\"" + blpFile + "\"")
-            
-            -- the dos command will not throw an error so check if the file has been converted
-            if ( DoesFileExist pngFile ) then 
-                return pngFile
-            else
-            (
-                --print ("[WARNING] - Texture not found - " + blpFile)
-                
-                append logMessages blpFile
-                
-                return undefined
-            )
-            
-        )
-        else
-        (
-            throw 50000 "nconvert.exe not found, file is required for converting blp to png, download it here: http://www.xnview.com/en/nconvert/"
-            
-        )
-    ),
-
-    function FindAndConvertPossibleM2Textures modelFile =
-    (
-        local modelPath = getFileNamePath modelFile
-        local blpFiles = getFiles ( modelPath + "*.blp" )
-        
-        local pngFiles = #()
-        
-        for blpFile in blpFiles do
-        (
-            local pngFile = HelperFunctions.Convert_blp_to_png blpFile
-            append pngFiles pngFile
-        )
-        return pngFiles
-    ),
-    
-    function BuildMaterial matName texture applyAlpha=
-    (
-        local mat = standardmaterial name:matName diffuseMapEnable:on opacityMapEnable:on
-                
-        mat.diffuseMap = BitmapTexture fileName:texture
-        mat.diffuseMap.alphaSource = 2
-        
-        if applyAlpha then 
-        (
-            mat.opacityMap = Bitmaptexture fileName:texture
-            mat.opacityMap.monooutput = 1
-        )
-        mat.twoSided = true
-        mat.ambient = color 0 0 0
-        mat.diffuse = color 0 0 0
-        
-        showTextureMap mat true
-        
-        return mat
-    ),
-    
-    function FindTextureByModelName possibleTextures modelName=
-    (
-        
-        local textureFound = undefined
-        
-        for texture in possibleTextures do
-        (
-            local texureFile = getfilenamefile texture
-            local foundIt = findstring texureFile modelName
-
-            if foundIt != undefined then 
-            (
-                textureFound = texture
-               --format "Texture might be %\n" texureFile
-                exit
-            )
-        )
-        
-        if ( textureFound == undefined and possibleTextures.count > 0 ) then textureFound = possibleTextures[1]
-            
-        return textureFound
-    ),
-    
-    function ApplyMaterials modelFile=
-    (
-        format "Importing possible textures\n"
-        local possibleTextures = HelperFunctions.FindAndConvertPossibleM2Textures modelFile
-        local possibleTexturesString = ""
-        
-        for i=1 to possibleTextures.count do
-            possibleTexturesString = possibleTexturesString + possibleTextures[i] + "\n"
-        
-        if possibleTextures.count > 0 then 
-        (
-            local modelName = getfilenamefile modelFile
-            local smartTexture = HelperFunctions.FindTextureByModelName possibleTextures modelName
-            
-            
-            /* use this to switch textures */
-            for obj in objects do
-            (
-                if( classof obj == editable_mesh) then 
-                (
-                    local mat = HelperFunctions.BuildMaterial obj.Name smartTexture true
-                    
-                    setUserPropBuffer obj possibleTexturesString
-                    obj.material = mat
-                )
-            )
-        )
-        
+        gw.text ( obj.pos + [0, 0, 2] ) ( obj.name as string ) color:Yellow
     )
+    gw.updateScreen()
     
 )
-
+RegisterRedrawViewsCallback DisplayWoWAttachments
+                                
 
 fn WOW2_toUpper str =
 (
@@ -326,10 +184,6 @@ fn uiOpenFile ftypes &fname =
 
 fn sortSpreadsheet data dataField type =
 (
-    if data == undefined then return undefined
-    
-    if data.count == 0 then return undefined
-    
 	fn sortStrings s1 s2 =
 	(
 		local ups1 = WOW2_toUpper s1[1]
@@ -430,7 +284,6 @@ if (doesFileExist m2impini) then
 	
 	-- Paths
 	WOW2_DBCPath	= ReadINI m2impini #string ini_section[2] "DBC"			WOW2_DBCPath
-    nConvertExe     = ReadIni m2impini #string ini_section[2] "nConvert"	nConvertExe
 )
 else
 (
@@ -449,7 +302,6 @@ fn WriteINI INIFile =
 	
 	--Path Settings
 	setINISetting (INIFile) 	ini_section[2]	("DBC")				(WOW2_DBCPath)
-    setINISetting (INIFile) 	ini_section[2]	("nConvert")				(nConvertExe)
 )
 -- INI control end!
 
@@ -934,7 +786,7 @@ struct WOW2_Header
 		
         ClearListener()
         
-        --print header
+        print header
         
         
 		return header
@@ -992,9 +844,6 @@ struct WOW2_Vertex
 				)
 			)
 			
-            
-            
-            
 			vert.normal = WOW2_ReadVec bitStream #v3d
 			
 			-- UV coordinates
@@ -1016,7 +865,7 @@ struct WOW2_Vertex
 			
 			varray[i] = vert
 		)
-		--print varray
+		
 		return varray
 	)
 )
@@ -1753,16 +1602,8 @@ struct WOW2_Submesh
 			(
 				subid += 1
 			)
-            
-            format "SubId % \n"  subid
-            
 			submesh.name = meshTypes[subid]
 			
-            if( submesh.name == undefined) then 
-            (
-                submesh.name = "object_" + (subid as  string )
-            )
-            
 			smarray[i] = submesh
 		)
 		
@@ -2068,46 +1909,43 @@ fn WOW2_Create_Submesh smesh skinIndices skinFaces mVerts smName =
 		append vertList vpos
 		append tvertList vuv
 	)
-	try
-    (
-        local msh = mesh vertices:vertList faces:faceList name:smName 
-        msh.WireColor = Color (random 0 128) (random 64 192) (random 0 128)
+	
+	local msh = mesh vertices:vertList faces:faceList name:smName 
+	msh.WireColor = Color (random 0 128) (random 64 192) (random 0 128)
 
-    -- 	if (WOW2_doVertexNormals == true) then
-    -- 	(
-    -- 		try
-    -- 		(
-    -- 			WOW2_SetVertexNormals msh smesh.m2verts
-    -- 		)
-    -- 		catch
-    -- 		(
-    -- 			echo ("ERROR# Setting vertex normals failed! " + getCurrentException())
-    -- 		)
-    -- 	)
-        
-        Update msh
-        redrawViews()
-        
-        -- tvert faces
-        if vertList.count != 0 then
-        (
-            -- setup map channels
-            meshOp.setMapSupport msh 1 true
-            meshOp.defaultMapFaces msh 1 
-            
-            -- setup uv coords for each channel
-            for t = 1 to tvertList.count do
-            (
-                local tv = tvertList[t]
-                
-                meshop.setMapVert msh 1 t tv
-            )
-        )
-        Update msh
+-- 	if (WOW2_doVertexNormals == true) then
+-- 	(
+-- 		try
+-- 		(
+-- 			WOW2_SetVertexNormals msh smesh.m2verts
+-- 		)
+-- 		catch
+-- 		(
+-- 			echo ("ERROR# Setting vertex normals failed! " + getCurrentException())
+-- 		)
+-- 	)
+	
+	Update msh
+	redrawViews()
+	
+	-- tvert faces
+	if vertList.count != 0 then
+	(
+		-- setup map channels
+		meshOp.setMapSupport msh 1 true
+		meshOp.defaultMapFaces msh 1 
+		
+		-- setup uv coords for each channel
+		for t = 1 to tvertList.count do
+		(
+			local tv = tvertList[t]
+			
+			meshop.setMapVert msh 1 t tv
+		)
+	)
+	Update msh
 
-        smesh.maxMesh = msh
-    )
-    catch()
+	smesh.maxMesh = msh
 )
 
 global WOW2_useBones_Points = true
@@ -2133,8 +1971,7 @@ fn WOW2_Create_Bones mbones =
 			cb = Point wireColor:green
 		local bname = "Bone_"
         
-       --print b.keyIndex
-        
+       
 		if (b.keyIndex) > 0 and (b.keyIndex) < 36 then 
 			bname = bname + WOW2_keyboneid[b.keyIndex] + "_"
 		else
@@ -2144,6 +1981,8 @@ fn WOW2_Create_Bones mbones =
 			bname = bname + "0" + ((i - 1) as string)
 		else
 			bname = bname + ((i - 1) as string)
+            
+        
             
 		--WOW2_convert_Position b.pivot
 		cb.name 		= bname
@@ -2430,158 +2269,69 @@ fn WOW2_Integer_to_String int buffer =
 	return strResult
 )
 
+global g_anims = undefined
+
 fn WOW2_Get_Anims anims =
 (
-    -- print anims
-    
+   g_anims = anims
 	for i = 1 to anims.count do
 	(
                 
 		local anim = anims[i]
-               
-        if( dbcData == undefined ) then 
-        (
-            anim.name = "Animation_" + ((i - 1) as string)
-            anims[i] = anim
-            continue
-        )
+
         
-        if( anim.animId + 1 > dbcdata.head.nRecords ) then
-        (
-            anim.name = "Animation_" + ((i - 1) as string)
-            anims[i] = anim
-            continue
-        )
-        
-        anim.name = (dbcdata.records[anim.animID + 1].name)
+		if (dbcdata != undefined and anim.animID + 1 <= dbcdata.records.count and dbcdata.records[anim.animID + 1].name != undefined) then
+			anim.name = (dbcdata.records[anim.animID + 1].name)
+		else
+			anim.name = "Animation_" + ((i - 1) as string)
+		
+		-- update original array
 		anims[i] = anim
-		
-		
 	)
 )
-global GSECS
-/* create StarCraft 2 AnimProps */
-
-fn SetSC2AnimationProperties Seqs=
-(
-	GSECS = Seqs
-   -- print GSECS.count
-    
-    --name, cstart, cend, moveSpeed, looping, rarity, priority
-    
-	local starAnimTrack = undefined
-	local nNoteTracks = numNoteTracks rootNode
-
-	if(  nNoteTracks > 0 ) then
-	(
-		for n=1 to nNoteTracks do deleteNoteTrack rootNode (getNoteTrack rootNode 1)
-	)
-
-	if( numNoteTracks rootNode == 0 ) then
-	(
-		starAnimTrack = notetrack "starAnimTrack"
-		addNoteTrack rootNode starAnimTrack
-	)
-	animPropsList = GSECS
-    
-	for i=1 to GSECS.Count do
-	(
-		local props = animPropsList[i]
-		local underscorePos = findstring props.Name "_full"
-
-		if( underscorePos != undefined) then
-		(
-			props.Name = substring props.Name 1 (underscorePos-1)
-		)
-
-        local underscorePos2 = findstring props.Name "_"
-
-		if( underscorePos2 != undefined) then
-		(
-			props.Name = substring props.Name 1 (underscorePos2-1) + " " + (bit.intaschar (64 + i))
-		)
-
-		local noteExists = getNoteKeyIndex starAnimTrack props.cstart
-		if( noteExists == undefined) then
-		(
-			local startNote = AddNewNoteKey starAnimTrack props.cstart
-			local endFrame = props.cend
-			local endNote = AddNewNoteKey starAnimTrack endFrame
-
-			if( props.moveSpeed > 1000) then props.moveSpeed = 450 --> don't know but for heroes this is an issue on the hero models
-
-			local val = props.Name + "\r\n"
-				  val += "rarity = " + props.rarity as string + "\r\n"
-				  val += "moveSpeed = " + props.moveSpeed as string + "\r\n"
-				  val += "nonLoop = " 	 + props.looping as string + "\r\n"
-				  val += "default_Anim = false\r\nsub_anim = false\r\ndefaultPriority = 0"
-
-			startNote.Value = val
-			endNote.Value = val
-
-			format  "- Animation '%' { start:%, end:% }\n" props.Name props.cstart props.cend 
-		)
-	)
-   
-)
-
 
 fn WOW2_write_SC2_Anims Sequences deleteOld:true =
 (
-    format "**************************************************\n"
-    format "Creating sequences on the notetrack(nbr of seqs %)\n" Sequences.count
-    
-    SetSC2AnimationProperties Sequences
-    
---     local NT = undefined
--- 	local nNoteTracks = numNoteTracks rootNode
--- 	if(  nNoteTracks > 0 ) then
--- 	(
--- 		for n=1 to nNoteTracks do deleteNoteTrack rootNode (getNoteTrack rootNode n)
--- 	)
-
--- 	if( numNoteTracks rootNode == 0 ) then
--- 	(
--- 		NT = notetrack "starAnimTrack"
--- 		addNoteTrack rootNode NT
--- 	)
-	
-    
---     for s in Sequences do
--- 	(
---         format "Adding %\n" s.name
--- 		local val = WOW2_SeqsToStringStream s
--- 		local key1 = addNewNoteKey NT.keys s.cstart
--- 		local key2 = addNewNoteKey NT.keys s.cend
--- 		key1.value = val
--- 		key2.value = val
--- 		local tag1 = FrameTagManager.CreateNewTag (s.name + " Start") s.cstart
--- 		local id = FrameTagManager.GetTagID tag1
--- 		local tag2 = FrameTagManager.CreateNewTag (s.name + " End") s.cend lockID:id
--- 	)
-    format "**************************************************\n"
+	local NT
+	if deleteOld then
+	(
+		while( numNoteTracks rootNode != 0 ) do deleteNoteTrack rootNode (getNoteTrack rootNode 1)
+		NT = notetrack "animations"
+		addNoteTrack rootNode NT
+	) else NT = getNoteTrack rootNode 1
+	for s in Sequences do
+	(
+		local val = WOW2_SeqsToStringStream s
+		local key1 = addNewNoteKey NT.keys s.cstart
+		local key2 = addNewNoteKey NT.keys s.cend
+		key1.value = val
+		key2.value = val
+		local tag1 = FrameTagManager.CreateNewTag (s.name + " Start") s.cstart
+		local id = FrameTagManager.GetTagID tag1
+		local tag2 = FrameTagManager.CreateNewTag (s.name + " End") s.cend lockID:id
+	)
 )
 
 fn WOW2_write_Wc3_Anims Sequences deleteOld:true =
 (
--- 	local NT
--- 	if deleteOld then
--- 	(
--- 		while( numNoteTracks rootNode != 0 ) do deleteNoteTrack rootNode (getNoteTrack rootNode 1)
--- 		NT = notetrack "animations"
--- 		addNoteTrack rootNode NT
--- 	) else NT = getNoteTrack rootNode 1
--- 	for s in Sequences do
--- 	(
--- 		local val = WOW2_SeqsToStringStreamNeodex s
--- 		local key1 = addNewNoteKey NT.keys s.cstart
--- 		local key2 = addNewNoteKey NT.keys s.cend
--- 		key1.value = val
--- 		key2.value = val
--- 		local tag1 = FrameTagManager.CreateNewTag (s.name + " Start") s.cstart
--- 		local id = FrameTagManager.GetTagID tag1
--- 		local tag2 = FrameTagManager.CreateNewTag (s.name + " End") s.cend lockID:id
--- 	)
+	local NT
+	if deleteOld then
+	(
+		while( numNoteTracks rootNode != 0 ) do deleteNoteTrack rootNode (getNoteTrack rootNode 1)
+		NT = notetrack "animations"
+		addNoteTrack rootNode NT
+	) else NT = getNoteTrack rootNode 1
+	for s in Sequences do
+	(
+		local val = WOW2_SeqsToStringStreamNeodex s
+		local key1 = addNewNoteKey NT.keys s.cstart
+		local key2 = addNewNoteKey NT.keys s.cend
+		key1.value = val
+		key2.value = val
+		local tag1 = FrameTagManager.CreateNewTag (s.name + " Start") s.cstart
+		local id = FrameTagManager.GetTagID tag1
+		local tag2 = FrameTagManager.CreateNewTag (s.name + " End") s.cend lockID:id
+	)
 )
 
 fn WOW2_Set_Anims anims =
@@ -2749,8 +2499,8 @@ fn WOW2_Sort_Bones mbones =
 
 fn WOW2_setNodeWorldRotation theNode theRot = 
 ( 
--- 	local tmat = transmatrix theNode.transform.pos
--- 	in coordsys tmat (theNode.rotation = theRot)
+	local tmat = transmatrix theNode.transform.pos
+	in coordsys tmat (theNode.rotation = theRot)
 )
 
 fn WOW2_Apply_Rotation mbone ablock =
@@ -2792,24 +2542,23 @@ fn WOW2_Apply_Translation mbone ablock =
 
 fn WOW2_Apply_Scale mbone ablock =
 (
-    return undefined
--- 	if ablock.keys.count != 0 then
--- 	(
--- 		if ablock.seq == undefined then
--- 		(
--- 			local obj = mbone
--- 			local subScale
--- 			in coordsys parent subScale = obj.scale
--- 			for i = 1 to ablock.keys.count do
--- 				ablock.keys[i] = ablock.keys[i]/subScale
--- 			obj.scale.controller = linear_scale ()
--- 			local c = obj.scale.controller
--- 			WOW2_writeKeys ablock c
--- 			c
--- 		)
--- 		else
--- 			ablock.seq.register mbone ablock WOW2_Apply_Scale false #scale
--- 	)
+	if ablock.keys.count != 0 then
+	(
+		if ablock.seq == undefined then
+		(
+			local obj = mbone
+			local subScale
+			in coordsys parent subScale = obj.scale
+			for i = 1 to ablock.keys.count do
+				ablock.keys[i] = ablock.keys[i]/subScale
+			obj.scale.controller = linear_scale ()
+			local c = obj.scale.controller
+			WOW2_writeKeys ablock c
+			c
+		)
+		else
+			ablock.seq.register mbone ablock WOW2_Apply_Scale false #scale
+	)
 )
 
 fn WOW2_Apply_FloatParam obj ablock param =
@@ -2901,74 +2650,26 @@ fn WOW2_CreateSc2Attachment mattach =
 	)
 )
 
-fn WOW2_getAttachmentValues name =
-(
-	fn searchString sarr s =
-	(
-		local index = 1
-		for i = 1 to sarr.count where matchPattern s pattern:sarr[i] do index = i
-		index
-	)
-	local s1 = filterString name " "
-	local n1 = searchString attachmentList s1[1]
-	if (s1.count > 1) then
-	(
-		local n2 = searchString attachmentAdd1List s1[2]
-		local n3 = searchString attachmentAdd2List s1[2]
-		#(n1,n2,n3)
-	)
-	else #(n1)
-)
-
-fn WOW2_CreateWc3Attachment mattach =
-(
-	local wc3attachid = #(	undefined, "Hand Right Ref", "Hand Left Ref", undefined, undefined, -- 0 - 4
-											undefined, undefined, undefined, undefined, undefined, -- 5 - 9
-											undefined, undefined, undefined, undefined, undefined, -- 10 - 14
-											"Sprite First Ref", "Sprite Second Ref", undefined, "Overhead Ref", "Origin Ref", -- 15 - 19
-											"Head Ref"
-										)
-	
-	wc3attachid[48] = "Foot Right Ref"
-	wc3attachid[47] = "Foot Left Ref"
-	wc3attachid[34] = "Chest Ref"
-	local pos = WOW2_convert_Position mattach.pos
-	--WOW2_convert_Position pos
-	if (mattach.id < wc3attachid.count and wc3attachid[mattach.id] != undefined) then
-	(
-		local att = Wc3AttachPoint pos:pos wirecolor:red
-		att.name = wc3attachid[mattach.id]
-		local flags = WOW2_getAttachmentValues att.name
-		if flags[1] != undefined then att.nameFirst = flags[1]
-		if flags[2] != undefined then att.nameAdd1 = flags[2]
-		if flags[3] != undefined then att.nameAdd2 = flags[3]
-		mattach.maxObj = att
-		att
-	)
-)
-
 fn WOW2_Create_Attachments mattachs mbones =
 (
-	local createFunc
-	case WOW2_ImportMode of
-	(
-		#NeoDex: createFunc = WOW2_CreateWc3Attachment
-		#Sc2ArtTools: createFunc = WOW2_CreateSc2Attachment
-		#WoW: createFunc = (fn tmp a b c = undefined)
-		default: createFunc = undefined
-	)
-	local anims = mdata.anims
-	local attachmentLayer = WOW2_Setup_Layer "Attachments"
-	for a in mattachs do
-	(
-		local b = mbones[a.bone + 1].maxObj
-		local att = createFunc a
-		if att != undefined then
-		(
-			att.parent = b
-			attachmentLayer.addNode att
-		)
-	)
+    
+    local attachmentLayer = WOW2_Setup_Layer "Attachments"
+    
+    for mattach in mattachs do
+    (
+        format "Creating attachment %\n" mattach.name
+        try(
+            mattach.maxObj = point box:On cross:Off size:5 centermarker:Off wirecolor:yellow
+            mattach.maxObj.name =  mattach.name + " Ref"
+            mattach.maxObj.pos = WOW2_convert_Position mattach.pos
+            
+            if( mattach.bone + 1 <= mbones.count ) then mattach.maxObj.parent = mbones[mattach.bone + 1].maxObj
+            
+            attachmentLayer.addNode mattach.maxObj
+        )
+        catch( format "#ERROR Unable to create attachment %\n" mattach.name )
+    )
+
 )
 
 fn WOW2_setUpParameter obj param objParam anims =
@@ -3512,6 +3213,7 @@ fn WOW2_Create_Lights mdata mbones =
 
 fn WOW2_AddBehavior behaviorType newName: unsupplied =
 (
+    if ( startools == undefined ) then return undefined
 	if startools.behaviors.targetNode == undefined do								
 		startools.behaviors.targetNode = SC2BehaviorHolder()
 	local newBehaviorCustAttribute = (startools.behaviors.AddBehavior startools.behaviors.targetNode behaviorType newName:newName)
@@ -3896,8 +3598,6 @@ fn WOW2_AddGeosetAnims bitStream anims =
 
 fn WOW2_Apply_Skin mesh mbones skinBones verts =
 (
-    local aniBonesLayer = WOW2_Setup_Layer "Animated Bones"
-    
 	select mesh
 	max modify mode
 	-- #Skin
@@ -3908,10 +3608,6 @@ fn WOW2_Apply_Skin mesh mbones skinBones verts =
 	-- add bones to skin
 	for i = 1 to skinBones.count do
 	(
-        -- add the bone to the Animated Bones Layer
-        aniBonesLayer.addNode skinBones[i].maxObj
-        
-        -- add the bones to the skin modifier
 		sknopsaddbone sk skinBones[i].maxObj 0
 	)
 	update mesh
@@ -3919,18 +3615,12 @@ fn WOW2_Apply_Skin mesh mbones skinBones verts =
 	--disableSceneRedraw() -- speeds up weight assignment
 	try
 	(
-        format "mesh %\n " mesh.name
 		local sknRepVerWeights = skinOps.ReplaceVertexWeights
 		-- 4. Set vertex weights
 		for i = 1 to verts.count do
 		(
 			local vert = verts[i]
 			
---             format "vertex %\n" i
---             
---             format "- bone weights %\n" vert.bw
---             format "- bone indeces %\n" vert.bi
---             
 			-- Fix weight bone reference to locally skinned bones index
 			for w = 1 to vert.bw.count do
 			(
@@ -3941,7 +3631,6 @@ fn WOW2_Apply_Skin mesh mbones skinBones verts =
 					if (bIndex > 0) then vert.bi[w] = bIndex else vert.bi[w] = 0
 				)
 			)
-
 			sknRepVerWeights sk i vert.bi vert.bw
 		)
 	)
@@ -4123,10 +3812,7 @@ fn WOW2_Create_GlobalLoopAnimationsSc2 gb anims =
 		while ((not anims[n].process) and n > 0) do n = n - 1
 		if n > 0 then
 		(
-            try
-                ( start = anims[n].cend + 20f ) 
-            catch 
-                ( start = 0)
+			start = anims[n].cend + 20f
 		) else start = 0
 		start
 	)
@@ -4153,6 +3839,7 @@ fn WOW2_Create_GlobalLoopAnimationsSc2 gb anims =
 		)
 		local num = g.numObjects
 		local ts = WOW2_AddBehavior #TrackSet
+        if ( ts == undefined ) then return undefined
 		ts.AddAnimation g.anim.name
 		ts.name = ("TrackSet Global " + GLArr[g.id])
 		--ts.globalLoop = true -- I think it crashes Star Tools
@@ -4194,7 +3881,7 @@ fn WOW2_Create_GlobalLoopAnimationsSc2 gb anims =
 		Sequences[g.id] = getNewAnimation g
 		g.anim = Sequences[g.id]
 	)
-	WOW2_write_SC2_Anims Sequences deleteOld:true
+	WOW2_write_SC2_Anims Sequences deleteOld:false
 	for g in gb do
 		setupGlobalAnimation g
 )
@@ -4246,7 +3933,7 @@ fn WOW2_Create_GlobalLoopAnimations gb anims =
 	WOW2_SimplifyGlobalSequences gb
 	case WOW2_ImportMode of
 	(
-		--#Sc2ArtTools: WOW2_Create_GlobalLoopAnimationsSc2 gb anims
+		#Sc2ArtTools: WOW2_Create_GlobalLoopAnimationsSc2 gb anims
 		default: WOW2_Create_GlobalLoopAnimationsWc3 gb anims
 	)
 )
@@ -4286,6 +3973,8 @@ fn WOW2_PreStart =
 	mdata.anims = WOW2_Animation.Read mstream mdata.anims
 	WOW2_Get_Anims mdata.anims
 
+      
+    
 	mdata.GlobalSequences = WOW2_Generate_GlobalSequences mdata.GlobalSequences mstream
 	mdata.verts = WOW2_Vertex.Read mstream mdata.verts
 	m2bones = WOW2_Bone.Read mstream mdata.bones
@@ -4343,7 +4032,7 @@ fn WOW2_Start =
 (
 	local scrStart = TimeStamp()
 	
-	echo ("Model Name: "+ mdata.name)
+	echo ("Model Name: "+mdata.name)
 	WOW2_Create_Bones m2bones
 	
     local executingStep = ""
@@ -4367,15 +4056,15 @@ fn WOW2_Start =
 	WOW2_Create_Mesh ()
 	WOW2_AddGeosetAnims mstream mdata.anims
 	
--- 	try 
--- 	(
--- 		echo ("Creating Materials...")
--- 		WOW2_Create_Materials()
--- 	)
--- 	catch
--- 	(
--- 		echo "#ERROR Creating materials failed!"
--- 	)
+	try 
+	(
+		echo ("Creating Materials...")
+		WOW2_Create_Materials()
+	)
+	catch
+	(
+		echo "#ERROR Creating materials failed!"
+	)
 	
  	try
 	(
@@ -4438,17 +4127,7 @@ fn WOW2_Start =
 		echo ("#ERROR Animating bones failed!: " + (getCurrentException()))
 	)
 	
-    try
-    (
-        echo ("Applying possible materials...")
-        hf = HelperFunctions()
-        hf.ApplyMaterials filename
-    )
-    catch
-    (
-        echo ("#ERROR Animating bones failed!: " + (getCurrentException()))
-	)
-    WOW2_SetBillboarded m2bones
+	WOW2_SetBillboarded m2bones
 	WOW2_Create_GlobalLoopAnimations mdata.GlobalSequences mdata.anims
 	--Star Tools Work
 -- 	with undo off
@@ -4536,9 +4215,6 @@ fn WOW2_Main =
 	sknstream = WOW2_Open sknFile
 	WOW2_Start()
 	WOW2_Close bstream
-    
-    
-    
 )
 
 -- ************************************
@@ -4566,9 +4242,6 @@ rollout WOW2_AnimUI "M2 Animation" width:480 height:500
 
 	fn fillInSpreadSheet lv anims =
 	(
-        if (anims == undefined ) then return undefined
-        if (anims.count == 0 ) then return 0
-        
 		local animOrder = #()
 		animOrder[anims.count] = 0
 		for i = 1 to anims.count do
@@ -4722,12 +4395,8 @@ rollout WOW2_GeoUI "M2 Geometry" width:480 height:500
 		)
 	)
 
-
-    
 	fn fillInSpreadSheet lv submeshes =
 	(
-  
-        tstsubmeshes = submeshes
 		local smOrder = #()
 		smOrder[submeshes.count] = 0
 		for i = 1 to submeshes.count do
@@ -4737,8 +4406,7 @@ rollout WOW2_GeoUI "M2 Geometry" width:480 height:500
 		
 		lv.Items.Clear()
 		theRange = #() -- array to collect the list items
-		
-        for i = 1 to submeshes.count do
+		for i = 1 to submeshes.count do
 		(
 			local smind = findItem smOrder i
 			local submesh = submeshes[smind]
@@ -4752,7 +4420,6 @@ rollout WOW2_GeoUI "M2 Geometry" width:480 height:500
 			
 			append theRange li -- we add the list item to the array
 		)
-        
 		lv.Items.AddRange theRange -- when done, we populate the ListView
 	)
 	
@@ -4924,14 +4591,9 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 (
 	group "Paths"
 	(
-		label		lSettDBCPath "DBFilesClient Path: " align:#left
-		edittext	tDBCPath width:340 text:WOW2_DBCPath align:#left across:2
-		button		bDBCPath "..." tooltip:"Locate your DBC files path" align:#right
-        
-        label		lblLocateNConvert "nConvert exe: " align:#left
-		edittext	txtNConvert width:340 text:nConvertExe align:#left across:2
-		button		btnLocateNConvert "..." tooltip:"Locate your nConvert Exe" align:#right
-        
+		label			lSettDBCPath "DBFilesClient Path: " align:#left
+		edittext	tDBCPath width:360 text:WOW2_DBCPath align:#left
+		button		bDBCPath "Browse..." tooltip:"Locate your DBC files path" align:#center
 	)
 	
 	group "Settings"
@@ -4943,8 +4605,8 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 		checkbox chkVertexNormals "Import Vertex Normals" checked:(WOW2_doVertexNormals) align:#left
 	)
 	
-	label		lblSettINIFile "Config File Location (Saves M2 Import settings): " align:#left 
-	edittext	tINIFile align:#center text:(m2impini) readOnly:true width:360 
+	label		lblSettINIFile "Config File Location (Saves M2 Import settings): " align:#center offset:[0,20]
+	edittext	tINIFile align:#center text:(m2impini) readOnly:true width:360
 	label		lblINIFileStatus "" align:#center
 	
 	button bSettSave "Save" align:#center height:30 width:70 tooltip:"Save your settings" across:2 offset:[40,10]
@@ -4967,19 +4629,6 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 	(
 		CheckSett tINIFile.text
 	)
-    
-    on btnLocateNConvert PRESSED do
-    (
-        local ret = getOpenFileName \
-                            caption: "Select nConvert.exe file" \
-                            types: "nConvert(*.exe)|*.exe|All files|*.*" \
-                            historyCategory: "nConvertExe"
-        
-        if( ret != undefined ) then 
-        (
-            txtNConvert.Text = ret
-        )
-    )
 	on bDBCPath pressed do
 	(
 		local ret = getSavePath initialDir:WOW2_DBCPath
@@ -4992,7 +4641,6 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 	on bSettSave pressed do
 	(
 		local saveGo = true
-        local nConvertExeTxt = txtNConvert.Text
 		local strDBCPath = tDBCPath.text
 		if (strDBCPath[strDBCPath.count] != "\\") then strDBCPath += "\\"
 		
@@ -5019,13 +4667,12 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 			-- Options
 			
 			-- Paths
-			WOW2_DBCPath			= tDBCPath.text
-			WOW2_flipuv_y			= chkFlipUV_Y.checked
+			WOW2_DBCPath				= tDBCPath.text
+			WOW2_flipuv_y				= chkFlipUV_Y.checked
 			WOW2_UseFPS				= spnUseFPS.value
 			WOW2_doVertexNormals	= chkVertexNormals.checked
-			WOW2_Model_Scale		= spnM3Scale.value
-			WOW2_useBones_Points    = chkMaxBonePoint.checked
-            nConvertExe             = txtNConvert.Text
+			WOW2_Model_Scale				= spnM3Scale.value
+			WOW2_useBones_Points  = chkMaxBonePoint.checked
 			--Write Settings to INIFile
 			WriteINI tINIFile.text
 			
@@ -5038,7 +4685,7 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 	)
 )
 
-rollout WOW2_Dialog "M2 Model Import v 3.1" width:400 height:370
+rollout WOW2_Dialog "M2 Model Import v 3.5" width:400 height:370
 (
     label lbl1 "NOTE: Character models do NOT work!!"
     
@@ -5054,7 +4701,7 @@ rollout WOW2_Dialog "M2 Model Import v 3.1" width:400 height:370
 	button bOK "Open" pos:[52,315] width:75 height:35 toolTip:"Open an M2" across:2
 	button bCancel "Cancel" pos:[281,316] width:75 height:35 toolTip:"Close M2 Importer"
 	GroupBox grp4 "Formating" pos:[4,193] width:390 height:65
-	radiobuttons rdoMode "Toolset:" pos:[43,210] width:245 height:30 enabled:true labels:#("Normal", "NeoDex", "Sc2ArtTools") default:2 columns:3
+	radiobuttons rdoMode "Toolset:" pos:[43,210] width:245 height:30 enabled:true labels:#("Normal", "Warcraft III", "Sc2ArtTools") default:2 columns:3
 	
     on WOW2_Dialog close do
 	(
@@ -5116,122 +4763,13 @@ fn WOW2_UI_Main =
 	WOW2_Dialog.placement = #normal
 )
 
-UTILITY m2impexp "WoW M2 Import v3.3"
+utility m2impexp "WoW M2 Import v3.5"
 (
-    ROLLOUT GriffonStudios_M2_MaterialManager "WOW M2 Material Manager" width:600 height:420
-    (
-        label lbl1 "Info: Press the update button when you picked another object in the scene" 
-        label lblPath "No Files Found" width:550 height:30 align:#left 
-        
-        listBox lb "List of other textures found for this model" width:550 height:20 
-        
-        checkbox chkApplyAlpha "Apply alpha" checked:true
-        
-        button btnRefresh "Update" height:35 width:100 across:5
-        button btnApplyTexture "Apply"  height:35 width:100
-        button btnApplyToAll "Apply to all"  height:35 width:100
-        button btnReset "Reset"  height:35 width:100
-        button btnClose "Close" height:35 width:100
-        
-        local selectedObj = undefined
-        local initialMaterial = undefined 
-        local applyAlpha = undefined
-        
-        function FillListBox= 
-        (
-            if $ == undefined then return undefined
-            
-            selectedObj = $
-            initialMaterial = selectedObj.material
-            local diffMap = initialMaterial.diffuseMap.FileName
-            local buffer = getUserPropBuffer selectedObj
-
-            lblPath.text = getfilenamepath diffMap
-            
-            lb.items = #() 
-            
-            if buffer != "" and buffer != undefined then 
-            (
-                local files = FilterString buffer "\n"
-            
-                local selectedItem = 1
-                
-                for i=1 to files.count do
-                (
-                    if files[i] == diffMap then 
-                    (
-                        selectedItem = i
-                        exit
-                    )
-                )
-                lb.items = (for o in files collect (filenameFromPath o))
-                lb.selection = selectedItem
-            )
-        )
-
-        on btnApplyToAll PRESSED do
-        (
-            if $ == undefined then return undefined
-
-            selectedObj = $
-            
-            for obj in objects do
-            
-                if( obj.name == selectedObj.name ) then
-                    obj.material = selectedObj.material 
-            
-        )
-        
-        on chkApplyAlpha changed theState do
-        (
-            if applyAlpha then applyAlpha = false else applyAlpha = true
-        )
-        
-        on btnReset PRESSED do
-        (
-            if ( selectedObj != undefined ) then selectedObj.material = initialMaterial
-        )
-        
-        on btnApplyTexture PRESSED do
-        (
-            if (lb.selected != undefined ) then 
-            (
-                local selected = lblPath.Text + lb.selected
-                local newMat = HelperFunctions.BuildMaterial initialMaterial.name selected applyAlpha
-                selectedObj.material = newMat
-            )
-        )
-        
-        on GriffonStudios_M2_MaterialManager OPEN do
-        (
-            applyAlpha = true
-            FillListBox()
-        )
-        
-        on btnRefresh PRESSED do
-        (
-            FillListBox()
-        )
-        
-        on btnClose PRESSED do 
-        (
-            destroydialog GriffonStudios_M2_MaterialManager
-        )
-        
-        
-    )
-    
-	button bImport    "Import"              height:30 width:100
-    button btnMatMngr "Material Manager"    height:30 width:100
-    
+	button 	bImport "Import" height:30 width:75
+		
 	on bImport pressed do
 	(
 		WOW2_UI_Main()
 	)
-    
-    on btnMatMngr PRESSED do
-    (
-        createdialog GriffonStudios_M2_MaterialManager
-    )
 	
 )
