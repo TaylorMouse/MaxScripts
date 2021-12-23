@@ -41,11 +41,11 @@ Not all of the supported games, listed below are found in the menu, some of them
 - [Heroes of the Storm](https://heroesofthestorm.com/en-us/)
 - [Diablo III](https://diablo3.blizzard.com/en-us/)
 - [World of Warcraft](https://worldofwarcraft.com/en-us/)
-- [Warcraft 3 Reforged](https://playwarcraft3.com/en-us/)
 - [Overwatch](https://playoverwatch.com/en-us/)
 - [Darksburg](https://darksburg.com/)
-- [Nothgard](https://northgard.net/)
+- [Northgard](https://northgard.net/)
 - [League of Legends](https://na.leagueoflegends.com/en-us/)
+- [Manhunt](https://www.rockstargames.com/games/manhunt)
 
 ## External Tools & Resources
 
