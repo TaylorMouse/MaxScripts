@@ -1,19 +1,18 @@
 /*
-    ©2014 ~ 2021 Script by Taylor Mouse
+    ©2014 ~ 2019 Script by Taylor Mouse
 	Starcraft II & Heroes of the Storm model import (.m3 & .m3a)
 	Starcraft and Heroes of the Storm are reigistered trademarks of Blizzard Entertainment
 
 */
 
 /*	Release notes
-
-v3.5 Release to community
-
+	v3.3.6 Fixed a castshadow problem when viewing in realistic mode in later versions of max
     v3.3.5 Fixed a scale factor for the UV and the positioning of hit test fuzzy and vol targets
     v3.3.4 Added a global scale factor since the initial * 100 was too much for some objects
     v3.3.3 Added FixGLsequences function
     v3.3.2 Fixed a bug in the naming conventions for animations
     v3.3.1 Fixed the uv coordination corrections, it no longer uses the basic 2048 conversion (works for 90%)
+
 
 v3.3 Release to community
     
@@ -2426,6 +2425,7 @@ fn Build_VolTarget=
 			obj.wirecolor = color 255 0 0
 			obj.boxmode = on
 			obj.renderable = off
+            obj.castShadows = false
 			freeze obj
 			Hide refBone
 		)
@@ -2491,6 +2491,7 @@ fn Build_HitTestFuzzy=
 			obj.wirecolor = color 0 0 255
 			obj.boxmode = on
 			obj.renderable = off
+            obj.castShadows = false
 			freeze obj
 			hide refBone
 		)
