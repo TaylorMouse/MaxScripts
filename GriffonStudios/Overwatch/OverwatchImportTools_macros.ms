@@ -34,13 +34,11 @@ macroscript FixAnimationAxisUp category:"OverwatchImportTools" tooltip:"Rotate m
 
 macroscript AnimationProperties category:"OverwatchImportTools" tooltip:"Display animation list"
 (
-    if(MyAnimationProperties != undefined) then destroydialog 
-        CreateDialog MyAnimationProperties lockwidth: true 
 )
 
 macroscript OverwatchAboutWindow category:"OverwatchImportTools"
 (
-    messageBox "(c)2017 Created by Taylor Mouse\nSpecial thanks to id-daemon and dynaomi\nfor making this possible" \
+    messageBox "\xa9 2017 Created by Taylor Mouse\nSpecial thanks to id-daemon and dynaomi\nfor making this possible" \
     title: "Overwatch Import Tools"
     
 )

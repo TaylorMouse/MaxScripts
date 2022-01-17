@@ -1,8 +1,7 @@
 fileIn "OverwatchImportTools_importmodel_dialog.ms"
 fileIn "OverwatchImportTools_importanimation_dialog.ms"
 fileIn "OverwatchImportTools_importmultianimation_dialog.ms"
-fileIn "TMsHelperScripts.ms"
-fileIn "TMsAnimationProperties.ms"
+fileIn "Overwatch_HelperScripts.ms"
 fileIn "OverwatchImportTools_macros.ms"
 
 
@@ -31,7 +30,6 @@ function GriffonStudios_GetHelpMenuPosition =
     return undefined
 )
 
-/* get the position of the help menu, to position our menu in front of it */
 function CreateOverwatchToolsMenu=
 (
     local mainMenu = menuMan.getMainMenuBar() 
@@ -52,14 +50,12 @@ function CreateOverwatchToolsMenu=
     owAction1.SetTitle "Import Model"
     owAction2.SetTitle "Import Single Animation"
     owAction3.SetTitle "Import Muliple Animations"
-    owAction4.SetTitle "Open Animation Selection"
     owAction5.SetTitle "About"
     owAction6.SetTitle "Fix Animation Up Axis"
     
     owAction1.setUseCustomTitle true
     owAction2.setUseCustomTitle true
     owAction3.setUseCustomTitle true
-    owAction4.setUseCustomTitle true
     owAction5.setUseCustomTitle true
     owAction6.setUseCustomTitle true
     
@@ -68,8 +64,7 @@ function CreateOverwatchToolsMenu=
     owMenu.addItem owAction3 3
     owMenu.addItem owSeperator 4
     owMenu.addItem owAction6 5
-    owMenu.addItem owAction4 6
-    owMenu.addItem owAction5 7
+    owMenu.addItem owAction5 6
     
 	pos = GriffonStudios_GetHelpMenuPosition()
 	

@@ -1,7 +1,7 @@
 /*
     Blizzard Overwatch Model Importer (.00C)
 
-    © 2017~2018 Script by Taylor Mouse
+    Â© 2017~2018 Script by Taylor Mouse
 
     Special thanks to id-daemon for reviewing and correcting the animation
     Special thanks to dynaomi for the awesome overtool.exe
@@ -20,55 +20,77 @@
 
 
 */
-fileIn "TMsHelperScripts.ms"
+fileIn "Overwatch_HelperScripts.ms"
 
-    STRUCT OWChunk 
-        ( name, Size, Size2, CheckSum, Offset )
-    STRUCT MRNMChunk 
-        ( nr_vertices, nr_submesh_desc, nr_materials, nr_vertex_buffer_desc, nr_index_buffer_desc, vertex_buffer_desc, index_buffer_desc, submesh_desc, submeshes, vertex_buffers, index_buffers );
-    STRUCT OWSubmesh 
-        ( vertex_start, index_start, index_count, nr_indices_to_draw, nr_vertices_to_draw, offset_bone_id, index_buffer_used, vertex_buffer_used, flags, mat_id, LOD_Flag)
-    STRUCT OWVertexBuffer
-        ( nr_input_elements, stream_1_block_size, stream_2_block_size, nr_vertex_elements_desc, vertex_elements_desc, stream_1_desc, stream_2_desc, vertex_element_list )
-    STRUCT OWIndexBuffer
-        ( nr_indices, index_format, offset )
-    STRUCT OWVertexElement
-        ( semantic_type, semantic_index, data_format, stream_number, classification, stride_offset )
-    STRUCT OWHardPoint
-        ( hp_name, parent_bone_name, transformation, scale )
-    STRUCT OWBones
-        ( hierarchy, transformations,bone_scales, bone_ids, animated_bone_ids, bone_refs, nr_bones, nr_bones_rigid, nr_bones_cloth )
+global owHelper
+global owImport
+global DEBUG_MODE
 
-
-      
+struct Overwatch_Import_Model 
+(
     
+--     STRUCT OWHardPoint
+--         ( hp_name, parent_bone_name, transformation, scale )
+--     STRUCT OWBones
+--         ( hierarchy, transformations,bone_scales, bone_ids, animated_bone_ids, bone_refs, nr_bones, nr_bones_rigid, nr_bones_cloth )
    
-    fn ReadChunks stream totalSize=
+    function ReadChunks stream=
     (
         local chunks = #()
-        while (true) do
+        STRUCT OWChunk 
+            ( name, Size, Size2, Flags, Offset )
+        
+        if ( readLong stream != -249346705 ) then (
+            format "Unsupported file type!\n"
+            return undefined        
+        )
+        
+        fSeek stream 0 #seek_end
+        local streamSize = ftell stream
+        fSeek stream 4 #seek_set
+        
+        local modl = owHelper.ReadFourCC stream
+        local totalSize = readLong stream #unsigned /* size without header */
+        local checkSum = readLong stream #unsigned
+        
+        if DEBUG_MODE then format "% (%) @ %\n" modl totalSize (ftell stream )
+        
+        while ( ftell stream < streamSize ) do
         (
             local c = OWChunk()
             
-            c.Name = ReadFourCC stream
+            c.Name = owHelper.ReadFourCC stream
             c.Size = ReadLong stream
             c.Size2 = ReadLong stream
-            c.CheckSum = ReadLong stream
+            c.Flags = ReadLong stream
             c.Offset = ftell stream
 
             append chunks c
-            
-            if (c.Size + c.Offset >= totalSize) then exit
 
-            SkipBytes stream c.Size
+            owHelper.SkipBytes stream c.Size
             
-            format "Chunk % - Size: % - Offset: % \n" c.Name c.Size c.Offset
-            
+            if DEBUG_MODE then format "% (%) @ % \n" c.Name c.Size c.Offset
         )
 
         return chunks
-    )
-
+    ),
+    function ReadMESD stream chunk=
+    (
+        format "Reading %\n" chunk
+        
+        struct OWMESD ( nrMaterials, materialLookup )
+        
+        owHelper.SkipBytes stream (16 * 4 + 12 )
+        
+        local mesd = OWMESD()
+        mesd.nrMaterials = readShort stream 
+        
+        owHelper.SkipBytes stream 18
+        
+        mesd.materialLookup = readLongLong stream
+        if DEBUG_MODE then format "%\n" mesd
+        mesd
+    ),
     function ReadLODs file=
     (
         local stream = fOpen file "rb"
@@ -123,12 +145,26 @@ fileIn "TMsHelperScripts.ms"
         fClose stream
         
         return availableLODflags
-    )
-
-    fn ReadMRNM stream chunk=
+    ),
+    function ReadMRNM stream chunk=
     (
-        local mrnm = MRNMChunk()
+        format "\nReading %\n" chunk.name
+        STRUCT MRNMChunk 
+              ( nr_vertices, nr_submesh_desc, nr_materials, nr_vertex_buffer_desc, nr_index_buffer_desc, 
+                vertex_buffer_desc, index_buffer_desc, submesh_desc, 
+                submeshes, vertex_buffers, index_buffers )
+        STRUCT OWSubmesh 
+              ( vertex_start, index_start, index_count, nr_indices_to_draw, nr_vertices_to_draw, 
+                offset_bone_id, index_buffer_used, vertex_buffer_used, flags, mat_id, LOD_Flag)
+        STRUCT OWVertexBuffer
+              ( nr_input_elements, stream_1_block_size, stream_2_block_size, nr_vertex_elements_desc, 
+                vertex_elements_desc, stream_1_desc, stream_2_desc, vertex_element_list )
+        STRUCT OWIndexBuffer
+              ( nr_indices, index_format, offset )
+        STRUCT OWVertexElement
+              ( semantic_type, semantic_index, data_format, stream_number, classification, stride_offset )
 
+        local mrnm = MRNMChunk()
         local availableLODflags = #()
         
         fSeek stream chunk.offset #seek_set
@@ -142,45 +178,42 @@ fileIn "TMsHelperScripts.ms"
         mrnm.nr_vertex_buffer_desc = ReadByte stream 
         mrnm.nr_index_buffer_desc = ReadByte stream
         
-        SkipBytes stream 100
+        owHelper.SkipBytes stream 100
         
         mrnm.vertex_buffer_desc = (ReadLongLong stream as integer) + chunk.offset
         mrnm.index_buffer_desc = (ReadLongLong stream as integer) + chunk.offset
         mrnm.submesh_desc = (ReadLongLong stream as integer) + chunk.offset
         
-        SkipBytes stream 8
+        owHelper.SkipBytes stream 8
         
         /* 
             read the submesh data 
         */
-        submeshes = #()
+        local submeshes = #()
         fseek stream mrnm.submesh_desc #seek_set
         for i=1 to mrnm.nr_submesh_desc do
         (
             local sm = OWSubMesh()
-                skipBytes stream 52
+            owHelper.skipBytes stream 52
             sm.vertex_start  = readLong stream  #unsigned
             sm.index_start = readShort stream #unsigned
-                skipBytes stream 14
+            owHelper.skipBytes stream 14
             sm.index_count = readShort stream #unsigned
             sm.nr_indices_to_draw = readShort stream #unsigned
             sm.nr_vertices_to_draw = readShort stream #unsigned
             sm.offset_bone_id = readShort stream
             sm.index_buffer_used = readByte stream
-                skipBytes stream 7
+            owHelper.skipBytes stream 7
             sm.vertex_buffer_used = readByte stream
             sm.flags = readByte stream
             sm.mat_id = readByte stream
             sm.LOD_Flag = readByte stream #unsigned
-                skipBytes stream 4
-            
-            
-            
-            appendIfUnique availableLODflags sm.LOD_flag
-            
-            
-            append submeshes sm
+            owHelper.skipBytes stream 4
 
+            appendIfUnique availableLODflags sm.LOD_flag
+            append submeshes sm
+            
+            if DEBUG_MODE then format "%\n" sm
         )
         
         mrnm.submeshes = submeshes
@@ -199,12 +232,13 @@ fileIn "TMsHelperScripts.ms"
             vb.stream_2_block_size     = readByte stream
             vb.nr_vertex_elements_desc = readByte stream
                unk2                    = readByte stream
-            SkipBytes stream 4
+            owHelper.SkipBytes stream 4
             vb.vertex_elements_desc  = ( readLongLong stream #unsigned as integer ) + chunk.offset
             vb.stream_1_desc         = ( readLongLong stream #unsigned as integer ) + chunk.offset
             vb.stream_2_desc         = ( readLongLong stream #unsigned as integer ) + chunk.offset
             
             append vertex_buffers vb
+            if DEBUG_MODE then format "%\n" vb
         )
         mrnm.vertex_buffers = vertex_buffers
         
@@ -220,6 +254,8 @@ fileIn "TMsHelperScripts.ms"
             ib.index_format = (readLong stream) --> if 0 then 2 bytes per index
             ib.offset = (readLongLong stream #unsigned as integer ) + chunk.offset
             append index_buffers ib
+            
+            if DEBUG_MODE then format "%\n" ib
         )
         mrnm.index_buffers = index_buffers
         
@@ -244,13 +280,15 @@ fileIn "TMsHelperScripts.ms"
                 ve.stride_offset   = readShort stream #unsigned 
              
                 append mrnm.vertex_buffers[i].vertex_element_list ve
+                if DEBUG_MODE then format "%\n" ve
             )
         )
         
+        if DEBUG_MODE then format "%\n" mrnm
      
         return mrnm
-    )
-    fn ReadMHRP stream chunk=
+    ),
+    function ReadMHRP stream chunk=
     (
         fSeek stream chunk.offset #seek_set
         
@@ -290,9 +328,8 @@ fileIn "TMsHelperScripts.ms"
 
         )
         return hardpoints
-    )
-
-    fn ReadMSKL stream chunk=
+    ),
+    function ReadMSKL stream chunk=
     (
         --if( buildBones == false ) then return undefined
         
@@ -405,9 +442,8 @@ fileIn "TMsHelperScripts.ms"
 
         return boneStruct
         
-    )
-
-    fn ReadCloth stream chunk=
+    ),
+    function ReadCloth stream chunk=
     (
         fSeek stream chunk.offset #seek_set
         
@@ -448,15 +484,15 @@ fileIn "TMsHelperScripts.ms"
         
         
         
-    )
-    
-    fn ReadMCOL stream chunk=
+    ),
+    function ReadMCOL stream chunk=
     (
         
         
-    )
+    ),
 
-    fn BuildMSKL bone_list=
+    /* BUILD */
+    function BuildMSKL bone_list=
     (
         --clearlistener()
         if( bone_list == undefined ) then return undefined
@@ -519,9 +555,8 @@ fileIn "TMsHelperScripts.ms"
 
             --b.scale = [s,s,s]
         )
-    )
-
-    fn BuildMHRP hardpoint_list=
+    ),
+    function BuildMHRP hardpoint_list=
     (
        if( hardpoint_list == undefined) then return undefined
         
@@ -542,399 +577,369 @@ fileIn "TMsHelperScripts.ms"
             
         )
 
-    )
-
-    function Import_Overwatch_00C file buildMesh buildHardPoints buildBones importLODs=
+    ),
+    function BuildMRNM owMdl =
     (
-        -- amp it up to 2GB of mem
-        heapSize += 200000000 - heapSize
+        format "Building meshes (%)\n" owMdl.MRNM.nr_submesh_desc
         
-        clearlistener()
-        if(file == undefined) then return undefined
+        local mrnm = owMdl.MRNM
+        local mskl = owMdl.MSKL
         
-        stream = fOpen file "rb"
-
-        /* read header : 16 bytes */
-        local magic = readLong stream 
+        local stream = owMdl.stream
         
-        if(magic != -249346705 ) then 
+        for i=1 to mrnm.nr_submesh_desc do
         (
-            format "Unsupported file type!\n"
-            return undefined        
-            
-        )
-        
-        local modl = ReadFourCC stream
-        local totalSize = readLong stream #unsigned /* size without header */
-        local checkSum = readLong stream #unsigned
-        
-        /* Read the chunks to get an overview */
-        local chunks = #()
-        chunks = ReadChunks stream totalSize
-        
-        /* parse each chunk seperatly */
-        local mrnm = undefined
-        local mhrp = undefined
-        local mskl = undefined
-        
-        --print chunks
-        
-        for chunk in chunks do
-        (
-            
-            if (chunk.name == "mskl") then mskl = ReadMSKL stream chunk -- Skeleton
-            if (chunk.name == "MHRP") then mhrp = ReadMHRP stream chunk -- Hard Points
-            if (chunk.name == "MRNM") then mrnm = ReadMRNM stream chunk -- Meshes
-            
-            -- TODO
-            if (chunk.name == "MCOL") then mrnm = ReadMCOL stream chunk -- collision mesh
+            local sm = mrnm.submeshes[i]
+            local vb = mrnm.vertex_buffers[sm.vertex_buffer_used + 1]
+            local ib = mrnm.index_buffers[sm.index_buffer_used + 1]
 
-            --if (chunk.name == "CLTH") then clth = ReadCloth stream chunk -- cloth data
+            local meshLayer = undefined
+            local meshName = undefined
             
-            --         "CLTH" -- cloth
-            --         "MDLC"
-            --         "MESD" -- emitters
-            --         "RGDL" -- Ragdoll
+            local index_list        = #()
+            local faces_list        = #()
+            local textcoord_list    = #()
             
-        )
-        
-        /* build the bones */
-        if (buildBones) then BuildMSKL mskl 
-        
-        /* build hard points, do this AFTER building the bones, the hard points use them as parent objects */
-        if (buildHardPoints) then BuildMHRP mhrp
-
-        /* Read and build the actual model */
-        if(buildMesh == true and (getFileNameType file != ".007" )) then
-        (
-            format "Nbr of Submeshes : %\n" mrnm.nr_submesh_desc
+            local vertex_list       = #()
+            local normal_list       = #()
+            local vertex_bones      = #()
+            local vertex_weights    = #()
+            local nr_vertices = 0
             
-            for i=1 to mrnm.nr_submesh_desc do
+            
+            meshLayer = owHelper.CreateLayer ("LOD - " + sm.LOD_Flag as string)
+            meshName = "LOD - " + (sm.LOD_Flag as string) +  " mesh_" + (i as string)
+            
+            if(sm.LOD_Flag < 0 and availableLODflags.Count > 1 ) then
+            (
+                    meshLayer = owHelper.CreateLayer "Collision"
+                    meshName = "CollisionBox_" + (i as string)
+                    meshLayer.IsHidden = true
+            )            
+            
+            Format "Reading data for % \n" meshName
+            
+            -- read tris
+            local offsetIndices = ib.offset + sm.index_start * 2
+            fSeek stream offsetIndices #seek_set
+            
+            --format "Offset %\n" offsetIndices
+            
+            format " - reading indices %\n" sm.nr_indices_to_draw
+            
+            for idx=1 to sm.nr_indices_to_draw do
+                append index_list (( readShort stream #unsigned ) + 1 )
+            
+            --print index_list
+                
+            for f=1 to index_list.count by 3 do
+            (
+                local a = index_list[f]
+                local b = index_list[f+1]
+                local c = index_list[f+2]
+            -- weird way of getting the nbr of vertices, but didn't find another :( 
+                if( a > nr_vertices ) then nr_vertices = a
+                if( b > nr_vertices ) then nr_vertices = b
+                if( c > nr_vertices ) then nr_vertices = c
+                append faces_list [a, b, c]
+            )
+            
+            -- read vertices 
+            for j=1 to vb.vertex_element_list.count do
             (
                 
-                local sm = mrnm.submeshes[i]
+                local element = vb.vertex_element_list[j]
+                local offsetStream = 0
+                local streamBlock = 0
                 
-                local vb = mrnm.vertex_buffers[sm.vertex_buffer_used + 1]
-                local ib = mrnm.index_buffers[sm.index_buffer_used + 1]
-
-                local meshLayer = undefined
-                local meshName = undefined
-                
-                local index_list        = #()
-                local faces_list        = #()
-                local textcoord_list    = #()
-                
-                local vertex_list       = #()
-                local normal_list       = #()
-                local vertex_bones      = #()
-                local vertex_weights    = #()
-                local nr_vertices = 0
-                
-                
-                -- only render out the requested LOD's
-                if ( (finditem importLODs sm.LOD_Flag) == 0 ) then continue
-                
-                --if( sm.LOD_Flag != preferredLODFlag and preferredLODFlag != 0) then continue
-                
-               
-                meshLayer = CreateLayer ("LOD - " + sm.LOD_Flag as string)
-                meshName = "LOD - " + (sm.LOD_Flag as string) +  " mesh_" + (i as string)
-                
-                if(sm.LOD_Flag < 0 and availableLODflags.Count > 1 ) then
+                if(element.stream_number == 0) then 
                 (
-                        meshLayer = CreateLayer "Collision"
-                        meshName = "CollisionBox_" + (i as string)
-                        meshLayer.IsHidden = true
-                )            
-                
-                Format "Reading data for % \n" meshName
-                
-                /* read tris */
-                local offsetIndices = ib.offset + sm.index_start * 2
-                fSeek stream offsetIndices #seek_set
-                
-                --format "Offset %\n" offsetIndices
-                
-                format " - reading indices %\n" sm.nr_indices_to_draw
-                
-                for idx=1 to sm.nr_indices_to_draw do
-                    append index_list (( readShort stream #unsigned ) + 1 )
-                
-                --print index_list
+                    streamBlock = vb.stream_1_block_size
+                    offsetStream = vb.stream_1_desc + sm.vertex_start * streamBlock
                     
-                for f=1 to index_list.count by 3 do
-                (
-                    local a = index_list[f]
-                    local b = index_list[f+1]
-                    local c = index_list[f+2]
-                /* weird way of getting the nbr of vertices, but didn't find another :( */
-                    if( a > nr_vertices ) then nr_vertices = a
-                    if( b > nr_vertices ) then nr_vertices = b
-                    if( c > nr_vertices ) then nr_vertices = c
-                    append faces_list [a, b, c]
                 )
-                
-                /* read vertices */
-                for j=1 to vb.vertex_element_list.count do
+                if(element.stream_number == 1) then 
                 (
+                    streamBlock = vb.stream_2_block_size
+                    offsetStream = vb.stream_2_desc + sm.vertex_start * streamBlock
                     
-                    local element = vb.vertex_element_list[j]
-                    local offsetStream = 0
-                    local streamBlock = 0
-                    
-                    if(element.stream_number == 0) then 
-                    (
-                        streamBlock = vb.stream_1_block_size
-                        offsetStream = vb.stream_1_desc + sm.vertex_start * streamBlock
-                        
-                    )
-                    if(element.stream_number == 1) then 
-                    (
-                        streamBlock = vb.stream_2_block_size
-                        offsetStream = vb.stream_2_desc + sm.vertex_start * streamBlock
-                        
-                    )
+                )
 
-                    fseek stream offsetStream #seek_set
-                    
-                    -- POSITION : R32G32B32_FLOAT
-                    if( element.semantic_type == 0) then
+                fseek stream offsetStream #seek_set
+                
+                -- POSITION : R32G32B32_FLOAT
+                if( element.semantic_type == 0) then
+                (
+                    for v=1 to nr_vertices do
                     (
-                        for v=1 to nr_vertices do
-                        (
-                            fseek stream element.stride_offset #seek_cur
+                        fseek stream element.stride_offset #seek_cur
 
-                            local x = readFloat stream * 50
-                            local y = readFloat stream * 50
-                            local z = readFloat stream * 50
-                    
-                            append vertex_list [x, y, z]
-                           
-                            SkipBytes stream ( streamBlock - element.stride_offset - 12 )
-                        )
+                        local x = readFloat stream * 50
+                        local y = readFloat stream * 50
+                        local z = readFloat stream * 50
+                
+                        append vertex_list [x, y, z]
                        
+                        owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 12 )
                     )
-
-                    -- NORMALS : R8G8B8A8_SNORM
-                    if( element.semantic_type == 1) then
-                    (
-                        for v=1 to nr_vertices do
-                        (
-                            fseek stream element.stride_offset #seek_cur
-                            
-                            local n1 = (readByte stream #signed ) / 255.0
-                            local n2 = (readByte stream #signed ) / 255.0
-                            local n3 = (readByte stream #signed ) / 255.0
-                            local n4 = (readByte stream #signed ) / 255.0
-                            
-                            append normal_list [n1, n2, n3, n4]
-                        
-                            SkipBytes stream ( streamBlock - element.stride_offset - 4 )
-                        )
-                    )
-                    
-                    -- COLOR
-                    if( element.semantic_type == 3) then
-                    (
-                        for v=1 to nr_vertices do
-                        (
---                             fseek stream element.stride_offset #seek_cur
---                            
---                         
---                             SkipBytes stream ( streamBlock - element.stride_offset - 4 )
-                        )
-                    )
-                    
-                      -- TANGENTS: not supported
-                    if( element.semantic_type == 3) then
-                    (
-                    )
-                    
-                    -- BONE_INDICES : R8G8B8A8_UINT
-                    if( element.semantic_type == 4) then
-                    (
-                        for v=1 to nr_vertices do
-                        (
-                            fseek stream element.stride_offset #seek_cur
-                            
-                            local i1 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
-                            local i2 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
-                            local i3 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
-                            local i4 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
-                            
-                            append vertex_bones [i1, i2, i3, i4]
-                            
-                            SkipBytes stream ( streamBlock - element.stride_offset - 4 )
-                        )
-                    )
-                    
-                    -- BONE_WEIGHTS : R8G8B8A8_UNORM
-                    if( element.semantic_type == 5) then
-                    (
-                        for v=1 to nr_vertices do
-                        (
-                            fseek stream element.stride_offset #seek_cur
-                            
-                            local f1 = (readByte stream #unsigned ) / 255.0
-                            local f2 = (readByte stream #unsigned ) / 255.0
-                            local f3 = (readByte stream #unsigned ) / 255.0
-                            local f4 = (readByte stream #unsigned ) / 255.0
-                        
-                            append vertex_weights [f1, f2, f3, f4]
-                            
-                            SkipBytes stream ( streamBlock - element.stride_offset - 4 )
-                        )
-                    )
-                    
-                    -- TEXCOORD : R16G16_FLOAT
-                    if( element.semantic_type == 9) then
-                    (
-                        local textcoord = #()
-                        for v=1 to nr_vertices do
-                        (
-                            fseek stream element.stride_offset #seek_cur
-                        
-                            local u = ReadHalfFloat stream
-                            local v = ReadHalfFloat stream
-                            
-                            append textcoord [u,1-v,0]
-                        
-                            SkipBytes stream ( streamBlock - element.stride_offset - 4 )
-                        )
-                        append textcoord_list textcoord
-                    )
-                    
                    
                 )
 
-                /* fix weights and bone indices for max */
-                if( vertex_weights.count > 0 ) then 
+                -- NORMALS : R8G8B8A8_SNORM
+                if( element.semantic_type == 1) then
                 (
-                    
-                    local new_vertex_weights = #()
-                    local new_vertex_bones = #()
-                    
                     for v=1 to nr_vertices do
                     (
-                        local ws = #()
-                        local bs = #()
+                        fseek stream element.stride_offset #seek_cur
                         
+                        local n1 = (readByte stream #signed ) / 255.0
+                        local n2 = (readByte stream #signed ) / 255.0
+                        local n3 = (readByte stream #signed ) / 255.0
+                        local n4 = (readByte stream #signed ) / 255.0
                         
-                        local vWeights = vertex_weights[v]
-                        local vBones = vertex_bones[v]
-
-                       
-                        if (vWeights[1] > 0 ) then 
-                        (
-                            append ws vWeights[1]
-                            append bs vBones[1]
-                        )
-                        if (vWeights[2] > 0 ) then
-                        (
-                            append ws vWeights[2]
-                            append bs vBones[2]
-                        )
-                        if (vWeights[3] > 0 ) then 
-                        (
-                            append ws vWeights[3]
-                            append bs vBones[3]
-                        )
-                        if (vWeights[4] > 0 ) then 
-                        (
-                            append ws vWeights[4]
-                            append bs vBones[4]
-                        )
-
-                        append new_vertex_weights ws
-                        append new_vertex_bones bs
-
-                    )
+                        append normal_list [n1, n2, n3, n4]
                     
-                    vertex_weights = new_vertex_weights
-                    vertex_bones = new_vertex_bones
+                        owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 4 )
+                    )
                 )
                 
-                format "Building Mesh '%'\n" meshName
-
-                if( buildMesh == true ) then
+                -- COLOR
+                if( element.semantic_type == 3) then
                 (
-                                        
-                    local theMesh = mesh vertices:vertex_list name:meshName faces:faces_list vnorms:normal_list -- tverts:textcoord_list[1] 
-                    theMesh.WireColor = Color (random 0 250) (random 0 255) (random 0 250)
-
-                    
-                    local numUVMaps = textcoord_list.count + 1
-                    meshop.setNumMaps theMesh numUVMaps
-                    
-                    Format "Number of uv texture coordinates mappings: %\n" textcoord_list.count
-                    for t=1 to textcoord_list.count do
+                    for v=1 to nr_vertices do
                     (
-                        Format "Applying uv texture coordinates mapping %\n" t
-                        local uvMap = t
-                        
-                        meshop.setMapSupport theMesh uvMap true 
-                        for x=1 to textcoord_list[uvMap].count do
-                            meshop.setMapVert theMesh uvMap x textcoord_list[uvMap][x]
-
-                        meshop.buildMapFaces theMesh uvMap
-                        update theMesh
+--                             fseek stream element.stride_offset #seek_cur
+--                            
+--                         
+--                             owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 4 )
                     )
-                    
-                    meshLayer.AddNode theMesh
-                    
-                    if( vertex_weights.count > 0 ) then
+                )
+                
+                  -- TANGENTS: not supported
+                if( element.semantic_type == 3) then
+                (
+                )
+                
+                -- BONE_INDICES : R8G8B8A8_UINT
+                if( element.semantic_type == 4) then
+                (
+                    for v=1 to nr_vertices do
                     (
-                        format " - Applying bones and weights to the vertices\n"
-                        try
+                        fseek stream element.stride_offset #seek_cur
+                        
+                        local i1 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
+                        local i2 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
+                        local i3 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
+                        local i4 = (readByte stream #unsigned) + 1 + sm.offset_bone_id
+                        
+                        append vertex_bones [i1, i2, i3, i4]
+                        
+                        owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 4 )
+                    )
+                )
+                
+                -- BONE_WEIGHTS : R8G8B8A8_UNORM
+                if( element.semantic_type == 5) then
+                (
+                    for v=1 to nr_vertices do
+                    (
+                        fseek stream element.stride_offset #seek_cur
+                        
+                        local f1 = (readByte stream #unsigned ) / 255.0
+                        local f2 = (readByte stream #unsigned ) / 255.0
+                        local f3 = (readByte stream #unsigned ) / 255.0
+                        local f4 = (readByte stream #unsigned ) / 255.0
+                    
+                        append vertex_weights [f1, f2, f3, f4]
+                        
+                        owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 4 )
+                    )
+                )
+                
+                -- TEXCOORD : R16G16_FLOAT
+                if( element.semantic_type == 9) then
+                (
+                    local textcoord = #()
+                    for v=1 to nr_vertices do
+                    (
+                        fseek stream element.stride_offset #seek_cur
+                    
+                        local u = owHelper.ReadHalfFloat stream
+                        local v = owHelper.ReadHalfFloat stream
+                        
+                        append textcoord [u,1-v,0]
+                    
+                        owHelper.SkipBytes stream ( streamBlock - element.stride_offset - 4 )
+                    )
+                    append textcoord_list textcoord
+                )
+                
+               
+            )
+
+            -- fix weights and bone indices for max
+            if( vertex_weights.count > 0 ) then 
+            (
+                
+                local new_vertex_weights = #()
+                local new_vertex_bones = #()
+                
+                for v=1 to nr_vertices do
+                (
+                    local ws = #()
+                    local bs = #()
+                    
+                    
+                    local vWeights = vertex_weights[v]
+                    local vBones = vertex_bones[v]
+
+                   
+                    if (vWeights[1] > 0 ) then 
+                    (
+                        append ws vWeights[1]
+                        append bs vBones[1]
+                    )
+                    if (vWeights[2] > 0 ) then
+                    (
+                        append ws vWeights[2]
+                        append bs vBones[2]
+                    )
+                    if (vWeights[3] > 0 ) then 
+                    (
+                        append ws vWeights[3]
+                        append bs vBones[3]
+                    )
+                    if (vWeights[4] > 0 ) then 
+                    (
+                        append ws vWeights[4]
+                        append bs vBones[4]
+                    )
+
+                    append new_vertex_weights ws
+                    append new_vertex_bones bs
+
+                )
+                
+                vertex_weights = new_vertex_weights
+                vertex_bones = new_vertex_bones
+            )
+            
+            format "Building Mesh '%'\n" meshName
+
+            local theMesh = mesh vertices:vertex_list name:meshName faces:faces_list vnorms:normal_list -- tverts:textcoord_list[1] 
+            theMesh.WireColor = Color 128 128 128
+            
+            local numUVMaps = textcoord_list.count + 1
+            meshop.setNumMaps theMesh numUVMaps
+            
+            Format "Number of uv texture coordinates mappings: %\n" textcoord_list.count
+            for t=1 to textcoord_list.count do
+            (
+                Format "Applying uv texture coordinates mapping %\n" t
+                local uvMap = t
+                
+                meshop.setMapSupport theMesh uvMap true 
+                for x=1 to textcoord_list[uvMap].count do
+                    meshop.setMapVert theMesh uvMap x textcoord_list[uvMap][x]
+
+                meshop.buildMapFaces theMesh uvMap
+                update theMesh
+            )
+            
+            meshLayer.AddNode theMesh
+            
+            if( vertex_weights.count > 0 and mskl != undefined ) then
+            (
+                format " - Applying bones and weights to the vertices\n"
+                try
+                (
+                    if(mskl.animated_bone_ids.count > 0) then
+                    (
+                        with redraw off
                         (
-                            if(mskl.animated_bone_ids.count > 0) then
+                            local skinMod = skin()
+                            max modify mode --> DO NOT FORGET THIS, it requires the tab to be selected
+                            addmodifier theMesh skinMod
+                            modPanel.setCurrentObject skinMod
+
+                            local nr_anim_bones = mskl.animated_bone_ids.count
+
+                            for b = 1 to nr_anim_bones do
                             (
-                                with redraw off
-                                (
-                                    local skinMod = skin()
-                                    max modify mode --> DO NOT FORGET THIS, it requires the tab to be selected
-                                    addmodifier theMesh skinMod
-                                    modPanel.setCurrentObject skinMod
+                                local boneRef = mskl.bone_refs[mskl.animated_bone_ids[b]]
+                            
+                                if(boneRef != undefined) then 
+                                    skinops.addbone skinMod boneRef 1 
+                            )
 
-                                    local nr_anim_bones = mskl.animated_bone_ids.count
-                                    
-                                    
-                                    for b = 1 to nr_anim_bones do
-                                    (
-                                        local boneRef = mskl.bone_refs[mskl.animated_bone_ids[b]]
-                                    
-                                        if(boneRef != undefined) then 
-                                            skinops.addbone skinMod boneRef 1 
-                                    )
-
-                                    modPanel.setCurrentObject skinMod
-                                    
-                                    for v = 1 to nr_vertices do
-                                    (
-                                        try(
-                                            skinOps.ReplaceVertexWeights skinMod v vertex_bones[v] vertex_weights[v]
-                                        )
-                                        catch()
-                                    )
-                                    
-                                    update theMesh
+                            modPanel.setCurrentObject skinMod
+                            
+                            for v = 1 to nr_vertices do
+                            (
+                                try(
+                                    skinOps.ReplaceVertexWeights skinMod v vertex_bones[v] vertex_weights[v]
                                 )
+                                catch()
                             )
                             
-                        ) catch( format "\n[Error]\n%\n\n" (getCurrentException()) )
+                            update theMesh
+                        )
                     )
                     
-                    meshop.deleteIsoVerts theMesh
-                    
-                )
-                format "\n"
+                ) catch( format "\n[Error]\n%\n\n" (getCurrentException()) )
             )
+            
+            meshop.deleteIsoVerts theMesh
+               
         )
+        
+        
+    ),
+    function Import_00C file=
+    (
+        if ( file == undefined ) then return undefined
+
+        owHelper = Overwatch_Helpers()
+        owImport = Overwatch_Import_Model()
+
+        struct _ow00C ( stream, MDLC, MRNM, MHRP, MSKL, MCOL, CLTH, MESD, RGDL )
+        
+        clearlistener()        
+        local stream = fOpen file "rb"
+        
+        /* Read the chunks to get an overview */
+        local chunks = owImport.ReadChunks stream
+        local owMdl = _ow00c()
+        
+        /* Parse the chunks */
+        for chunk in chunks do
+        (
+            if (chunk.name == "MESD") then owMdl.MESD = owImport.ReadMESD stream chunk -- material
+            if (chunk.name == "MRNM") then owMdl.MRNM = owImport.ReadMRNM stream chunk -- Meshes
+--             if (chunk.name == "MSKL") then owMdl.MSKL = owImport.ReadMSKL stream chunk -- Skeleton
+--             if (chunk.name == "MHRP") then owMdl.MRHP = owImport.ReadMHRP stream chunk -- Hard Points
+--             if (chunk.name == "MCOL") then owMdl.MCOl = owImport.ReadMCOL stream chunk -- Collision mesh
+--             if (chunk.name == "CLTH") then owMdl.CLTH = owImport.ReadCLTH stream chunk -- Cloth data
+--             if (chunk.name == "RGDL") then owMdl.RGDL = owImport.ReadRGDL stream chunk -- Ragdoll
+--             if (chunk.name == "MESD") then owMdl.MESD = owImport.ReadMESD stream chunk -- Emitters
+            
+
+        )
+        owMdl.stream = stream
+        
+        /* build the bones */
+--         owImport.BuildMSKL mskl 
+        
+        /* build hard points, do this AFTER building the bones, the hard points use them as parent objects */
+--         owImport.BuildMHRP mhrp
+
+        /* Read and build the actual model */
+        owImport.BuildMRNM owMdl
+
         fClose stream 
-        try (FixYup()) catch ()
+        try (owHelper.FixYup()) catch ()
     )
 
-f = @"F:\Blizzard\Overwatch\Extracted\Heroes\Zenyatta\Ascendant\000000000ACE.00C"
-
--- Import_Overwatch_00C file buildMesh buildHardPoints buildBones importLODs
-    Import_Overwatch_00C f true true true #(8)
+)
+--DEBUG_MODE = true
+--Overwatch_Import_Model.Import_00C @"G:\Game Dev\Griffon Studios\My 3D Models\Warcraft\WC3 Reforged\From Overwatch\Danath Trollbane\000000004887.00C"
