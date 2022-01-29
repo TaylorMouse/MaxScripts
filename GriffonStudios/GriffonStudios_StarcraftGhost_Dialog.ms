@@ -31,7 +31,7 @@ rollout GriffonStudios_StarcraftGhostModelImport_Rollout "Import Starcraft Ghost
         if ( STARCRAFT_II_ARTTOOLS_INSTALLED == undefined or STARCRAFT_II_ARTTOOLS_INSTALLED == false ) then 
         (
             cbUseSC2ArtTools.enabled = false
-            cbUseSC2ArtTools.checked = falsep
+            cbUseSC2ArtTools.checked = false
         )
 	)
     
