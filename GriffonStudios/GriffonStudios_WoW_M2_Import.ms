@@ -2,6 +2,9 @@
 
 Version History
 ---------------
+3.6 - April 7th 2020 (Taylor Mouse)
+- Support for HD models
+
 3.5 - Dec 16th 2021 (Taylor Mouse)
 - Bugfixes
 
@@ -65,7 +68,7 @@ global WOW2_ImportAsM3 		= true
 global WOW2_doVertexNormals = true
 global WOW2_useFPS 			= 30	-- fps to rescale animations to
 global WOW2_flipuv_y 		= true  -- change this if textures appear upside down
-global WOW2_Model_Scale     = 100.0
+global WOW2_Model_Scale     = 25.0
 global M2_V2                = 260  
 global WOW2_sc2vers         = 0.4
 global filename
@@ -158,6 +161,36 @@ function DisplayWoWAttachments=
 RegisterRedrawViewsCallback DisplayWoWAttachments
                                 
 
+function WOW2_RenameBones=
+(
+    function ReplaceString baseString old new=
+    (
+        local parts = filterString baseString old
+        local newString = ""
+        for p=1 to parts.count - 1 do
+            newString = newString + parts[p] + new
+        
+        newString = newString + parts[parts.count]
+        
+        newString
+    )
+    local points = #()
+    for obj in objects where classof obj == Point and obj.parent != undefined do append points obj
+        
+    for obj in points do
+    (
+        if ( findString obj.parent.name "any" != undefined ) then
+        (
+            local refPos = (findstring obj.name " Ref" ) - 1
+            if refPos == undefined then refPos = -1
+            local newName = substring obj.name 1 refPos
+            local newBoneName = "bone_" + ( ReplaceString newName " " "_" )
+            obj.parent.name = newBoneName
+        )
+    )
+    
+)
+
 fn WOW2_toUpper str =
 (
    if str == undefined do return undefined
@@ -208,6 +241,7 @@ fn sortSpreadsheet data dataField type =
 	)
 	
 	local dataOrder = #()
+    if ( data.count ==0 ) then return undefined
 	dataOrder[data.count] = 0
 	for i = 1 to data.count do
 	(
@@ -786,7 +820,7 @@ struct WOW2_Header
 		
         ClearListener()
         
-        print header
+        --print header
         
         
 		return header
@@ -1564,7 +1598,9 @@ struct WOW2_ParticleEmitter
 
 struct WOW2_Submesh
 (
-	id, indverts, nverts, indfaces, nfaces,
+	id, 
+    show = false, --> for MAX only by TM
+    indverts, nverts, indfaces, nfaces,
 	nbones, indbones,
 	s1,b1,
 	boundSphere,
@@ -1603,8 +1639,17 @@ struct WOW2_Submesh
 				subid += 1
 			)
 			submesh.name = meshTypes[subid]
-			
+			if submesh.id < 2 then submesh.name = "Main"
+            if submesh.id > 1 and submesh.id < 100  then submesh.name = "Hairstyle"
+            if submesh.id > 67000 and submesh.id < 67500  then submesh.name = "BigBelt"
+            if submesh.id > 67500 then submesh.name = "Body"
+                
+            
+            if ( i > 1 and smarray[i-1].name != submesh.name ) then submesh.show = true
+            if submesh.id < 2  then submesh.show = true
+            
 			smarray[i] = submesh
+            --print submesh
 		)
 		
 		return smarray
@@ -1913,17 +1958,7 @@ fn WOW2_Create_Submesh smesh skinIndices skinFaces mVerts smName =
 	local msh = mesh vertices:vertList faces:faceList name:smName 
 	msh.WireColor = Color (random 0 128) (random 64 192) (random 0 128)
 
--- 	if (WOW2_doVertexNormals == true) then
--- 	(
--- 		try
--- 		(
--- 			WOW2_SetVertexNormals msh smesh.m2verts
--- 		)
--- 		catch
--- 		(
--- 			echo ("ERROR# Setting vertex normals failed! " + getCurrentException())
--- 		)
--- 	)
+    if smesh.show == false then hide msh
 	
 	Update msh
 	redrawViews()
@@ -2279,12 +2314,14 @@ fn WOW2_Get_Anims anims =
                 
 		local anim = anims[i]
 
-        
 		if (dbcdata != undefined and anim.animID + 1 <= dbcdata.records.count and dbcdata.records[anim.animID + 1].name != undefined) then
 			anim.name = (dbcdata.records[anim.animID + 1].name)
 		else
-			anim.name = "Animation_" + ((i - 1) as string)
+        (
+			--anim.name = "Animation_" + ((i - 1) as string)
+            anim.name = "Animation_" + (anim.animID as string)
 		
+        )
 		-- update original array
 		anims[i] = anim
 	)
@@ -2791,64 +2828,55 @@ fn WOW2_Create_Particle_Material particle texture flipbookOn =
 
 fn WOW2_CreateWc3ParticleEmitter  p texture anims =
 (
+    function parseValue particle =
+    (
+        try (
+            if particle.val == undefined then return 0
+            if particle.animated == false then return particle.val
+            if particle.animated == true then return particle.val.keys[1][1]
+            ) catch ( return 0.0 )
+    )
+    
+    print p
 	local pos = WOW2_convert_Position p.position
 	local enableFlipbook = (bit.or p.rows p.cols) > 1
-	--WOW2_convert_Position pos
-	local part = BlizzParticle2 pos:pos
+
+	local part = WC3RefEmitter pos:pos --> references the new Warcraft 3 Reforged Particle emitter
+
 	part.name = "BlizzPart0" + (p.id as string)
+
 	local texName = getFilenameFile texture.texFile 
-	part.texture = WOW2_Assign_Map texName add:""
+	part.texture = ""--WOW2_Assign_Map texName add:""
+
 	part.particleType = p.HeadorTail + 1
-	part.rows = p.rows
-	part.cols = p.cols
+	part.rowCount = p.rows
+	part.colCount = p.cols
 	part.Unshaded = on
-	local blendMode = 0
-	case (p.blend) of
-	(
-		0: blendMode = 1
-		1: blendMode = 1
-		2: blendMode = 2
-		3: blendMode = 2
-		4: blendMode = 5
-		5: blendMode = 3
-		6: blendMode = 4
-		default: blendMode = 1
-	)
-	part.path = ""
-	part.filtermode = blendMode
-	--part.ParticleSpace = (bit.get p.flags 3)
-	local resizeFunc = fn tmp2 a = a*WOW2_Model_Scale
-	WOW2_convertParam p.emissionspeed resizeFunc
-	WOW2_setUpParameter part p.emissionspeed #Speed anims
-	WOW2_convertParam p.Vertical_range radToDeg
-	WOW2_setUpParameter part p.Vertical_range #Coneangle anims
-	WOW2_setUpParameter part p.Gravity #gravity anims
-	WOW2_getStaticParameter part #Life p.Lifespan
-	WOW2_setUpParameter part p.Emissionrate #PartsEmit anims
-	if p.Emitter_type != 2 then
-	(
-		WOW2_convertParam p.Emissionarea_length resizeFunc
-		WOW2_convertParam p.Emissionarea_width resizeFunc
-		WOW2_setUpParameter part p.Emissionarea_length #length anims
-		WOW2_setUpParameter part p.Emissionarea_width #width anims
-	)
-	else
-	(
-		part.length = 1.0
-		part.width = 1.0
-	)
-	if (bit.get p.flags 13) then --XY Quads, face emitter direction
-		part.XYQuads = on
-	part.ParticleSpace = (not (bit.get p.flags 7))
-	local colors = p.Colors.keys
+    part.emissionRate = parseValue p.Emissionrate
+    part.speed = parseValue p.emissionspeed
+    part.gravity = parseValue p.gravity
+    part.lifespan = parseValue p.lifespan
+    
+    part.length = (parseValue p.Emissionarea_length) * WOW2_Model_Scale
+    part.width = (parseValue p.Emissionarea_width)  * WOW2_Model_Scale
+    
+    if part.length <=1.0 then part.length = WOW2_Model_Scale
+    if part.width <=1.0 then part.width = WOW2_Model_Scale
+        
+    if (bit.get p.flags 13) then part.XYQuads = true
+    
+    local colors = p.Colors.keys
 	part.StartColor = colors[1]
-	part.MiddleColor = colors[2]
+	part.MidColor = colors[2]
 	part.EndColor = colors[3]
-	local opacity = p.UOpacity.keys
+    
+    local opacity = p.UOpacity.keys
 	part.StartAlpha = opacity[1]
-	part.MiddleAlpha = opacity[2]
+	part.MidAlpha = opacity[2]
 	part.EndAlpha = opacity[3]
-	fn getScale sxy sa =
+    
+    
+    fn getScale sxy sa =
 	(
 		local result = #(0.0,0.0,0.0)
 		for i = 1 to 3 do
@@ -2856,16 +2884,22 @@ fn WOW2_CreateWc3ParticleEmitter  p texture anims =
 		result
 	)
 	local sc = getScale p.Vec2DScale.keys p.scale
-	part.StartScale = sc[1]
-	part.MiddleScale = sc[2]
-	part.EndScale = sc[3]
-	local fb = p.rows*p.cols
-	part.endLifespanHead = fb/2
-	part.startDecayHead = fb/2
-	part.endDecayHead = fb
-	part.endLifespanTail= fb/2
-	part.startDecayTail = fb/2
-	part.endDecayTail = fb
+	part.startSize = sc[1]
+	part.midSize = sc[2]
+	part.endSize = sc[3]
+    
+    local fb = p.rows*p.cols
+	part.endLifespanUVAnim = fb/2
+	part.endTailUVAnim= fb/2
+    part.startDecayUVAnim = fb/2
+	part.endDecayUVAnim = fb
+    part.startTailDecayUVAnim = fb/2
+	part.endTailDecayUVAnim = fb
+    
+    part.PARTICLE_USE_MODEL_SPACE = (not (bit.get p.flags 7))
+    
+    part.coneAngle = parseValue p.Vertical_range
+
 	p.maxObj = part
 	part
 )
@@ -3152,16 +3186,17 @@ fn WOW2_Create_ParticleEmitters mdata mbones =
 	case WOW2_ImportMode of
 	(
 		#NeoDex: createFunc = WOW2_CreateWc3ParticleEmitter
-		#Sc2ArtTools: createFunc = WOW2_CreateSc2ParticleEmitter
-		#WoW: createFunc = (fn tmp a b c = undefined)
-		default: createFunc = undefined
+		#Sc2ArtTools: createFunc = WOW2_CreateWc3ParticleEmitter --WOW2_CreateSc2ParticleEmitter
+		#WoW: createFunc = WOW2_CreateWc3ParticleEmitter --(fn tmp a b c = undefined)
+		default: createFunc = WOW2_CreateWc3ParticleEmitter
 	)
 	local anims = mdata.anims
 	local particleLayer = WOW2_Setup_Layer "Particle Emitters"
 	for p in mdata.Particles do
 	(
+        
 		local b = mbones[p.bone + 1].maxObj
-		--local texture = mdata.Textures[p.texture+1]
+		local texture = mdata.Textures[p.texture+1]
 		local part = createFunc p texture anims
 		part.parent = b
 		particleLayer.addNode part
@@ -3224,8 +3259,8 @@ fn WOW2_AddBehavior behaviorType newName: unsupplied =
 
 fn WOW2_SetBillboardedSc2 billboarded =
 (
-	local behavior = WOW2_AddBehavior #Billboard_Behavior
-	behavior.addBones billboarded
+	--local behavior = WOW2_AddBehavior #Billboard_Behavior
+	--behavior.addBones billboarded
 )
 
 mapped fn WOW2_SetBillboardedWc3 bone=
@@ -3543,6 +3578,15 @@ fn WOW2_Create_Mesh =
 (
 	step = "Create Mesh"
 
+    -- fix the indFaces, as the new character models have some issues with this.
+    for i=1 to skndata.Submeshes.count do (
+        if i> 1 then (
+             skndata.Submeshes[i].indfaces = skndata.Submeshes[i-1].indfaces + skndata.Submeshes[i-1].NFaces
+         )
+        --format "TM INFO: %\n" skndata.Submeshes[i]
+       
+    )
+        
 	echo "Creating submeshes..."
 	local submeshes = skndata.submeshes
 	local meshesLayer = WOW2_Setup_Layer "Meshes"
@@ -3803,17 +3847,44 @@ global GLArr = #(
 			"N","O","P","Q","R","S","T","U","V","X","Y","Z"
 		)
 
+function GetLastKeyFrame =
+(
+    local lastKeyFrame = 0
+    for obj in objects do 
+    (
+        try(
+            if obj.pos.controller != undefined and obj.pos.controller.keys != undefined then 
+            (
+                local lastKey = obj.pos.controller.keys.count
+                local keyFrame = obj.pos.controller.keys[lastKey].time
+                if ( keyFrame > lastKeyFrame ) then 
+                    lastKeyFrame = keyFrame
+            )
+            if obj.rotation.controller != undefined and obj.rotation.controller.keys != undefined then 
+            (
+                local lastKey = obj.rotation.controller.keys.count
+                local keyFrame = obj.rotation.controller.keys[lastKey].time
+                if ( keyFrame > lastKeyFrame ) then 
+                    lastKeyFrame = keyFrame
+            )
+        )catch()
+    )
+    lastKeyFrame as integer / TicksPerFrame
+)
+        
 fn WOW2_Create_GlobalLoopAnimationsSc2 gb anims =
 (
 	fn getStartTime anims =
 	(
 		local start = undefined
-		local n = anims.count
-		while ((not anims[n].process) and n > 0) do n = n - 1
-		if n > 0 then
-		(
-			start = anims[n].cend + 20f
-		) else start = 0
+        try (
+            local n = anims.count
+            while ((not anims[n].process) and n > 0) do n = n - 1
+            if n > 0 then
+            (
+                start = anims[n].cend + 20f
+            ) else start = 0
+        ) catch ()
 		start
 	)
 	fn getNewAnimation g =
@@ -3873,6 +3944,8 @@ fn WOW2_Create_GlobalLoopAnimationsSc2 gb anims =
 	local Sequences = #()
 	if gb.count > 0 then Sequences[gb.count] = undefined
 	local start = getStartTime anims
+    if start == undefined then 
+        start = GetLastKeyFrame() + 10
 	for g in gb do
 	(
 		g.start = g.start + start
@@ -3953,40 +4026,27 @@ fn WOW2_PreStart =
     if (mdata.version < 263) then throw ("Old model format detected. 3.* models and above supported only")
 	
     skndata = WOW2_SkinHeader.Read sknstream
-	
     
     if (skndata.fileID != "SKIN") then throw ("Invalid SKIN file!")
-	-- check that model and skin vert counts are the same
 	if (mdata.verts.nEntry != skndata.indices.nEntry) then 
-	(
 		echo ("#WARNING Indices in SKIN file do not match model vertices!")
-		--throw ("Invalid SKIN file!")
-	)
 	
 	WOW2_SkinHeader.Fill sknstream skndata
-	
     
 	mdata.name = WOW2_ReadData mstream mdata.name #string
-
-    
     
 	mdata.anims = WOW2_Animation.Read mstream mdata.anims
 	WOW2_Get_Anims mdata.anims
-
-      
     
 	mdata.GlobalSequences = WOW2_Generate_GlobalSequences mdata.GlobalSequences mstream
 	mdata.verts = WOW2_Vertex.Read mstream mdata.verts
 	m2bones = WOW2_Bone.Read mstream mdata.bones
 	mdata.bonesLU = WOW2_ReadData mstream mdata.bonesLU #uint16
 
---     
---     
 -- 	-- Materials
--- 	mdata.Textures = WOW2_Texture.Read mstream mdata.Textures
---     print mdata.Textures
+ 	mdata.Textures = WOW2_Texture.Read mstream mdata.Textures
  	mdata.RenderFlags = WOW2_RenderFlags.Read mstream mdata.RenderFlags
--- 	mdata.TexAnims = WOW2_UVAnimation.Read mstream mdata.TexAnims
+ 	mdata.TexAnims = WOW2_UVAnimation.Read mstream mdata.TexAnims
  	mdata.Trans = WOW2_Read_Transparencies mstream mdata.Trans
  	mdata.GeoAnims = WOW2_GeosetAnimation.Read mstream mdata.GeoAnims
 
@@ -4087,15 +4147,15 @@ fn WOW2_Start =
 		echo ("#ERROR Creating Lights failed!" + (getCurrentException()))
 	)
 	
-	try
-	(
-		echo ("Creating Particle Emitters...")
-		WOW2_Create_ParticleEmitters mdata m2bones
-	)
-	catch
-	(
-		echo ("#ERROR Creating Particle Emitters failed!" + (getCurrentException()))
-	)
+-- 	try
+-- 	(
+-- 		echo ("Creating Particle Emitters...")
+-- 		WOW2_Create_ParticleEmitters mdata m2bones
+-- 	)
+-- 	catch
+-- 	(
+-- 		echo ("#ERROR Creating Particle Emitters failed!" + (getCurrentException()))
+-- 	)
 	
 	try
 	(
@@ -4129,20 +4189,8 @@ fn WOW2_Start =
 	
 	WOW2_SetBillboarded m2bones
 	WOW2_Create_GlobalLoopAnimations mdata.GlobalSequences mdata.anims
-	--Star Tools Work
--- 	with undo off
--- 	(
--- 		with redraw off
--- 		(
--- 			if WOW2_ImportMode == #Sc2ArtTools then
--- 			(
--- 				StarTools.Utilities.miscUtil.CheckRequiredObj #AttachPoint
--- 				StarTools.Utilities.miscUtil.CheckRequiredObj #HitTestGeo
--- 				StarTools.Utilities.miscUtil.MinStar2HelpersDisplay()
--- 			)
--- 			WOW2_FillMeditorWithVisible ()
--- 		)
--- 	)
+
+    WOW2_RenameBones()
 	
 	ParticleDebug = #()
 	local pflags = #()
@@ -4243,6 +4291,7 @@ rollout WOW2_AnimUI "M2 Animation" width:480 height:500
 	fn fillInSpreadSheet lv anims =
 	(
 		local animOrder = #()
+        if ( anims.count ==0 ) then return undefined
 		animOrder[anims.count] = 0
 		for i = 1 to anims.count do
 		(
@@ -4413,6 +4462,8 @@ rollout WOW2_GeoUI "M2 Geometry" width:480 height:500
 			li = dotNetObject "System.Windows.Forms.ListViewItem" (submesh.uiIndex as string)
 			li.checked = submesh.process
 			
+            if ( submesh.name == undefined ) then submesh.name = "Unknown"
+            
 			sub_li = li.SubItems.add submesh.name
 			sub_li = li.SubItems.add (submesh.nverts as string)
 			sub_li = li.SubItems.add (submesh.nfaces as string)
@@ -4685,9 +4736,9 @@ rollout WOW2_Dialog_Settings "M2 Model Import Settings" width:400 height:350
 	)
 )
 
-rollout WOW2_Dialog "M2 Model Import v 3.5" width:400 height:370
+rollout WOW2_Dialog "M2 Model Import v 3.6" width:400 height:370
 (
-    label lbl1 "NOTE: Character models do NOT work!!"
+    label lbl1 "Character models in experimental import mode!"
     
 	
 	GroupBox grp1 "Model and Skin" pos:[4,17] width:392 height:172
@@ -4763,7 +4814,7 @@ fn WOW2_UI_Main =
 	WOW2_Dialog.placement = #normal
 )
 
-utility m2impexp "WoW M2 Import v3.5"
+utility m2impexp "WoW M2 Import v3.6"
 (
 	button 	bImport "Import" height:30 width:75
 		
