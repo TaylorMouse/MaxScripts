@@ -143,3 +143,28 @@ rollout GriffonStudios_DiabloIIIAnimation_Rollout "Import Diablo III Animation" 
         )
     )
 )
+
+
+macroscript GriffonStudios_ImportDiabloIIIModel
+    category:"Griffon Studios"
+    internalcategory:"Griffon Studios"
+    buttonText:"Import Model"
+    toolTip:"Import Diablo III appearance model"
+(
+    on execute do(
+        
+        createDialog GriffonStudios_DiabloIIIModel_Rollout
+    )
+)
+
+macroscript GriffonStudios_ImportDiabloIIIAnimation
+    category:"Griffon Studios"
+    internalcategory:"Griffon Studios"
+    buttonText:"Import Animation"
+    toolTip:"Import Diablo III animation"
+(
+    on execute do(
+
+        createDialog GriffonStudios_DiabloIIIAnimation_Rollout
+    )
+)
