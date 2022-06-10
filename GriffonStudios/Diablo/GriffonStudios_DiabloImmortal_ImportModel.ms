@@ -42,60 +42,6 @@ struct HelperScripts
         return str
     ),
     
-    function BuildBoundingBox bBox=
-    (
-        local p1 = bBox[1]
-        local p2 = bBox[2]
-
-        local xMin = 0
-        local xMax = 0
-        local yMin = 0
-        local yMax = 0
-        local zMin = 0
-        local zMax = 0
-        
-        if p1.x < p2.x then 
-            ( 
-                xMin = p1.x
-                xMax = p2.X
-            )
-        else
-            ( 
-                xMin = p2.x
-                xMax = p1.x
-            )
-        if p1.y < p2.y then 
-            ( 
-                yMin = p1.y
-                yMax = p2.y
-            )
-        else
-            ( 
-                yMin = p2.y
-                yMax = p1.y
-            )
-        if p1.z < p2.z then 
-            ( 
-                zMin = p1.z
-                zMax = p2.z
-            )
-        else
-            ( 
-                zMin = p2.z
-                zMax = p1.z
-            )
-        
-        local help = GriffonStudios_Helpers()
-        local s = help.BuildSpline s #([xMin, yMin, zMin], [xMax, yMin, zMin], [xMax,yMin, zMax], [xMin,yMin, zMax], [xMin, yMin, zMin] )
-        s = help.BuildSpline s #([xMin, yMax, zMin], [xMax, yMax, zMin], [xMax,yMax, zMax], [xMin,yMax, zMax], [xMin, yMax, zMin] )
-        s = help.BuildSpline s #([xMin, yMax, zMin], [xMin, yMin, zMin])
-        s = help.BuildSpline s #([xMin, yMax, zMax], [xMin, yMin, zMax])    
-        s = help.BuildSpline s #([xMax, yMax, zMin], [xMax, yMin, zMin])
-        s = help.BuildSpline s #([xMax, yMax, zMax], [xMax, yMin, zMax])
-            
-        return s
-    ),
-    
     function ReadHalfFloat stream = 
     (
         hf = readshort stream
@@ -203,6 +149,33 @@ struct DiabloImmortalTools
                     append verts [pos.x, pos.z, pos.y]
                 )
             )
+            
+            if chunk == "C4B_Q4H_T2H" then (
+                local uvSet = #()
+                for v=1 to nTotalVerts do
+                (
+                    _help.SkipBytes stream 12
+                    append uvSet [ReadFloat stream, ReadFloat stream, 0.0]
+                )
+                append uvSets uvSet
+                
+            )
+            
+            if chunk == "N4B_T2H_T2H" then (
+                
+                local uvSet1 = #()
+                local uvSet2 = #()
+                for v=1 to nTotalVerts do
+                (
+                    _help.SkipBytes stream 4
+                    append uvSet1 [_help.ReadHalfFloat stream, _help.ReadHalfFloat stream, 0.0]
+                    append uvSet2 [_help.ReadHalfFloat stream, _help.ReadHalfFloat stream, 0.0]
+                ) 
+                append uvSets uvSet1
+                append uvSets uvSet2
+                
+            )
+            
             if chunk == "P3F_N4B_T2F" then (
                 local uvSet = #()
                 for v=1 to nTotalVerts do
@@ -210,7 +183,7 @@ struct DiabloImmortalTools
                     local pos = [ReadFloat stream, ReadFloat stream, ReadFloat stream] * scale
                     append verts [pos.x, pos.z, pos.y]
                     _help.SkipBytes stream 4
-                    append uvSet [_help.ReadHalfFloat stream, _help.ReadHalfFloat stream, 0.0]
+                    append uvSet [ReadFloat stream, ReadFloat stream, 0.0]
                 )
                 append uvSets uvSet
             )
