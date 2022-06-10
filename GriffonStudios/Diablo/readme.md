@@ -11,9 +11,10 @@
 |P3F|Point 3 Float, position of the vertices|Read
 |W4B_I4B|Vertex weights 4 bytes compressed, Bone indices 4 bytes|Not read in the script
 |Q4H_T2H|Q(uat) ? 4 Half Floats and Texture Coordinates 2 Half Floats|Uv's are read
-|Q4H_T2H_T2H|Q(uat) ? 4 Half Floats and 2 pari of Texture Coordinates 2 Half Floats|Uv's are read
+|Q4H_T2H_T2H|Q(uat) ? 4 Half Floats and 2 pair of Texture Coordinates 2 Half Floats|Uv's are read
 |P3F_N4B_T2F|Point 3 Floats for position of the vertices, Normals 4 Bytes compressed, Texture Coordinate 2 floats|Read
 |N4B_T2H_T2H|Normals 4 Bytes compressed, 2 pair of Texture Coordinate 2 floats|Read
+|C4B_Q4H_T2H|Color 4 Bytes compress, Q(uat) ? 4 Half Floats and texture coordinates 2 Half Floats| Uv's are read
 
 ## Supported fileformat
 - .mesh
