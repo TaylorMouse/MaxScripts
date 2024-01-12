@@ -1,4 +1,4 @@
-fileIn "GriffonStudios_DiabloIII_Dialog.ms"
+fileIn "Diablo/GriffonStudios_DiabloIII_Dialog.ms"
 fileIn "GriffonStudios_WorldOfWarcraft_Dialog.ms"
 fileIn "GriffonStudios_XNA_Lara.ms"
 fileIn "GriffonStudios_AnimationProperties.ms"
