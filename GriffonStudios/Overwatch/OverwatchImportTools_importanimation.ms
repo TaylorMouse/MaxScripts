@@ -1,7 +1,7 @@
 /*
     Blizzard Overwatch Animation Importer (.006)
     
-    � 2017~2018 Script by Taylor Mouse
+    (c) 2017~2018 Script by Taylor Mouse
     
     Special thanks to id-daemon for reviewing and correcting the animation
     Special thanks to dynaomi for the awesome overtool.exe
@@ -20,7 +20,7 @@
     - v0.1 : Initial version
 */
 
-    fileIn "TMsHelperScripts.ms"
+    fileIn "Overwatch_HelperScripts.ms"
 
     struct OverwatchAxisList ( axis, rotation )
 

@@ -86,11 +86,11 @@ function ImportImmortalMesh f=
 )
 
 (
-    local f = getOpenFileName \
-                    caption:"Diablo Immortal" \
-                    types:"Supported Files|*.Mesh|Diablo Immortal(*.Mesh)|*.Mesh|All Files|*.*" \
-                    historyCategory:"ImmortalPreset"
+    -- local f = getOpenFileName \
+    --                 caption:"Diablo Immortal" \
+    --                 types:"Supported Files|*.Mesh|Diablo Immortal(*.Mesh)|*.Mesh|All Files|*.*" \
+    --                 historyCategory:"ImmortalPreset"
 
-    -- f = @"G:\Blizzard\Diablo Immortal\Extracted\Char\barbarian\Mesh_m_barbarian_yifu_t04_001_aw3.Mesh"
-    ImportImmortalMesh f
+    -- -- f = @"G:\Blizzard\Diablo Immortal\Extracted\Char\barbarian\Mesh_m_barbarian_yifu_t04_001_aw3.Mesh"
+    -- ImportImmortalMesh f
 )

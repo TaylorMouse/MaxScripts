@@ -139,20 +139,20 @@ clearListener()
         update obj
     )
     
-    file1 = @"D:\Downloads\main_idle.sop"
-    file2 = @"D:\Downloads\main_idle.mesh"
-    file3 = @"D:\Downloads\main_idle.tex"
+    -- file1 = @"D:\Downloads\main_idle.sop"
+    -- file2 = @"D:\Downloads\main_idle.mesh"
+    -- file3 = @"D:\Downloads\main_idle.tex"
     
-    max select all
-    max delete
-    verts = ReadVerts file1
-    faces = ReadFaces file2
-    colors = ReadColors file3
+    -- max select all
+    -- max delete
+    -- verts = ReadVerts file1
+    -- faces = ReadFaces file2
+    -- colors = ReadColors file3
 
-    local theMesh = mesh name:"main" vertices:verts faces:faces
+    -- local theMesh = mesh name:"main" vertices:verts faces:faces
     
     
-    ApplyColors theMesh colors
+    -- ApplyColors theMesh colors
     
 )
 

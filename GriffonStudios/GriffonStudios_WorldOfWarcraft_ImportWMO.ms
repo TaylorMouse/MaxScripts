@@ -1,5 +1,5 @@
 /************************************************************************************************
-�2018 by Taylor Mouse 
+(c) 2018 by Taylor Mouse 
 
 Description:
     Import World Of Warcraft - WMO Files

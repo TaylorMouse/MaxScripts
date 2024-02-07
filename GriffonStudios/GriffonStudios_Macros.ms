@@ -115,6 +115,20 @@ macroscript GriffonStudios_SolidBackGroundColor
     )
 )
 
+macroscript GriffonStudios_ImportWoW2
+    category:"Griffon Studios"
+    internalcategory:"Griffon Studios"
+    buttonText:"Import WoW M2 Model"
+    toolTip:"Import WoW M2 Model"
+    icon:#("Griffon_Studios", 7)
+(
+    on execute do 
+    ( 
+        WOW2_UI_Main()
+    )
+)
+
+
 
 macroscript GriffonStudios_OpenMaxScriptHelp
     category:"Griffon Studios"
