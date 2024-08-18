@@ -4824,3 +4824,16 @@ utility m2impexp "WoW M2 Import v3.6"
 	)
 	
 )
+
+macroscript GriffonStudios_ImportWorldOfWarcraft
+    category:"Griffon Studios"
+    internalcategory:"Griffon Studios"
+    buttonText:"Import WoW Model"
+    toolTip:"Import World of Warcraft Model(.m2)"
+	icon:#("GriffonStudios",7)
+(
+    on execute do
+    (
+        WOW2_UI_Main()
+    )
+)
